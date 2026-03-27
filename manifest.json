@@ -1,0 +1,35 @@
+{
+  "manifest_version": 3,
+  "name": "即刻 Web Polish",
+  "version": "0.1.0",
+  "description": "增强即刻 Web 的阅读体验，并在用户相关元素悬浮时展示资料卡片。",
+  "icons": {
+    "16": "icon.png",
+    "48": "icon.png",
+    "128": "icon.png"
+  },
+  "host_permissions": [
+    "https://web.okjike.com/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://web.okjike.com/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "jike-twitter-font.user.css"
+      ],
+      "matches": [
+        "https://web.okjike.com/*"
+      ]
+    }
+  ]
+}

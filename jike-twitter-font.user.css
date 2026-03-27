@@ -1,0 +1,365 @@
+/* ==UserStyle==
+@name         即刻 Web — Twitter 风格字体优化
+@description  将即刻 Web 版的字体、字重、行高改为类 Twitter（Chirp）风格，提升可读性；同时附带若干体验优化。
+@version      1.6.0
+@author       Manus
+@namespace    https://web.okjike.com
+@homepageURL  https://web.okjike.com
+@match        https://web.okjike.com/*
+@license      MIT
+==/UserStyle== */
+
+@-moz-document domain("web.okjike.com") {
+
+  /* ============================================================
+     核心说明：
+     即刻 Web 的字体来源有两处：
+     1. :root,html { font-family: Source Han Sans VF, ... }  ← 即刻自定义
+     2. :root { --mantine-font-family: -apple-system, ... }  ← Mantine 框架默认
+        body { font-family: var(--mantine-font-family) }     ← body 使用变量
+     
+     由于 :root,html 的 font-family 直接写死，优先级高于 body 的变量引用，
+     所以必须同时覆盖 :root,html 和 body 才能完全替换字体。
+     
+     Twitter/X 使用 Chirp 字体（私有），回退链为：
+     -apple-system → BlinkMacSystemFont → Segoe UI → Roboto → Helvetica
+     中文回退（按平台优先级）：
+       macOS：PingFang SC → Hiragino Sans GB
+       Windows：Microsoft YaHei（提前，优先于 Noto Sans SC）
+       Linux/Android：Noto Sans SC → Noto Sans CJK SC
+
+     v1.5.2 深色模式修复：彻底移除颜色覆盖，让即刻原生深浅色系统正常工作。
+     v1.6.0 Windows 优化：将 Microsoft YaHei 提前到 PingFang SC 之后，
+             Windows 用户优先使用微软雅黑（支持 fw:450 可变字重）。
+     ============================================================ */
+
+  /* ============================================================
+     1. 全局字体替换
+        同时覆盖 :root,html（即刻写死的）和 CSS 变量（Mantine 的）
+        字体回退链顺序：
+          系统字体 → macOS 中文 → Windows 中文 → Linux/通用中文 → 兜底
+     ============================================================ */
+
+  :root, html {
+    font-family:
+      -apple-system,
+      BlinkMacSystemFont,
+      "Segoe UI",
+      Roboto,
+      "Helvetica Neue",
+      "PingFang SC",
+      "Microsoft YaHei",
+      "Hiragino Sans GB",
+      "Noto Sans SC",
+      "Noto Sans CJK SC",
+      Arial,
+      sans-serif !important;
+
+    /* 行高：Twitter 正文约 1.5625（25px/16px） */
+    line-height: 1.5625 !important;
+
+    /* 字间距清零：即刻默认 0.25px，Twitter 不设，清零更清爽 */
+    letter-spacing: 0 !important;
+
+    /* 覆盖 Mantine CSS 变量，影响所有使用变量的组件 */
+    --mantine-font-family:
+      -apple-system,
+      BlinkMacSystemFont,
+      "Segoe UI",
+      Roboto,
+      "Helvetica Neue",
+      "PingFang SC",
+      "Microsoft YaHei",
+      "Hiragino Sans GB",
+      "Noto Sans SC",
+      "Noto Sans CJK SC",
+      Arial,
+      sans-serif !important;
+    --mantine-font-family-headings:
+      -apple-system,
+      BlinkMacSystemFont,
+      "Segoe UI",
+      Roboto,
+      "Helvetica Neue",
+      "PingFang SC",
+      "Microsoft YaHei",
+      "Hiragino Sans GB",
+      "Noto Sans SC",
+      "Noto Sans CJK SC",
+      Arial,
+      sans-serif !important;
+
+    /* 行高变量 */
+    --mantine-line-height: 1.5625 !important;
+    --mantine-line-height-xs: 1.4 !important;
+    --mantine-line-height-sm: 1.5 !important;
+    --mantine-line-height-md: 1.5625 !important;
+    --mantine-line-height-lg: 1.625 !important;
+    --mantine-line-height-xl: 1.6875 !important;
+  }
+
+  /* body 直接覆盖（字体、渲染方式、字间距） */
+  body {
+    font-family:
+      -apple-system,
+      BlinkMacSystemFont,
+      "Segoe UI",
+      Roboto,
+      "Helvetica Neue",
+      "PingFang SC",
+      "Microsoft YaHei",
+      "Hiragino Sans GB",
+      "Noto Sans SC",
+      "Noto Sans CJK SC",
+      Arial,
+      sans-serif !important;
+
+    /* auto（次像素渲染）让苹方/雅黑笔画更饱满厚实，比 antialiased 更接近 Twitter */
+    -webkit-font-smoothing: auto !important;
+    -moz-osx-font-smoothing: auto !important;
+
+    letter-spacing: 0 !important;
+  }
+
+  /* 全局 letter-spacing 清零（即刻在 :root,html 设置了 0.25px） */
+  * {
+    letter-spacing: 0 !important;
+  }
+
+  /* ============================================================
+     2. 动态正文（Post Body）
+        font-weight 提升至 450，让笔画更厚实接近 Twitter
+        苹方、微软雅黑、Noto Sans SC 均为可变字体，支持 450 字重
+     ============================================================ */
+
+  ._markdown_4ekzj_11 {
+    font-size: 1rem !important;
+    line-height: 1.5625 !important;
+    font-weight: 450 !important;
+  }
+
+  ._markdown_4ekzj_11 p {
+    line-height: 1.5625 !important;
+    margin-bottom: 0.5em !important;
+  }
+
+  ._markdown_4ekzj_11 a:hover {
+    text-decoration: underline !important;
+  }
+
+  /* ============================================================
+     3. 动态卡片标题行（用户名 + 时间戳）
+        _title_go2me_7 = 用户名区域，即刻 fw:500 → 改为 fw:700（加粗）
+        _desc_go2me_18 = 时间戳，即刻 12px → 改为 13px
+     ============================================================ */
+
+  ._title_go2me_7 {
+    font-size: 0.9375rem !important;  /* 15px，Twitter 用户名大小 */
+    font-weight: 700 !important;      /* 加粗，Twitter 风格 */
+    line-height: 1.5 !important;
+  }
+
+  ._desc_go2me_18 {
+    font-size: 0.8125rem !important;  /* 13px */
+    line-height: 1.4 !important;
+  }
+
+  /* ============================================================
+     4. 用户名加粗
+        即刻用户名的 DOM 结构（默认 variant）：
+          <span class="_root_1pcpi_1 _username_1o1bm_7">
+            <a href="/u/username">screenName</a>  ← 文字在 <a> 里
+          </span>
+        文字 variant（通知页等）：
+          <span class="_usernameText_1o1bm_11">screenName</span>
+        两种都需要覆盖。
+     ============================================================ */
+
+  /* 默认 variant：<a> 继承字重，需要直接设置 */
+  ._username_1o1bm_7,
+  ._username_1o1bm_7 a {
+    font-weight: 700 !important;
+  }
+
+  /* 文字 variant（通知页等） */
+  ._usernameText_1o1bm_11 {
+    font-weight: 700 !important;
+  }
+
+  /* ============================================================
+     5. 互动栏（点赞、评论、转发）
+        即刻：14px → 改为 13px，与 Twitter 一致
+     ============================================================ */
+
+  ._root_1hb5q_1 {
+    font-size: 0.8125rem !important;  /* 13px */
+    line-height: 1.4 !important;
+  }
+
+  ._root_1wh2w_1 {
+    font-size: 0.8125rem !important;
+  }
+
+  /* ============================================================
+     6. 页面标题 / 顶部导航
+        即刻：20px fw:500 → 改为 fw:700（加粗）
+     ============================================================ */
+
+  ._header_10v18_1 {
+    font-size: 1.25rem !important;
+    font-weight: 700 !important;
+  }
+
+  ._title_10v18_41 {
+    font-weight: 700 !important;
+  }
+
+  /* 导航 Tab */
+  ._tabActive_6j6uq_23 {
+    font-weight: 700 !important;
+  }
+
+  /* ============================================================
+     7. 用户个人页
+        大屏：screenName 36px fw:500 → fw:700
+        小屏：screenName 20px fw:500 → fw:700
+     ============================================================ */
+
+  ._screenName_gw2sk_66 {
+    font-weight: 700 !important;
+  }
+
+  ._screenName_yuyf0_19 {
+    font-weight: 700 !important;
+  }
+
+  /* ============================================================
+     8. 通知页各类卡片
+        时间戳 footer：12px → 13px
+     ============================================================ */
+
+  ._footer_19g2a_43,
+  ._footer_1ygph_57,
+  ._footer_1swqg_37,
+  ._footer_i1wij_41,
+  ._footer_11t7c_35,
+  ._footer_1titi_43,
+  ._footer_cirzo_37 {
+    font-size: 0.8125rem !important;  /* 13px */
+    line-height: 1.4 !important;
+  }
+
+  /* ============================================================
+     9. 时间轴（月份/年份标签）
+        Noto Sans SC 硬编码 → 覆盖为系统字体
+     ============================================================ */
+
+  ._sectionYear_qlece_12,
+  ._sectionMonth_qlece_26 {
+    font-family:
+      -apple-system,
+      BlinkMacSystemFont,
+      "Segoe UI",
+      "PingFang SC",
+      "Microsoft YaHei",
+      "Noto Sans SC",
+      sans-serif !important;
+  }
+
+  /* ============================================================
+     10. 引用卡片（转发卡片）
+        ._content_1kp3y_20 使用 -webkit-line-clamp:2 截断文字。
+        line-height 必须与原版保持一致（calc(1.5rem * scale) = 24px），
+        否则截断高度和容器高度不匹配，底部出现白缝「污点」。
+     ============================================================ */
+
+  ._content_1kp3y_20 {
+    line-height: calc(1.5rem * var(--mantine-scale)) !important;
+  }
+
+  /* ============================================================
+     11. 链接预览卡片
+        ._header_8timl_20 同样使用 -webkit-line-clamp:2，
+        且有固定 height: calc(2.375rem * scale)。
+        line-height 必须保持原版 calc(1.1875rem * scale)，否则截断错位。
+     ============================================================ */
+
+  ._header_8timl_20 {
+    line-height: calc(1.1875rem * var(--mantine-scale)) !important;
+  }
+
+  ._footer_8timl_31 {
+    font-size: 0.8125rem !important;
+  }
+
+  /* ============================================================
+     12. 模态框标题
+     ============================================================ */
+
+  ._title_wsu6s_15 {
+    font-size: 1.125rem !important;
+    font-weight: 700 !important;
+  }
+
+  /* ============================================================
+     13. 编辑器（发帖框）
+     ============================================================ */
+
+  ._editor_nlk79_1 {
+    line-height: 1.5625 !important;
+  }
+
+  ._editor_j2i5m_1 {
+    line-height: 1.5625 !important;
+  }
+
+  /* ============================================================
+     体验优化 A：滚动条美化
+     ============================================================ */
+
+  ::-webkit-scrollbar {
+    width: 5px !important;
+    height: 5px !important;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent !important;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.18) !important;
+    border-radius: 3px !important;
+  }
+
+  [data-mantine-color-scheme="dark"] ::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.18) !important;
+  }
+
+  /* ============================================================
+     体验优化 B：图片圆角统一
+         Twitter 图片圆角约 16px
+     ============================================================ */
+
+  ._media_55kv8_8 {
+    border-radius: 14px !important;
+  }
+
+  /* ============================================================
+     体验优化 C：文字选中颜色
+         Twitter 选中背景为淡蓝色
+     ============================================================ */
+
+  ::selection {
+    background-color: rgba(29, 155, 240, 0.2) !important;
+  }
+
+  /* ============================================================
+     体验优化 D：焦点轮廓（键盘可访问性）
+     ============================================================ */
+
+  :focus-visible {
+    outline: 2px solid var(--tint-jike-blue, #03a9f4) !important;
+    outline-offset: 2px !important;
+  }
+
+}
