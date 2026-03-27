@@ -3,6 +3,12 @@
   "name": "即刻 Web Polish",
   "version": "0.1.0",
   "description": "增强即刻 Web 的阅读体验，并在用户相关元素悬浮时展示资料卡片。",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "jike-polish@local",
+      "strict_min_version": "109.0"
+    }
+  },
   "icons": {
     "16": "icon.png",
     "48": "icon.png",

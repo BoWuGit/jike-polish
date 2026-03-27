@@ -107,11 +107,11 @@
         <a href="${profileUrl}" class="jp-av-link"><img class="jp-av" src="${avatar}"></a>
         <div class="jp-info">
           <a href="${profileUrl}" class="jp-name">${name}${verified ? '<span class="jp-badge">✓</span>' : ""}</a>
+          <div class="jp-stats">
+            <span><b>${following}</b> 关注</span>
+            <span><b>${followers}</b> 被关注</span>
+          </div>
         </div>
-      </div>
-      <div class="jp-stats">
-        <span><b>${following}</b> 关注</span>
-        <span><b>${followers}</b> 被关注</span>
       </div>
       ${tags.length ? `<div class="jp-tags">${tags.join("")}</div>` : ""}
       ${bio ? `<div class="jp-bio">${bio}</div>` : ""}
@@ -180,13 +180,14 @@
     s.textContent = `
 #${POPUP_ID}{position:fixed;z-index:99999;width:calc(17.5rem * var(--mantine-scale,1));max-width:calc(100vw - 24px);padding:12px;border-radius:calc(0.75rem * var(--mantine-scale,1));background:var(--bg-body-1,#fff);border:0;box-shadow:0 2px 12px 0 rgba(0,0,0,0.24);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif;color:var(--color-text-primary,#1d2129);animation:jpIn .12s ease}
 @keyframes jpIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
-#${POPUP_ID} .jp-head{display:flex;align-items:center;gap:10px}
+#${POPUP_ID} .jp-head{display:flex;align-items:flex-start;gap:10px}
 #${POPUP_ID} .jp-av-link{flex-shrink:0}
 #${POPUP_ID} .jp-av{width:48px;height:48px;border-radius:50%;object-fit:cover}
-#${POPUP_ID} .jp-name{font-size:15px;font-weight:700;color:inherit;text-decoration:none;display:flex;align-items:center;gap:2px}
+#${POPUP_ID} .jp-info{display:flex;flex-direction:column}
+#${POPUP_ID} .jp-name{font-size:15px;font-weight:700;color:inherit;text-decoration:none;display:flex;align-items:center;gap:2px;margin-top:2px}
 #${POPUP_ID} .jp-name:hover{text-decoration:underline}
 #${POPUP_ID} .jp-badge{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:var(--tint-jike-blue,#1da1f2);color:#fff;font-size:9px;font-weight:700;margin-left:3px}
-#${POPUP_ID} .jp-stats{margin-top:8px;font-size:13px;display:flex;gap:14px}
+#${POPUP_ID} .jp-stats{margin-top:6px;font-size:13px;display:flex;gap:14px}
 #${POPUP_ID} .jp-stats b{font-weight:700}
 #${POPUP_ID} .jp-tags{margin-top:6px;display:flex;flex-wrap:wrap;gap:4px}
 #${POPUP_ID} .jp-tag{display:inline-block;padding:2px 8px;border-radius:10px;font-size:12px;background:var(--bg-tag,#f0f1f5);color:var(--color-text-secondary,#5a5e66)}

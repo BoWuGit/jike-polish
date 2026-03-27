@@ -11,6 +11,7 @@
 2. 开启「开发者模式」
 3. 点击「加载已解压的扩展程序」
 4. 选择本项目目录
+5. Firefox 调试：打开 `about:debugging#/runtime/this-firefox`，点击「临时载入附加组件」，选择项目里的 `manifest.json`
 
 ## 调试说明
 
