@@ -121,8 +121,8 @@
     letter-spacing: 0 !important;
   }
 
-  /* 全局 letter-spacing 清零（即刻在 :root,html 设置了 0.25px） */
-  * {
+  /* 限定常见文本元素，避免一刀切影响未知组件 */
+  body, button, input, textarea, select, a, span, div, p, h1, h2, h3, h4, h5, h6 {
     letter-spacing: 0 !important;
   }
 
@@ -135,16 +135,36 @@
   ._markdown_4ekzj_11 {
     font-size: 1rem !important;
     line-height: 1.5625 !important;
-    font-weight: 450 !important;
+    font-weight: 430 !important;
   }
 
   ._markdown_4ekzj_11 p {
     line-height: 1.5625 !important;
-    margin-bottom: 0.5em !important;
+    margin-bottom: 0.42em !important;
+  }
+
+  ._markdown_4ekzj_11 p + p {
+    margin-top: 0.1em !important;
   }
 
   ._markdown_4ekzj_11 a:hover {
     text-decoration: underline !important;
+  }
+
+  ._markdown_4ekzj_11 strong {
+    font-weight: 650 !important;
+  }
+
+  ._markdown_4ekzj_11 blockquote {
+    margin: 0.8em 0 !important;
+    padding-left: 0.9em !important;
+    border-left: 3px solid var(--border-primary, rgba(15, 23, 42, 0.12)) !important;
+    color: var(--color-text-secondary, #5a5e66) !important;
+  }
+
+  [data-mantine-color-scheme="dark"] ._markdown_4ekzj_11 blockquote {
+    border-left-color: var(--border-primary, rgba(255, 255, 255, 0.14)) !important;
+    color: var(--color-text-secondary, #b7bfcc) !important;
   }
 
   /* ============================================================
@@ -155,13 +175,15 @@
 
   ._title_go2me_7 {
     font-size: 0.9375rem !important;  /* 15px，Twitter 用户名大小 */
-    font-weight: 700 !important;      /* 加粗，Twitter 风格 */
+    font-weight: 650 !important;
     line-height: 1.5 !important;
   }
 
   ._desc_go2me_18 {
     font-size: 0.8125rem !important;  /* 13px */
     line-height: 1.4 !important;
+    font-weight: 400 !important;
+    color: var(--color-text-secondary, #707684) !important;
   }
 
   /* ============================================================
@@ -178,12 +200,12 @@
   /* 默认 variant：<a> 继承字重，需要直接设置 */
   ._username_1o1bm_7,
   ._username_1o1bm_7 a {
-    font-weight: 700 !important;
+    font-weight: 650 !important;
   }
 
   /* 文字 variant（通知页等） */
   ._usernameText_1o1bm_11 {
-    font-weight: 700 !important;
+    font-weight: 650 !important;
   }
 
   /* ============================================================
@@ -194,10 +216,25 @@
   ._root_1hb5q_1 {
     font-size: 0.8125rem !important;  /* 13px */
     line-height: 1.4 !important;
+    color: var(--color-text-secondary, #6b7280) !important;
+    transition: color .15s ease !important;
   }
 
   ._root_1wh2w_1 {
     font-size: 0.8125rem !important;
+    color: inherit !important;
+  }
+
+  ._root_1hb5q_1:hover {
+    color: var(--color-text-primary, #1d2129) !important;
+  }
+
+  [data-mantine-color-scheme="dark"] ._root_1hb5q_1 {
+    color: var(--color-text-secondary, #b7bfcc) !important;
+  }
+
+  [data-mantine-color-scheme="dark"] ._root_1hb5q_1:hover {
+    color: var(--color-text-primary, #eef1f5) !important;
   }
 
   /* ============================================================
@@ -207,16 +244,16 @@
 
   ._header_10v18_1 {
     font-size: 1.25rem !important;
-    font-weight: 700 !important;
+    font-weight: 650 !important;
   }
 
   ._title_10v18_41 {
-    font-weight: 700 !important;
+    font-weight: 650 !important;
   }
 
   /* 导航 Tab */
   ._tabActive_6j6uq_23 {
-    font-weight: 700 !important;
+    font-weight: 650 !important;
   }
 
   /* ============================================================
@@ -226,11 +263,11 @@
      ============================================================ */
 
   ._screenName_gw2sk_66 {
-    font-weight: 700 !important;
+    font-weight: 650 !important;
   }
 
   ._screenName_yuyf0_19 {
-    font-weight: 700 !important;
+    font-weight: 650 !important;
   }
 
   /* ============================================================
@@ -247,6 +284,7 @@
   ._footer_cirzo_37 {
     font-size: 0.8125rem !important;  /* 13px */
     line-height: 1.4 !important;
+    color: var(--color-text-secondary, #707684) !important;
   }
 
   /* ============================================================
@@ -290,6 +328,19 @@
 
   ._footer_8timl_31 {
     font-size: 0.8125rem !important;
+    color: var(--color-text-secondary, #707684) !important;
+  }
+
+  [data-mantine-color-scheme="dark"] ._desc_go2me_18,
+  [data-mantine-color-scheme="dark"] ._footer_19g2a_43,
+  [data-mantine-color-scheme="dark"] ._footer_1ygph_57,
+  [data-mantine-color-scheme="dark"] ._footer_1swqg_37,
+  [data-mantine-color-scheme="dark"] ._footer_i1wij_41,
+  [data-mantine-color-scheme="dark"] ._footer_11t7c_35,
+  [data-mantine-color-scheme="dark"] ._footer_1titi_43,
+  [data-mantine-color-scheme="dark"] ._footer_cirzo_37,
+  [data-mantine-color-scheme="dark"] ._footer_8timl_31 {
+    color: var(--color-text-secondary, #b7bfcc) !important;
   }
 
   /* ============================================================
@@ -298,7 +349,7 @@
 
   ._title_wsu6s_15 {
     font-size: 1.125rem !important;
-    font-weight: 700 !important;
+    font-weight: 650 !important;
   }
 
   /* ============================================================
@@ -341,7 +392,7 @@
      ============================================================ */
 
   ._media_55kv8_8 {
-    border-radius: 14px !important;
+    border-radius: 16px !important;
   }
 
   /* ============================================================
