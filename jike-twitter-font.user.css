@@ -362,4 +362,47 @@
     outline-offset: 2px !important;
   }
 
+  /* ============================================================
+     体验优化 E：桌面端主布局（Twitter 式：feed 居中，nav 左挂）
+     思路：feed 本身作为页面中轴线居中，
+     左导航"挂"在 feed 左侧，不参与居中计算。
+     这样视觉重心始终在页面正中，和 Twitter 一致。
+     ============================================================ */
+  @media (min-width: 960px) {
+    :root {
+      --jp-nav-width: calc(5.25rem * var(--mantine-scale));
+      --jp-nav-gap: clamp(6px, 0.8vw, 14px);
+      --jp-feed-width: clamp(620px, 44vw, 720px);
+      --jp-feed-left: max(
+        calc(var(--jp-nav-width) + var(--jp-nav-gap) + 16px),
+        calc((100vw - var(--jp-feed-width)) / 2)
+      );
+      --jp-nav-left: calc(var(--jp-feed-left) - var(--jp-nav-gap) - var(--jp-nav-width));
+    }
+
+    /* 左栏：挂在 feed 左侧 */
+    [class*="navbar_desktopStack_"],
+    [class*="_desktopStack_"] {
+      left: var(--jp-nav-left) !important;
+    }
+
+    /* feed 容器：页面正中 */
+    .mantine-ScrollArea-content > .mantine-Container-root[data-size="md"],
+    .mantine-ScrollArea-content > [class*="_container_"].mantine-Container-root[data-size="md"] {
+      --container-size: var(--jp-feed-width) !important;
+      width: min(var(--jp-feed-width), calc(100vw - 32px)) !important;
+      max-width: var(--jp-feed-width) !important;
+      margin-left: var(--jp-feed-left) !important;
+      margin-right: auto !important;
+      padding-inline: 0 !important;
+    }
+
+    /* 详情页 / 个人页等非 feed 容器：与 feed 对齐 */
+    .mantine-ScrollArea-content > .mantine-Container-root:not([data-size="md"]) {
+      margin-left: var(--jp-feed-left) !important;
+      margin-right: auto !important;
+      max-width: var(--jp-feed-width) !important;
+    }
+  }
+
 }
