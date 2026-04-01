@@ -174,9 +174,23 @@
     });
   }
 
+  function forwardCustomPopupWheel(event) {
+    const target = event.currentTarget;
+    const scroller = findScrollableContainer(target instanceof HTMLElement ? target : activeLink);
+    if (!scroller) return;
+    event.preventDefault();
+    scroller.scrollBy({
+      top: event.deltaY,
+      left: event.deltaX,
+      behavior: "auto"
+    });
+    closePopup();
+  }
+
   function bindCardControls(card) {
     card.addEventListener("mouseenter", cancelHide);
     card.addEventListener("mouseleave", hide);
+    card.addEventListener("wheel", forwardCustomPopupWheel, { passive: false });
   }
 
   function renderLoadingCard(anchor) {
