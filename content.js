@@ -142,6 +142,38 @@
     card.style.top = `${top}px`;
   }
 
+  function findScrollableContainer(startNode = document.body) {
+    const start = startNode instanceof HTMLElement ? startNode : document.body;
+    for (let el = start; el; el = el.parentElement) {
+      const style = getComputedStyle(el);
+      const overflowY = style.overflowY;
+      if ((overflowY === "auto" || overflowY === "scroll") && el.scrollHeight > el.clientHeight + 4) {
+        return el;
+      }
+    }
+
+    const viewport = Array.from(document.querySelectorAll(".mantine-ScrollArea-viewport, [class*='ScrollArea-viewport'], [class*='ScrollArea_viewport']"))
+      .find((el) => el instanceof HTMLElement && el.scrollHeight > el.clientHeight + 4);
+    if (viewport instanceof HTMLElement) return viewport;
+
+    return document.scrollingElement || document.documentElement;
+  }
+
+  function forwardNativeHoverCardWheel(event) {
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) return;
+    const nativeCard = target.closest(".mantine-HoverCard-dropdown, [class*='mantine-HoverCard-dropdown']");
+    if (!nativeCard) return;
+    const scroller = findScrollableContainer(nativeCard);
+    if (!scroller) return;
+    event.preventDefault();
+    scroller.scrollBy({
+      top: event.deltaY,
+      left: event.deltaX,
+      behavior: "auto"
+    });
+  }
+
   function bindCardControls(card) {
     card.addEventListener("mouseenter", cancelHide);
     card.addEventListener("mouseleave", hide);
@@ -380,6 +412,7 @@
       if (!e.relatedTarget?.closest?.(`#${POPUP_ID}`)) hide();
     });
     document.body.addEventListener("mouseleave", hide);
+    document.addEventListener("wheel", forwardNativeHoverCardWheel, { passive: false, capture: true });
     document.addEventListener("mousedown", (e) => {
       const target = e.target;
       if (!(target instanceof HTMLElement)) return;
