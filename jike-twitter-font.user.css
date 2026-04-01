@@ -96,6 +96,13 @@
     --mantine-line-height-md: 1.5625 !important;
     --mantine-line-height-lg: 1.625 !important;
     --mantine-line-height-xl: 1.6875 !important;
+
+    /* 统一层级色，优先用颜色分层而不是 opacity */
+    --jp-text-secondary: #707684;
+    --jp-text-tertiary: #8a919f;
+    --jp-nav-muted: #4f5663;
+    --jp-divider-muted: rgba(15, 23, 42, 0.08);
+    --jp-placeholder: #a0a6b2;
   }
 
   /* body 直接覆盖（字体、渲染方式、字间距） */
@@ -176,14 +183,14 @@
   ._title_go2me_7 {
     font-size: 0.9375rem !important;  /* 15px，Twitter 用户名大小 */
     font-weight: 650 !important;
-    line-height: 1.5 !important;
+    line-height: 1.45 !important;
   }
 
   ._desc_go2me_18 {
     font-size: 0.8125rem !important;  /* 13px */
     line-height: 1.4 !important;
     font-weight: 400 !important;
-    color: var(--color-text-secondary, #707684) !important;
+    color: var(--jp-text-secondary, #707684) !important;
   }
 
   /* ============================================================
@@ -216,7 +223,7 @@
   ._root_1hb5q_1 {
     font-size: 0.8125rem !important;  /* 13px */
     line-height: 1.4 !important;
-    color: var(--color-text-secondary, #6b7280) !important;
+    color: var(--jp-text-secondary, #707684) !important;
     transition: color .15s ease !important;
   }
 
@@ -230,7 +237,7 @@
   }
 
   [data-mantine-color-scheme="dark"] ._root_1hb5q_1 {
-    color: var(--color-text-secondary, #b7bfcc) !important;
+    color: var(--jp-text-secondary, #b7bfcc) !important;
   }
 
   [data-mantine-color-scheme="dark"] ._root_1hb5q_1:hover {
@@ -284,7 +291,7 @@
   ._footer_cirzo_37 {
     font-size: 0.8125rem !important;  /* 13px */
     line-height: 1.4 !important;
-    color: var(--color-text-secondary, #707684) !important;
+    color: var(--jp-text-secondary, #707684) !important;
   }
 
   /* ============================================================
@@ -328,19 +335,16 @@
 
   ._footer_8timl_31 {
     font-size: 0.8125rem !important;
-    color: var(--color-text-secondary, #707684) !important;
+    color: var(--jp-text-secondary, #707684) !important;
   }
 
-  [data-mantine-color-scheme="dark"] ._desc_go2me_18,
-  [data-mantine-color-scheme="dark"] ._footer_19g2a_43,
-  [data-mantine-color-scheme="dark"] ._footer_1ygph_57,
-  [data-mantine-color-scheme="dark"] ._footer_1swqg_37,
-  [data-mantine-color-scheme="dark"] ._footer_i1wij_41,
-  [data-mantine-color-scheme="dark"] ._footer_11t7c_35,
-  [data-mantine-color-scheme="dark"] ._footer_1titi_43,
-  [data-mantine-color-scheme="dark"] ._footer_cirzo_37,
-  [data-mantine-color-scheme="dark"] ._footer_8timl_31 {
-    color: var(--color-text-secondary, #b7bfcc) !important;
+  html[data-mantine-color-scheme="dark"],
+  [data-mantine-color-scheme="dark"] {
+    --jp-text-secondary: #b7bfcc;
+    --jp-text-tertiary: #969fb0;
+    --jp-nav-muted: #a5adbb;
+    --jp-divider-muted: rgba(255, 255, 255, 0.08);
+    --jp-placeholder: #8f98a9;
   }
 
   /* ============================================================
@@ -362,6 +366,24 @@
 
   ._editor_j2i5m_1 {
     line-height: 1.5625 !important;
+  }
+
+  /* 发帖区占位文案轻一些，避免和首条动态抢视线 */
+  ._editor_nlk79_1::placeholder,
+  ._editor_j2i5m_1::placeholder,
+  [contenteditable="true"][data-placeholder]::before {
+    color: var(--jp-placeholder, #a0a6b2) !important;
+  }
+
+  /* 发帖区与 feed 的首屏节奏：工具栏、分割线、首条卡片更连贯 */
+  ._editor_nlk79_1,
+  ._editor_j2i5m_1 {
+    margin-bottom: 2px !important;
+  }
+
+  ._editor_nlk79_1 + *,
+  ._editor_j2i5m_1 + * {
+    margin-top: 6px !important;
   }
 
   /* ============================================================
@@ -413,6 +435,30 @@
     outline-offset: 2px !important;
   }
 
+  /* 左栏默认更克制，hover/active 再抬起来 */
+  [class*="navbar_desktopStack_"] a:not(.jike-logo),
+  [class*="_desktopStack_"] a:not(.jike-logo) {
+    color: var(--jp-nav-muted, #4f5663) !important;
+    transition: background-color .15s ease, color .15s ease !important;
+  }
+
+  [class*="navbar_desktopStack_"] a:not(.jike-logo):hover,
+  [class*="_desktopStack_"] a:not(.jike-logo):hover,
+  [class*="navbar_desktopStack_"] a[aria-current="page"],
+  [class*="_desktopStack_"] a[aria-current="page"] {
+    color: var(--color-text-primary, #1d2129) !important;
+  }
+
+  [class*="navbar_desktopStack_"]::after,
+  [class*="_desktopStack_"]::after {
+    border-color: var(--jp-divider-muted, rgba(15, 23, 42, 0.08)) !important;
+  }
+
+  /* 只降低引用卡片正文，不压标题 */
+  ._content_1kp3y_20 {
+    color: var(--jp-text-secondary, #707684) !important;
+  }
+
   /* ============================================================
      体验优化 E：桌面端主布局（Twitter 式：feed 居中，nav 左挂）
      思路：feed 本身作为页面中轴线居中，
@@ -422,8 +468,8 @@
   @media (min-width: 960px) {
     :root {
       --jp-nav-width: calc(5.25rem * var(--mantine-scale));
-      --jp-nav-gap: clamp(6px, 0.8vw, 14px);
-      --jp-feed-width: clamp(620px, 44vw, 720px);
+      --jp-nav-gap: clamp(8px, 0.9vw, 16px);
+      --jp-feed-width: clamp(640px, 45vw, 736px);
       --jp-feed-left: max(
         calc(var(--jp-nav-width) + var(--jp-nav-gap) + 16px),
         calc((100vw - var(--jp-feed-width)) / 2)
