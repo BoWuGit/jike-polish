@@ -716,7 +716,7 @@
 #${POPUP_ID} .jp-tag{display:inline-block;padding:2px 8px;border-radius:10px;font-size:12px;background:var(--bg-tag,#f0f1f5) !important;color:var(--color-text-secondary,#5a5e66) !important}
 #${POPUP_ID} .jp-gender-m{background:#e8f4fd !important;color:#1da1f2 !important}
 #${POPUP_ID} .jp-gender-f{background:#fde8ef !important;color:#e84887 !important}
-#${POPUP_ID} .jp-bio{margin-top:6px;font-size:13px;line-height:1.45;color:var(--mantine-color-dimmed,var(--color-text-secondary,#5a5e66)) !important;white-space:pre-wrap;word-break:break-word;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+#${POPUP_ID} .jp-bio{margin-top:6px;font-size:13px;line-height:1.45;color:var(--mantine-color-dimmed,var(--color-text-secondary,#5a5e66)) !important;white-space:pre-wrap;word-break:break-word}
 #${POPUP_ID} .jp-follow{margin-top:10px;padding:5px 16px;border-radius:999px;border:1px solid #f8e71c;background:#f8e71c;font-size:13px;font-weight:600;cursor:pointer;color:#1d2129;transition:all .15s}
 #${POPUP_ID} .jp-follow:hover{filter:brightness(.96)}
 #${POPUP_ID} .jp-follow.jp-following{border-color:var(--border-primary,#d9d9d9);background:transparent;color:var(--color-text-secondary,#5a5e66) !important;font-weight:400}
@@ -748,6 +748,7 @@
 :is([data-mantine-color-scheme="dark"], [data-theme="dark"], html.dark, body.dark) #${POPUP_ID} .jp-status-text,#${POPUP_ID}.jp-dark .jp-status-text{color:#b7bfcc !important}
 :is([data-mantine-color-scheme="dark"], [data-theme="dark"], html.dark, body.dark) #${POPUP_ID} .jp-skeleton,#${POPUP_ID}.jp-dark .jp-skeleton{background:rgba(255,255,255,.09)}
 :is([data-mantine-color-scheme="dark"], [data-theme="dark"], html.dark, body.dark) #${POPUP_ID} .jp-skeleton::after,#${POPUP_ID}.jp-dark .jp-skeleton::after{background:linear-gradient(90deg,transparent,rgba(255,255,255,.12),transparent)}
+.mantine-HoverCard-dropdown [class*="_bio"],.mantine-HoverCard-dropdown [class*="_briefIntro"],.mantine-HoverCard-dropdown [class*="_desc"]{-webkit-line-clamp:unset !important;display:block !important;overflow:visible !important;max-height:none !important;text-overflow:unset !important}
 .jp-lightbox-zoom-button svg{display:block;width:22px;height:22px}
 .jp-lightbox-zoom-button:disabled{opacity:.45;cursor:default}
 .yarl__slide_image.jp-lightbox-zoomed{max-width:none;will-change:transform;touch-action:none;user-select:none}

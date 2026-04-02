@@ -40,6 +40,11 @@
 - 开启调试日志：在控制台执行 `localStorage.setItem("JIKE_POLISH_DEBUG", "1")`
 - 关闭调试日志：`localStorage.removeItem("JIKE_POLISH_DEBUG")`
 
+## 测试页面
+
+- 正文 @提及 + 原生 HoverCard：<https://web.okjike.com/u/28e960ee-9e3a-45bb-bee3-d859b34416c1/repost/69c14cecc5a1d4e6497efb7d>
+- 长 bio 用户（龙翊Longyi）：<https://web.okjike.com/u/5ca1f20e-e12f-4792-8e1c-bffb2cf1c932>
+
 ## 版本与发布建议
 
 - 当前建议先发布到 private 仓库做迭代测试，确认稳定后再公开。
