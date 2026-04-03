@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "即刻 Web Polish",
-  "version": "0.1.0",
-  "description": "增强即刻 Web 的阅读体验，并在用户相关元素悬浮时展示资料卡片。",
+  "version": "1.1.0",
+  "description": "即刻 Web 增强：字体优化、用户悬浮卡片、图片灯箱缩放",
   "browser_specific_settings": {
     "gecko": {
       "id": "jike-polish@local",
