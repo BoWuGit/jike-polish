@@ -3,10 +3,10 @@
 即刻 Web 的个人增强插件，提升阅读与交互体验。支持 Chrome（MV3）和 Firefox。
 
 
-插件效果：
+**插件效果：**
 ![效果图](./screenshot.png)
 
-原生即刻 Web 版效果：
+**原生即刻 Web 版效果：**
 ![原生效果](./screenshot-native.png)
 
 👉 [Chrome Web Store 安装](https://chromewebstore.google.com/detail/hnbakdoibeogigpihopfjfjbacfmcfck)
