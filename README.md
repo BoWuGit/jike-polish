@@ -2,6 +2,8 @@
 
 即刻 Web 的个人增强插件，提升阅读与交互体验。支持 Chrome（MV3）和 Firefox。
 
+👉 [Chrome Web Store 安装](https://chromewebstore.google.com/detail/hnbakdoibeogigpihopfjfjbacfmcfck)
+
 ## 功能
 
 ### 界面与字体优化
@@ -46,7 +48,4 @@
 - 正文 @提及 + 原生 HoverCard：<https://web.okjike.com/u/28e960ee-9e3a-45bb-bee3-d859b34416c1/repost/69c14cecc5a1d4e6497efb7d>
 - 长 bio 用户（龙翊Longyi）：<https://web.okjike.com/u/5ca1f20e-e12f-4792-8e1c-bffb2cf1c932>
 
-## 版本与发布建议
 
-- 当前建议先发布到 private 仓库做迭代测试，确认稳定后再公开。
-- 若后续要沿用旧扩展的 Chrome Web Store 上架项继续升级，需保证使用同一开发者账号与同一扩展私钥（即保持扩展 ID 不变）。
