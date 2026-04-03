@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "即刻 Web Polish",
   "version": "1.1.0",
-  "description": "即刻 Web 增强：字体优化、用户悬浮卡片、图片灯箱缩放",
+  "description": "即刻 Web 增强：字体、布局优化、用户悬浮卡片、图片灯箱缩放",
   "browser_specific_settings": {
     "gecko": {
       "id": "jike-polish@local",
