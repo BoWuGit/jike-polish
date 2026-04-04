@@ -2,7 +2,7 @@
   "name": "jike-polish",
   "private": true,
   "type": "module",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "即刻 Web 浏览器扩展（内容脚本构建与校验）",
   "scripts": {
     "build": "esbuild src/content.js --outfile=content.js --platform=browser --target=chrome109",
