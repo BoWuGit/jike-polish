@@ -483,9 +483,9 @@
       left: var(--jp-nav-left) !important;
     }
 
-    /* feed 容器：页面正中 */
-    .mantine-ScrollArea-content > .mantine-Container-root[data-size="md"],
-    .mantine-ScrollArea-content > [class*="_container_"].mantine-Container-root[data-size="md"] {
+    /* feed 容器：页面正中（排除详情页：当 ScrollArea 内含 fixed 详情容器时不应用） */
+    .mantine-ScrollArea-content:not(:has(> [class*="_container_cxm8d_"])) > .mantine-Container-root[data-size="md"],
+    .mantine-ScrollArea-content:not(:has(> [class*="_container_cxm8d_"])) > [class*="_container_"].mantine-Container-root[data-size="md"] {
       --container-size: var(--jp-feed-width) !important;
       width: min(var(--jp-feed-width), calc(100vw - 32px)) !important;
       max-width: var(--jp-feed-width) !important;
@@ -494,8 +494,8 @@
       padding-inline: 0 !important;
     }
 
-    /* 详情页 / 个人页等非 feed 容器：与 feed 对齐 */
-    .mantine-ScrollArea-content > .mantine-Container-root:not([data-size="md"]) {
+    /* 个人页等非 feed 容器：与 feed 对齐（排除详情页） */
+    .mantine-ScrollArea-content:not(:has(> [class*="_container_cxm8d_"])) > .mantine-Container-root:not([data-size="md"]) {
       margin-left: var(--jp-feed-left) !important;
       margin-right: auto !important;
       max-width: var(--jp-feed-width) !important;
