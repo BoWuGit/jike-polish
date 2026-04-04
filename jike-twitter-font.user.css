@@ -1,7 +1,7 @@
 /* ==UserStyle==
 @name         即刻 Web — Twitter 风格字体优化
 @description  将即刻 Web 版的字体、字重、行高改为类 Twitter（Chirp）风格，提升可读性；同时附带若干体验优化。
-@version      1.6.0
+@version      1.6.1
 @author       Manus
 @namespace    https://web.okjike.com
 @homepageURL  https://web.okjike.com
@@ -31,6 +31,8 @@
      v1.5.2 深色模式修复：彻底移除颜色覆盖，让即刻原生深浅色系统正常工作。
      v1.6.0 Windows 优化：将 Microsoft YaHei 提前到 PingFang SC 之后，
              Windows 用户优先使用微软雅黑（支持 fw:450 可变字重）。
+     v1.6.1 桌面布局：nav + gap + feed 整组水平居中，间距恒为 --jp-nav-gap；
+             收紧 Mantine 容器选择器，避免详情页布局被误改。
      ============================================================ */
 
   /* ============================================================
@@ -460,32 +462,34 @@
   }
 
   /* ============================================================
-     体验优化 E：桌面端主布局（Twitter 式：feed 居中，nav 左挂）
-     思路：feed 本身作为页面中轴线居中，
-     左导航"挂"在 feed 左侧，不参与居中计算。
-     这样视觉重心始终在页面正中，和 Twitter 一致。
+     体验优化 E：桌面端主布局（Twitter 式：nav 左挂 + feed）
+     思路：nav、间距与 feed 视为一组，整组在视口内水平居中；
+     左导航绝对定位在组的左缘，feed 容器用 margin-left 对齐到 nav+gap 之后。
+     组居中后 feed 中线略偏右（nav 只在左侧），与常见信息流产品一致。
      ============================================================ */
   @media (min-width: 960px) {
     :root {
       --jp-nav-width: calc(5.25rem * var(--mantine-scale));
       --jp-nav-gap: clamp(8px, 0.9vw, 16px);
       --jp-feed-width: clamp(640px, 45vw, 736px);
-      --jp-feed-left: max(
-        calc(var(--jp-nav-width) + var(--jp-nav-gap) + 16px),
-        calc((100vw - var(--jp-feed-width)) / 2)
-      );
-      --jp-nav-left: calc(var(--jp-feed-left) - var(--jp-nav-gap) - var(--jp-nav-width));
+      /*
+       * nav + gap + feed 作为一组居中，保证 nav-feed 间距始终为 --jp-nav-gap。
+       * 组整体居中后，feed 中心会略偏右（因为 nav 只在左侧），视觉上自然。
+       */
+      --jp-group-width: calc(var(--jp-nav-width) + var(--jp-nav-gap) + var(--jp-feed-width));
+      --jp-group-left: max(16px, calc((100vw - var(--jp-group-width)) / 2));
+      --jp-nav-left: var(--jp-group-left);
+      --jp-feed-left: calc(var(--jp-group-left) + var(--jp-nav-width) + var(--jp-nav-gap));
     }
 
-    /* 左栏：挂在 feed 左侧 */
+    /* 左栏：整组居中后的左缘 */
     [class*="navbar_desktopStack_"],
     [class*="_desktopStack_"] {
       left: var(--jp-nav-left) !important;
     }
 
-    /* feed 容器：页面正中（排除详情页：当 ScrollArea 内含 fixed 详情容器时不应用） */
-    .mantine-ScrollArea-content:not(:has(> [class*="_container_cxm8d_"])) > .mantine-Container-root[data-size="md"],
-    .mantine-ScrollArea-content:not(:has(> [class*="_container_cxm8d_"])) > [class*="_container_"].mantine-Container-root[data-size="md"] {
+    /* feed 容器：页面正中（排除详情页容器 _container_cxm8d_） */
+    .mantine-ScrollArea-content > .mantine-Container-root[data-size="md"]:not([class*="_container_cxm8d_"]) {
       --container-size: var(--jp-feed-width) !important;
       width: min(var(--jp-feed-width), calc(100vw - 32px)) !important;
       max-width: var(--jp-feed-width) !important;
@@ -494,8 +498,8 @@
       padding-inline: 0 !important;
     }
 
-    /* 个人页等非 feed 容器：与 feed 对齐（排除详情页） */
-    .mantine-ScrollArea-content:not(:has(> [class*="_container_cxm8d_"])) > .mantine-Container-root:not([data-size="md"]) {
+    /* 个人页等非 feed 容器：与 feed 对齐（排除详情页容器） */
+    .mantine-ScrollArea-content > .mantine-Container-root:not([data-size="md"]):not([class*="_container_cxm8d_"]) {
       margin-left: var(--jp-feed-left) !important;
       margin-right: auto !important;
       max-width: var(--jp-feed-width) !important;
