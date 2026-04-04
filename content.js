@@ -16,7 +16,9 @@
   let hoverTimer = null;
   let requestSeq = 0;
   let lightboxObserver = null;
+  let themeObserver = null;
   let lightboxRaf = 0;
+  let profileFetchAbort = null;
 
   const lightboxZoom = {
     image: null,
@@ -34,7 +36,11 @@
 
   function log(...a) { if (DEBUG) console.log("[jike-polish]", ...a); }
   function token() { return localStorage.getItem("JK_ACCESS_TOKEN"); }
-  function esc(s) { const d = document.createElement("div"); d.textContent = s; return d.innerHTML; }
+  const escEl = document.createElement("div");
+  function esc(s) { escEl.textContent = s; return escEl.innerHTML; }
+  function extensionRuntime() {
+    return globalThis.browser?.runtime ?? globalThis.chrome?.runtime;
+  }
   function isDarkModeActive() {
     const root = document.documentElement;
     const body = document.body;
@@ -73,7 +79,7 @@
     return m ? decodeURIComponent(m[1]) : null;
   }
 
-  async function fetchUser(id) {
+  async function fetchUser(id, signal) {
     if (CACHE.has(id)) return CACHE.get(id);
     if (PENDING.has(id)) return PENDING.get(id);
     const t = token();
@@ -83,29 +89,31 @@
       ? [`username=${encodeURIComponent(id)}`, `id=${encodeURIComponent(id)}`]
       : [`username=${encodeURIComponent(id)}`];
     const task = (async () => {
-      for (const q of qs) {
-        try {
-          const r = await fetch(`${API_BASE}/users/profile?${q}`, {
-            headers: { "X-Jike-Access-Token": t }
-          });
-          if (!r.ok) continue;
-          const j = await r.json();
-          if (j.user) {
-            CACHE.set(id, j.user);
-            return j.user;
+      try {
+        for (const q of qs) {
+          try {
+            const r = await fetch(`${API_BASE}/users/profile?${q}`, {
+              headers: { "X-Jike-Access-Token": t },
+              signal
+            });
+            if (!r.ok) continue;
+            const j = await r.json();
+            if (j.user) {
+              CACHE.set(id, j.user);
+              return j.user;
+            }
+          } catch (e) {
+            if (e?.name === "AbortError") return null;
+            log("fetch err", q, e);
           }
-        } catch (e) {
-          log("fetch err", q, e);
         }
+        return null;
+      } finally {
+        PENDING.delete(id);
       }
-      return null;
     })();
     PENDING.set(id, task);
-    try {
-      return await task;
-    } finally {
-      PENDING.delete(id);
-    }
+    return task;
   }
 
   async function toggleFollow(username, isFollowing) {
@@ -139,6 +147,7 @@
   }
 
   function closePopup() {
+    profileFetchAbort?.abort();
     cancelHide();
     cancelHover();
     removePopup();
@@ -196,8 +205,22 @@
   }
 
   function forwardCustomPopupWheel(event) {
-    const target = event.currentTarget;
-    const scroller = findScrollableContainer(target instanceof HTMLElement ? target : activeLink);
+    const card = event.currentTarget;
+    if (!(card instanceof HTMLElement)) return;
+    const inner = card.querySelector(".jp-scroll");
+    const scrollEl = inner instanceof HTMLElement ? inner : card;
+    const overflowY = scrollEl.scrollHeight - scrollEl.clientHeight;
+    if (overflowY > 1) {
+      const dy = event.deltaY;
+      const atTop = scrollEl.scrollTop <= 0;
+      const atBottom = scrollEl.scrollTop + scrollEl.clientHeight >= scrollEl.scrollHeight - 1;
+      if ((dy < 0 && !atTop) || (dy > 0 && !atBottom)) {
+        event.preventDefault();
+        scrollEl.scrollTop += dy;
+        return;
+      }
+    }
+    const scroller = findScrollableContainer(activeLink instanceof HTMLElement ? activeLink : document.body);
     if (!scroller) return;
     event.preventDefault();
     scroller.scrollBy({
@@ -205,7 +228,6 @@
       left: event.deltaX,
       behavior: "auto"
     });
-    closePopup();
   }
 
   function bindCardControls(card) {
@@ -462,8 +484,39 @@
     });
   }
 
+  function mutationTouchesLightbox(node) {
+    if (node instanceof Element) {
+      return !!(node.matches?.(".yarl__portal") || node.closest?.(".yarl__portal"));
+    }
+    if (node instanceof DocumentFragment && node.querySelector?.(".yarl__portal")) return true;
+    return false;
+  }
+
+  function isLightboxMutationRelevant(mutations) {
+    for (const m of mutations) {
+      if (m.type === "childList") {
+        for (const n of m.addedNodes) {
+          if (mutationTouchesLightbox(n)) return true;
+        }
+        for (const n of m.removedNodes) {
+          if (mutationTouchesLightbox(n)) return true;
+        }
+        continue;
+      }
+      if (m.type === "attributes" && m.attributeName && ["class", "aria-hidden", "src"].includes(m.attributeName)) {
+        const t = m.target;
+        if (t instanceof Element && t.closest(".yarl__portal")) return true;
+      }
+    }
+    return false;
+  }
+
+  function onLightboxDomMutations(mutations) {
+    if (isLightboxMutationRelevant(mutations)) scheduleLightboxSync();
+  }
+
   function bootLightboxZoom() {
-    lightboxObserver = new MutationObserver(scheduleLightboxSync);
+    lightboxObserver = new MutationObserver(onLightboxDomMutations);
     lightboxObserver.observe(document.body, {
       childList: true,
       subtree: true,
@@ -559,20 +612,22 @@
     const card = document.createElement("div");
     card.id = POPUP_ID;
     card.innerHTML = `
-      <div class="jp-head">
-        <div class="jp-skeleton jp-skeleton-avatar"></div>
-        <div class="jp-info jp-skeleton-group">
-          <div class="jp-skeleton jp-skeleton-line jp-skeleton-name"></div>
-          <div class="jp-skeleton jp-skeleton-line jp-skeleton-meta"></div>
+      <div class="jp-scroll">
+        <div class="jp-head">
+          <div class="jp-skeleton jp-skeleton-avatar"></div>
+          <div class="jp-info jp-skeleton-group">
+            <div class="jp-skeleton jp-skeleton-line jp-skeleton-name"></div>
+            <div class="jp-skeleton jp-skeleton-line jp-skeleton-meta"></div>
+          </div>
         </div>
+        <div class="jp-tags">
+          <span class="jp-skeleton jp-skeleton-chip"></span>
+          <span class="jp-skeleton jp-skeleton-chip jp-skeleton-chip-wide"></span>
+        </div>
+        <div class="jp-skeleton jp-skeleton-line"></div>
+        <div class="jp-skeleton jp-skeleton-line jp-skeleton-line-short"></div>
+        <div class="jp-skeleton jp-skeleton-button"></div>
       </div>
-      <div class="jp-tags">
-        <span class="jp-skeleton jp-skeleton-chip"></span>
-        <span class="jp-skeleton jp-skeleton-chip jp-skeleton-chip-wide"></span>
-      </div>
-      <div class="jp-skeleton jp-skeleton-line"></div>
-      <div class="jp-skeleton jp-skeleton-line jp-skeleton-line-short"></div>
-      <div class="jp-skeleton jp-skeleton-button"></div>
     `;
     applyPopupTheme(card);
     document.body.appendChild(card);
@@ -585,9 +640,11 @@
     const card = document.createElement("div");
     card.id = POPUP_ID;
     card.innerHTML = `
-      <div class="jp-status">
-        <div class="jp-status-title">资料暂时不可用</div>
-        <div class="jp-status-text">${esc(message)}</div>
+      <div class="jp-scroll">
+        <div class="jp-status">
+          <div class="jp-status-title">资料暂时不可用</div>
+          <div class="jp-status-text">${esc(message)}</div>
+        </div>
       </div>
     `;
     applyPopupTheme(card);
@@ -622,19 +679,21 @@
     const tags = [genderIcon, province, industry].filter(Boolean);
 
     card.innerHTML = `
-      <div class="jp-head">
-        <a href="${profileUrl}" class="jp-av-link"><img class="jp-av" src="${avatar}"></a>
-        <div class="jp-info">
-          <a href="${profileUrl}" class="jp-name">${name}${verified ? '<span class="jp-badge">✓</span>' : ""}</a>
-          <div class="jp-stats">
-            <span><b>${following}</b> 关注</span>
-            <span><b>${followers}</b> 被关注</span>
+      <div class="jp-scroll">
+        <div class="jp-head">
+          <a href="${profileUrl}" class="jp-av-link"><img class="jp-av" src="${avatar}"></a>
+          <div class="jp-info">
+            <a href="${profileUrl}" class="jp-name">${name}${verified ? '<span class="jp-badge">✓</span>' : ""}</a>
+            <div class="jp-stats">
+              <span><b>${following}</b> 关注</span>
+              <span><b>${followers}</b> 被关注</span>
+            </div>
           </div>
         </div>
+        ${tags.length ? `<div class="jp-tags">${tags.join("")}</div>` : ""}
+        ${bio ? `<div class="jp-bio">${bio}</div>` : ""}
+        ${!isSelf ? `<button class="jp-follow ${isFollowing ? "jp-following" : ""}">${isFollowing ? "已关注" : "关注"}</button>` : ""}
       </div>
-      ${tags.length ? `<div class="jp-tags">${tags.join("")}</div>` : ""}
-      ${bio ? `<div class="jp-bio">${bio}</div>` : ""}
-      ${!isSelf ? `<button class="jp-follow ${isFollowing ? "jp-following" : ""}">${isFollowing ? "已关注" : "关注"}</button>` : ""}
     `;
     applyPopupTheme(card);
 
@@ -676,23 +735,31 @@
   async function showCard(link) {
     if (activeLink !== link) return;
     cancelHide();
-    const id = extractId(link);
-    if (!id) return;
-    const t = token();
-    const seq = ++requestSeq;
-    log("hover", id);
-    renderLoadingCard(link);
-    if (!t) {
-      renderErrorCard(link, "未检测到登录状态，无法加载用户资料。");
-      return;
+    profileFetchAbort?.abort();
+    const ac = new AbortController();
+    profileFetchAbort = ac;
+    try {
+      const id = extractId(link);
+      if (!id) return;
+      const t = token();
+      const seq = ++requestSeq;
+      log("hover", id);
+      renderLoadingCard(link);
+      if (!t) {
+        renderErrorCard(link, "未检测到登录状态，无法加载用户资料。");
+        return;
+      }
+      const user = await fetchUser(id, ac.signal);
+      if (seq !== requestSeq || activeLink !== link) return;
+      if (ac.signal.aborted) return;
+      if (!user) {
+        renderErrorCard(link, "接口没有返回资料，可能是网络波动或页面结构已变更。");
+        return;
+      }
+      renderCard(user, link);
+    } finally {
+      if (profileFetchAbort === ac) profileFetchAbort = null;
     }
-    const user = await fetchUser(id);
-    if (seq !== requestSeq || activeLink !== link) return;
-    if (!user) {
-      renderErrorCard(link, "接口没有返回资料，可能是网络波动或页面结构已变更。");
-      return;
-    }
-    renderCard(user, link);
   }
 
   function injectStyles() {
@@ -702,6 +769,7 @@
     s.textContent = `
 #${POPUP_ID}{position:fixed;z-index:99999;width:calc(17.5rem * var(--mantine-scale,1));max-width:calc(100vw - 24px);padding:12px;border-radius:calc(0.75rem * var(--mantine-scale,1));background:var(--bg-body-1,var(--mantine-color-body,#fff)) !important;border:1px solid var(--border-primary,rgba(15,23,42,.08)) !important;box-shadow:0 6px 24px rgba(15,23,42,.16);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif;color:var(--mantine-color-text,var(--color-text-primary,#1d2129)) !important;animation:jpIn .12s ease}
 @keyframes jpIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+#${POPUP_ID} .jp-scroll{max-height:min(60vh,420px);overflow-y:auto;overscroll-behavior:contain}
 #${POPUP_ID} .jp-head{display:flex;align-items:flex-start;gap:10px}
 #${POPUP_ID} .jp-av-link{flex-shrink:0}
 #${POPUP_ID} .jp-av{width:48px;height:48px;border-radius:50%;object-fit:cover}
@@ -737,7 +805,6 @@
 #${POPUP_ID} .jp-skeleton-button{width:84px;height:32px;margin-top:10px}
 @keyframes jpShimmer{100%{transform:translateX(100%)}}
 :is([data-mantine-color-scheme="dark"], [data-theme="dark"], html.dark, body.dark) #${POPUP_ID}{background:var(--bg-body-1,#1d1f24) !important;border-color:var(--border-primary,rgba(255,255,255,.1)) !important;box-shadow:0 8px 30px rgba(0,0,0,.4);color:#eef1f5 !important}
-:is([data-mantine-color-scheme="dark"], [data-theme="dark"], html.dark, body.dark) #${POPUP_ID}{background:var(--bg-body-1,#1d1f24) !important;border-color:var(--border-primary,rgba(255,255,255,.1)) !important;box-shadow:0 8px 30px rgba(0,0,0,.4);color:#eef1f5 !important}
 #${POPUP_ID}.jp-dark{background:var(--mantine-color-dark-7,#1d1f24) !important;border-color:rgba(255,255,255,.1) !important;box-shadow:0 8px 30px rgba(0,0,0,.4);color:#eef1f5 !important}
 :is([data-mantine-color-scheme="dark"], [data-theme="dark"], html.dark, body.dark) #${POPUP_ID} .jp-name,:is([data-mantine-color-scheme="dark"], [data-theme="dark"], html.dark, body.dark) #${POPUP_ID} .jp-stats b,:is([data-mantine-color-scheme="dark"], [data-theme="dark"], html.dark, body.dark) #${POPUP_ID} .jp-status-title,#${POPUP_ID}.jp-dark .jp-name,#${POPUP_ID}.jp-dark .jp-stats b,#${POPUP_ID}.jp-dark .jp-status-title{color:#eef1f5 !important}
 :is([data-mantine-color-scheme="dark"], [data-theme="dark"], html.dark, body.dark) #${POPUP_ID} .jp-bio,:is([data-mantine-color-scheme="dark"], [data-theme="dark"], html.dark, body.dark) #${POPUP_ID} .jp-stats,:is([data-mantine-color-scheme="dark"], [data-theme="dark"], html.dark, body.dark) #${POPUP_ID} .jp-stats span,#${POPUP_ID}.jp-dark .jp-bio,#${POPUP_ID}.jp-dark .jp-stats,#${POPUP_ID}.jp-dark .jp-stats span{color:#b7bfcc !important}
@@ -760,7 +827,12 @@
   async function injectUserStyle() {
     if (document.getElementById("jike-polish-userstyle")) return;
     try {
-      const url = chrome.runtime.getURL("jike-twitter-font.user.css");
+      const runtime = extensionRuntime();
+      if (!runtime?.getURL) {
+        log("style err: extension runtime unavailable");
+        return;
+      }
+      const url = runtime.getURL("jike-twitter-font.user.css");
       const raw = await fetch(url).then(r => r.text());
       const inner = raw.replace(/\/\*[\s\S]*?==\/UserStyle== \*\//, "")
         .match(/@-moz-document\s+domain\("web\.okjike\.com"\)\s*\{([\s\S]*)\}\s*$/)?.[1] || raw;
@@ -771,10 +843,24 @@
     } catch (e) { log("style err", e); }
   }
 
+  function syncOpenPopupTheme() {
+    const card = document.getElementById(POPUP_ID);
+    if (card) applyPopupTheme(card);
+  }
+
   function boot() {
     injectStyles();
     injectUserStyle();
     bootLightboxZoom();
+
+    themeObserver = new MutationObserver(() => syncOpenPopupTheme());
+    themeObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class", "data-mantine-color-scheme", "data-theme"]
+    });
+    if (document.body) {
+      themeObserver.observe(document.body, { attributes: true, attributeFilter: ["class"] });
+    }
 
     document.body.addEventListener("mouseover", (e) => {
       const link = getLink(e.target);
