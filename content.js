@@ -59,16 +59,16 @@
     if (root && root.clientWidth > 0) parts.push(root.clientWidth);
     if (window.innerWidth > 0) parts.push(window.innerWidth);
     if (!parts.length) return 0;
-    return Math.floor(Math.min.apply(null, parts));
+    return Math.floor(Math.min(...parts));
   }
+  const NAV_DESKTOP_STACK_SELECTOR = '.mantine-ScrollArea-content > [class*="_desktopStack_"]';
   function syncJpNavInlineLeft() {
+    const nav = document.querySelector(NAV_DESKTOP_STACK_SELECTOR);
+    if (!(nav instanceof HTMLElement)) return;
     if (window.matchMedia && !window.matchMedia("(min-width: 960px)").matches) {
-      const nav2 = document.querySelector('.mantine-ScrollArea-content > [class*="_desktopStack_"]');
-      if (nav2 instanceof HTMLElement) nav2.style.removeProperty("left");
+      nav.style.removeProperty("left");
       return;
     }
-    const nav = document.querySelector('.mantine-ScrollArea-content > [class*="_desktopStack_"]');
-    if (!(nav instanceof HTMLElement)) return;
     const left = getComputedStyle(document.documentElement).getPropertyValue("--jp-nav-left").trim();
     if (left) nav.style.setProperty("left", left, "important");
   }
@@ -85,18 +85,19 @@
     bindScrollAreaChildResizeObservers();
   }
   let jpLayoutSyncExtraTimers = [];
+  function scheduleJpLayoutSyncRafChain(remaining) {
+    if (remaining <= 0) return;
+    requestAnimationFrame(() => {
+      jpLayoutTick();
+      scheduleJpLayoutSyncRafChain(remaining - 1);
+    });
+  }
   function scheduleJpLayoutSync() {
     for (const t of jpLayoutSyncExtraTimers) clearTimeout(t);
     jpLayoutSyncExtraTimers = [];
     jpLayoutTick();
     queueMicrotask(jpLayoutTick);
-    requestAnimationFrame(() => {
-      jpLayoutTick();
-      requestAnimationFrame(() => {
-        jpLayoutTick();
-        requestAnimationFrame(jpLayoutTick);
-      });
-    });
+    scheduleJpLayoutSyncRafChain(3);
     for (const ms of [0, 55, 160, 320]) {
       jpLayoutSyncExtraTimers.push(setTimeout(jpLayoutTick, ms));
     }
@@ -134,13 +135,14 @@
       if (document.body) jpLayoutWidthRo.observe(document.body);
       const scrollVp = document.querySelector(".mantine-ScrollArea-viewport");
       if (scrollVp) jpLayoutWidthRo.observe(scrollVp);
-    } catch (_) {
+    } catch {
     }
     requestAnimationFrame(() => {
       syncJpLayoutWidthVar();
       requestAnimationFrame(syncJpLayoutWidthVar);
     });
   }
+  const SCROLL_CONTENT_CHILD_LIST_OBSERVER = { childList: true, subtree: false };
   function installSpaLocationHook() {
     scheduleJpLayoutSync();
     window.addEventListener("popstate", scheduleJpLayoutSync);
@@ -155,12 +157,12 @@
     try {
       const scrollContent = document.querySelector(".mantine-ScrollArea-content");
       if (scrollContent) {
-        new MutationObserver(() => scheduleJpLayoutSync()).observe(scrollContent, {
-          childList: true,
-          subtree: false
-        });
+        new MutationObserver(() => scheduleJpLayoutSync()).observe(
+          scrollContent,
+          SCROLL_CONTENT_CHILD_LIST_OBSERVER
+        );
       }
-    } catch (_) {
+    } catch {
     }
   }
   function isDarkModeActive() {
@@ -384,7 +386,11 @@
     image.style.transformOrigin = "center center";
     image.style.transition = lightboxZoom.dragging ? "none" : "transform 140ms ease";
     image.style.transform = `translate3d(${x}px, ${y}px, 0) scale(${lightboxZoom.scale})`;
-    image.style.cursor = lightboxZoom.scale > 1 ? lightboxZoom.dragging ? "grabbing" : "grab" : "zoom-in";
+    let cursor = "zoom-in";
+    if (lightboxZoom.scale > 1) {
+      cursor = lightboxZoom.dragging ? "grabbing" : "grab";
+    }
+    image.style.cursor = cursor;
     image.classList.toggle("jp-lightbox-zoomed", lightboxZoom.scale > 1);
     updateLightboxZoomButtons();
   }
@@ -738,7 +744,12 @@
     const profileUrl = `https://web.okjike.com/u/${user.username || ""}`;
     const isFollowing = !!user.following;
     const isSelf = user.isSelf;
-    const genderIcon = user.gender === "MALE" ? '<span class="jp-tag jp-gender-m">\u2642</span>' : user.gender === "FEMALE" ? '<span class="jp-tag jp-gender-f">\u2640</span>' : "";
+    let genderIcon = "";
+    if (user.gender === "MALE") {
+      genderIcon = '<span class="jp-tag jp-gender-m">\u2642</span>';
+    } else if (user.gender === "FEMALE") {
+      genderIcon = '<span class="jp-tag jp-gender-f">\u2640</span>';
+    }
     const province = user.province ? `<span class="jp-tag">${esc(user.province)}</span>` : "";
     const industry = user.industry ? `<span class="jp-tag">${esc(user.industry)}</span>` : "";
     const tags = [genderIcon, province, industry].filter(Boolean);
@@ -891,7 +902,8 @@
         return;
       }
       const url = runtime.getURL("jike-twitter-font.user.css");
-      const raw = await fetch(url, { cache: "no-store" }).then((r) => r.text());
+      const res = await fetch(url, { cache: "no-store" });
+      const raw = await res.text();
       const inner = raw.replace(/\/\*[\s\S]*?==\/UserStyle== \*\//, "").match(/@-moz-document\s+domain\("web\.okjike\.com"\)\s*\{([\s\S]*)\}\s*$/)?.[1] || raw;
       const s = document.createElement("style");
       s.id = "jike-polish-userstyle";

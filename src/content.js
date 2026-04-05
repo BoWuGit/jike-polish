@@ -63,18 +63,19 @@
     if (root && root.clientWidth > 0) parts.push(root.clientWidth);
     if (window.innerWidth > 0) parts.push(window.innerWidth);
     if (!parts.length) return 0;
-    return Math.floor(Math.min.apply(null, parts));
+    return Math.floor(Math.min(...parts));
   }
+
+  const NAV_DESKTOP_STACK_SELECTOR = '.mantine-ScrollArea-content > [class*="_desktopStack_"]';
 
   /** 内联 left !important，压过即刻对侧栏的定位；与 --jp-nav-left 同步 */
   function syncJpNavInlineLeft() {
+    const nav = document.querySelector(NAV_DESKTOP_STACK_SELECTOR);
+    if (!(nav instanceof HTMLElement)) return;
     if (window.matchMedia && !window.matchMedia("(min-width: 960px)").matches) {
-      const nav = document.querySelector('.mantine-ScrollArea-content > [class*="_desktopStack_"]');
-      if (nav instanceof HTMLElement) nav.style.removeProperty("left");
+      nav.style.removeProperty("left");
       return;
     }
-    const nav = document.querySelector('.mantine-ScrollArea-content > [class*="_desktopStack_"]');
-    if (!(nav instanceof HTMLElement)) return;
     const left = getComputedStyle(document.documentElement).getPropertyValue("--jp-nav-left").trim();
     if (left) nav.style.setProperty("left", left, "important");
   }
@@ -87,7 +88,6 @@
     syncJpNavInlineLeft();
   }
 
-  /** 路由/DOM 变化后的一帧布局同步（class、宽度变量、nav 内联、子列 ResizeObserver） */
   function jpLayoutTick() {
     syncPostDetailLayoutClass();
     syncJpLayoutWidthVar();
@@ -97,21 +97,23 @@
   let jpLayoutSyncExtraTimers = [];
 
   /**
-   * SPA 进详情时 ScrollArea 的「直接子节点」往往不变，仅子列宽度从 ~736 变为 ~600，childList MO 不会触发。
-   * 用多帧 + 短延迟再跑一遍，等 React 提交后再读 --jp-nav-left / 详情样式。
+   * SPA 进详情时 ScrollArea 直接子节点常不变，子列宽度变化不会触发 childList；
+   * 多帧 + 短延迟，等 React 提交后再同步 --jp-nav-left / 详情样式。
    */
+  function scheduleJpLayoutSyncRafChain(remaining) {
+    if (remaining <= 0) return;
+    requestAnimationFrame(() => {
+      jpLayoutTick();
+      scheduleJpLayoutSyncRafChain(remaining - 1);
+    });
+  }
+
   function scheduleJpLayoutSync() {
     for (const t of jpLayoutSyncExtraTimers) clearTimeout(t);
     jpLayoutSyncExtraTimers = [];
     jpLayoutTick();
     queueMicrotask(jpLayoutTick);
-    requestAnimationFrame(() => {
-      jpLayoutTick();
-      requestAnimationFrame(() => {
-        jpLayoutTick();
-        requestAnimationFrame(jpLayoutTick);
-      });
-    });
+    scheduleJpLayoutSyncRafChain(3);
     for (const ms of [0, 55, 160, 320]) {
       jpLayoutSyncExtraTimers.push(setTimeout(jpLayoutTick, ms));
     }
@@ -153,12 +155,16 @@
       if (document.body) jpLayoutWidthRo.observe(document.body);
       const scrollVp = document.querySelector(".mantine-ScrollArea-viewport");
       if (scrollVp) jpLayoutWidthRo.observe(scrollVp);
-    } catch (_) { /* ignore */ }
+    } catch {
+      /* ResizeObserver unsupported */
+    }
     requestAnimationFrame(() => {
       syncJpLayoutWidthVar();
       requestAnimationFrame(syncJpLayoutWidthVar);
     });
   }
+
+  const SCROLL_CONTENT_CHILD_LIST_OBSERVER = { childList: true, subtree: false };
 
   function installSpaLocationHook() {
     scheduleJpLayoutSync();
@@ -171,16 +177,17 @@
         return ret;
       };
     }
-    /* 直接子节点不变时（feed→详情仍 nav+md+cxm8d），childList 不触发；子列尺寸变化由 ResizeObserver 处理 */
     try {
       const scrollContent = document.querySelector(".mantine-ScrollArea-content");
       if (scrollContent) {
-        new MutationObserver(() => scheduleJpLayoutSync()).observe(scrollContent, {
-          childList: true,
-          subtree: false
-        });
+        new MutationObserver(() => scheduleJpLayoutSync()).observe(
+          scrollContent,
+          SCROLL_CONTENT_CHILD_LIST_OBSERVER
+        );
       }
-    } catch (_) { /* ignore */ }
+    } catch {
+      /* MutationObserver unavailable */
+    }
   }
 
   function isDarkModeActive() {
@@ -272,7 +279,10 @@
         body: JSON.stringify({ username })
       });
       return r.ok;
-    } catch (e) { log("follow err", e); return false; }
+    } catch (e) {
+      log("follow err", e);
+      return false;
+    }
   }
 
   function removePopup() {
@@ -430,7 +440,11 @@
     image.style.transformOrigin = "center center";
     image.style.transition = lightboxZoom.dragging ? "none" : "transform 140ms ease";
     image.style.transform = `translate3d(${x}px, ${y}px, 0) scale(${lightboxZoom.scale})`;
-    image.style.cursor = lightboxZoom.scale > 1 ? (lightboxZoom.dragging ? "grabbing" : "grab") : "zoom-in";
+    let cursor = "zoom-in";
+    if (lightboxZoom.scale > 1) {
+      cursor = lightboxZoom.dragging ? "grabbing" : "grab";
+    }
+    image.style.cursor = cursor;
     image.classList.toggle("jp-lightbox-zoomed", lightboxZoom.scale > 1);
     updateLightboxZoomButtons();
   }
@@ -810,11 +824,12 @@
     const isFollowing = !!user.following;
     const isSelf = user.isSelf;
 
-    const genderIcon = user.gender === "MALE"
-      ? '<span class="jp-tag jp-gender-m">♂</span>'
-      : user.gender === "FEMALE"
-        ? '<span class="jp-tag jp-gender-f">♀</span>'
-        : "";
+    let genderIcon = "";
+    if (user.gender === "MALE") {
+      genderIcon = '<span class="jp-tag jp-gender-m">♂</span>';
+    } else if (user.gender === "FEMALE") {
+      genderIcon = '<span class="jp-tag jp-gender-f">♀</span>';
+    }
     const province = user.province ? `<span class="jp-tag">${esc(user.province)}</span>` : "";
     const industry = user.industry ? `<span class="jp-tag">${esc(user.industry)}</span>` : "";
 
@@ -975,14 +990,17 @@
         return;
       }
       const url = runtime.getURL("jike-twitter-font.user.css");
-      const raw = await fetch(url, { cache: "no-store" }).then((r) => r.text());
+      const res = await fetch(url, { cache: "no-store" });
+      const raw = await res.text();
       const inner = raw.replace(/\/\*[\s\S]*?==\/UserStyle== \*\//, "")
         .match(/@-moz-document\s+domain\("web\.okjike\.com"\)\s*\{([\s\S]*)\}\s*$/)?.[1] || raw;
       const s = document.createElement("style");
       s.id = "jike-polish-userstyle";
       s.textContent = inner;
       document.head.appendChild(s);
-    } catch (e) { log("style err", e); }
+    } catch (e) {
+      log("style err", e);
+    }
   }
 
   function syncOpenPopupTheme() {
