@@ -39,11 +39,17 @@
 
 ## 本地开发
 
-1. 打开 `chrome://extensions/`
-2. 开启「开发者模式」
-3. 点击「加载已解压的扩展程序」
-4. 选择本项目目录
-5. Firefox 调试：打开 `about:debugging#/runtime/this-firefox`，点击「临时载入附加组件」，选择项目里的 `manifest.json`
+内容脚本源码在 `src/content.js`，根目录的 `content.js` 由构建生成（与 `manifest.json` 引用一致）。
+
+1. 安装依赖并构建：`npm install` → `npm run build`
+2. 代码检查：`npm run lint`（或 `npm run check`：lint + build）
+3. 打开 `chrome://extensions/`
+4. 开启「开发者模式」
+5. 点击「加载已解压的扩展程序」
+6. 选择本项目目录
+7. Firefox 调试：打开 `about:debugging#/runtime/this-firefox`，点击「临时载入附加组件」，选择项目里的 `manifest.json`
+
+修改 `src/content.js` 后请重新执行 `npm run build` 再刷新扩展。商店 zip 可使用 `./pack.sh`（脚本内会先执行构建）。
 
 ## 调试说明
 

@@ -4,12 +4,13 @@
   const POPUP_ID = "jike-polish-popup";
   const LIGHTBOX_ZOOM_OUT_BUTTON_ID = "jike-polish-lightbox-zoom-out";
   const LIGHTBOX_ZOOM_IN_BUTTON_ID = "jike-polish-lightbox-zoom-in";
-  const CACHE = /* @__PURE__ */ new Map();
-  const PENDING = /* @__PURE__ */ new Map();
+  const CACHE = new Map();
+  const PENDING = new Map();
   const SHOW_DELAY = 140;
   const LIGHTBOX_MIN_SCALE = 1;
   const LIGHTBOX_MAX_SCALE = 6;
   const LIGHTBOX_SCALE_STEP = 0.5;
+
   let activeLink = null;
   let hideTimer = null;
   let hoverTimer = null;
@@ -18,6 +19,7 @@
   let themeObserver = null;
   let lightboxRaf = 0;
   let profileFetchAbort = null;
+
   const lightboxZoom = {
     image: null,
     scale: 1,
@@ -31,24 +33,26 @@
     originX: 0,
     originY: 0
   };
-  function log(...a) {
-    if (DEBUG) console.log("[jike-polish]", ...a);
-  }
-  function token() {
-    return localStorage.getItem("JK_ACCESS_TOKEN");
-  }
+
+  function log(...a) { if (DEBUG) console.log("[jike-polish]", ...a); }
+  function token() { return localStorage.getItem("JK_ACCESS_TOKEN"); }
   const escEl = document.createElement("div");
-  function esc(s) {
-    escEl.textContent = s;
-    return escEl.innerHTML;
-  }
+  function esc(s) { escEl.textContent = s; return escEl.innerHTML; }
   function extensionRuntime() {
     return globalThis.browser?.runtime ?? globalThis.chrome?.runtime;
   }
+
+  /** 单条动态详情（含转发）：与信息流共用 DOM 骨架；仅跳过对主栏 Container 的覆盖以免分隔线错位 */
   const POST_DETAIL_PATH = /\/u\/[^/]+\/(?:post|repost)\//i;
+
   function syncPostDetailLayoutClass() {
     document.documentElement.classList.toggle("jp-detail-post", POST_DETAIL_PATH.test(location.pathname));
   }
+
+  /** 取实际可排版宽度写入 --jp-layout-width，排除滚动条。
+   *  即刻使用 Mantine ScrollArea 管理滚动，滚动条在 .mantine-ScrollArea-viewport 内，
+   *  因此需优先取该元素的 clientWidth（不含滚动条），而非 html.clientWidth / innerWidth。
+   */
   function readLayoutWidthPx() {
     const parts = [];
     const scrollVp = document.querySelector(".mantine-ScrollArea-viewport");
@@ -61,7 +65,10 @@
     if (!parts.length) return 0;
     return Math.floor(Math.min(...parts));
   }
+
   const NAV_DESKTOP_STACK_SELECTOR = '.mantine-ScrollArea-content > [class*="_desktopStack_"]';
+
+  /** 内联 left !important，压过即刻对侧栏的定位；与 --jp-nav-left 同步 */
   function syncJpNavInlineLeft() {
     const nav = document.querySelector(NAV_DESKTOP_STACK_SELECTOR);
     if (!(nav instanceof HTMLElement)) return;
@@ -72,6 +79,7 @@
     const left = getComputedStyle(document.documentElement).getPropertyValue("--jp-nav-left").trim();
     if (left) nav.style.setProperty("left", left, "important");
   }
+
   function syncJpLayoutWidthVar() {
     const el = document.documentElement;
     if (!el) return;
@@ -79,12 +87,19 @@
     if (w > 0) el.style.setProperty("--jp-layout-width", `${w}px`);
     syncJpNavInlineLeft();
   }
+
   function jpLayoutTick() {
     syncPostDetailLayoutClass();
     syncJpLayoutWidthVar();
     bindScrollAreaChildResizeObservers();
   }
+
   let jpLayoutSyncExtraTimers = [];
+
+  /**
+   * SPA 进详情时 ScrollArea 直接子节点常不变，子列宽度变化不会触发 childList；
+   * 多帧 + 短延迟，等 React 提交后再同步 --jp-nav-left / 详情样式。
+   */
   function scheduleJpLayoutSyncRafChain(remaining) {
     if (remaining <= 0) return;
     requestAnimationFrame(() => {
@@ -92,6 +107,7 @@
       scheduleJpLayoutSyncRafChain(remaining - 1);
     });
   }
+
   function scheduleJpLayoutSync() {
     for (const t of jpLayoutSyncExtraTimers) clearTimeout(t);
     jpLayoutSyncExtraTimers = [];
@@ -102,8 +118,10 @@
       jpLayoutSyncExtraTimers.push(setTimeout(jpLayoutTick, ms));
     }
   }
+
   let jpScrollChildrenRo = null;
   let jpScrollChildrenDebounce = 0;
+
   function bindScrollAreaChildResizeObservers() {
     const content = document.querySelector(".mantine-ScrollArea-content");
     if (!content) return;
@@ -120,7 +138,9 @@
       if (node instanceof Element) jpScrollChildrenRo.observe(node);
     }
   }
+
   let jpLayoutWidthRo = null;
+
   function installJpLayoutWidthTracking() {
     syncJpLayoutWidthVar();
     bindScrollAreaChildResizeObservers();
@@ -136,19 +156,22 @@
       const scrollVp = document.querySelector(".mantine-ScrollArea-viewport");
       if (scrollVp) jpLayoutWidthRo.observe(scrollVp);
     } catch {
+      /* ResizeObserver unsupported */
     }
     requestAnimationFrame(() => {
       syncJpLayoutWidthVar();
       requestAnimationFrame(syncJpLayoutWidthVar);
     });
   }
+
   const SCROLL_CONTENT_CHILD_LIST_OBSERVER = { childList: true, subtree: false };
+
   function installSpaLocationHook() {
     scheduleJpLayoutSync();
     window.addEventListener("popstate", scheduleJpLayoutSync);
     for (const key of ["pushState", "replaceState"]) {
       const orig = history[key];
-      history[key] = function(...args) {
+      history[key] = function (...args) {
         const ret = orig.apply(history, args);
         scheduleJpLayoutSync();
         return ret;
@@ -163,8 +186,10 @@
         );
       }
     } catch {
+      /* MutationObserver unavailable */
     }
   }
+
   function isDarkModeActive() {
     const root = document.documentElement;
     const body = document.body;
@@ -178,9 +203,11 @@
     const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
     return luminance < 0.45;
   }
+
   function applyPopupTheme(card) {
     card.classList.toggle("jp-dark", isDarkModeActive());
   }
+
   function isBodyMention(el) {
     if (!(el instanceof HTMLElement)) return false;
     const link = el.closest('a[href*="/u/"]');
@@ -188,23 +215,28 @@
     if (!link.querySelector('[class*="_mentionUser_"], [class*="_name_1rdwv_"], [class*="_avatar_1rdwv_"]')) return false;
     return true;
   }
+
   function getLink(el) {
     if (!(el instanceof HTMLElement)) return null;
     const link = el.closest('a[href*="/u/"]');
     if (!link || !isBodyMention(el)) return null;
     return link;
   }
+
   function extractId(link) {
     const m = (link.getAttribute("href") || "").match(/\/u\/([^/?#]+)/i);
     return m ? decodeURIComponent(m[1]) : null;
   }
+
   async function fetchUser(id, signal) {
     if (CACHE.has(id)) return CACHE.get(id);
     if (PENDING.has(id)) return PENDING.get(id);
     const t = token();
     if (!t) return null;
     const isUuid = /^[0-9a-f]{8}-/.test(id);
-    const qs = isUuid ? [`username=${encodeURIComponent(id)}`, `id=${encodeURIComponent(id)}`] : [`username=${encodeURIComponent(id)}`];
+    const qs = isUuid
+      ? [`username=${encodeURIComponent(id)}`, `id=${encodeURIComponent(id)}`]
+      : [`username=${encodeURIComponent(id)}`];
     const task = (async () => {
       try {
         for (const q of qs) {
@@ -232,6 +264,7 @@
     PENDING.set(id, task);
     return task;
   }
+
   async function toggleFollow(username, isFollowing) {
     const t = token();
     if (!t || !username) return null;
@@ -251,16 +284,20 @@
       return false;
     }
   }
+
   function removePopup() {
     const el = document.getElementById(POPUP_ID);
     if (el) el.remove();
   }
+
   function cancelHide() {
     clearTimeout(hideTimer);
   }
+
   function cancelHover() {
     clearTimeout(hoverTimer);
   }
+
   function closePopup() {
     profileFetchAbort?.abort();
     cancelHide();
@@ -268,10 +305,12 @@
     removePopup();
     activeLink = null;
   }
+
   function hide() {
     cancelHide();
     hideTimer = setTimeout(() => closePopup(), 160);
   }
+
   function positionCard(card, anchor) {
     const rect = anchor.getBoundingClientRect();
     const cr = card.getBoundingClientRect();
@@ -284,6 +323,7 @@
     card.style.left = `${left}px`;
     card.style.top = `${top}px`;
   }
+
   function findScrollableContainer(startNode = document.body) {
     const start = startNode instanceof HTMLElement ? startNode : document.body;
     for (let el = start; el; el = el.parentElement) {
@@ -293,10 +333,14 @@
         return el;
       }
     }
-    const viewport = Array.from(document.querySelectorAll(".mantine-ScrollArea-viewport, [class*='ScrollArea-viewport'], [class*='ScrollArea_viewport']")).find((el) => el instanceof HTMLElement && el.scrollHeight > el.clientHeight + 4);
+
+    const viewport = Array.from(document.querySelectorAll(".mantine-ScrollArea-viewport, [class*='ScrollArea-viewport'], [class*='ScrollArea_viewport']"))
+      .find((el) => el instanceof HTMLElement && el.scrollHeight > el.clientHeight + 4);
     if (viewport instanceof HTMLElement) return viewport;
+
     return document.scrollingElement || document.documentElement;
   }
+
   function forwardNativeHoverCardWheel(event) {
     const target = event.target;
     if (!(target instanceof HTMLElement)) return;
@@ -311,6 +355,7 @@
       behavior: "auto"
     });
   }
+
   function forwardCustomPopupWheel(event) {
     const card = event.currentTarget;
     if (!(card instanceof HTMLElement)) return;
@@ -321,7 +366,7 @@
       const dy = event.deltaY;
       const atTop = scrollEl.scrollTop <= 0;
       const atBottom = scrollEl.scrollTop + scrollEl.clientHeight >= scrollEl.scrollHeight - 1;
-      if (dy < 0 && !atTop || dy > 0 && !atBottom) {
+      if ((dy < 0 && !atTop) || (dy > 0 && !atBottom)) {
         event.preventDefault();
         scrollEl.scrollTop += dy;
         return;
@@ -336,44 +381,53 @@
       behavior: "auto"
     });
   }
+
   function bindCardControls(card) {
     card.addEventListener("mouseenter", cancelHide);
     card.addEventListener("mouseleave", hide);
     card.addEventListener("wheel", forwardCustomPopupWheel, { passive: false });
   }
+
   function getOpenLightbox() {
     return document.querySelector(".yarl__portal.yarl__portal_open");
   }
+
   function getActiveLightboxImage() {
     const lightbox = getOpenLightbox();
     if (!lightbox) return null;
-    return lightbox.querySelector(".yarl__slide_current .yarl__slide_image") || lightbox.querySelector('.yarl__slide[aria-hidden="false"] .yarl__slide_image') || lightbox.querySelector(".yarl__slide_image");
+    return lightbox.querySelector(".yarl__slide_current .yarl__slide_image")
+      || lightbox.querySelector('.yarl__slide[aria-hidden="false"] .yarl__slide_image')
+      || lightbox.querySelector(".yarl__slide_image");
   }
+
   function clamp(value, min, max) {
     return Math.min(max, Math.max(min, value));
   }
+
   function clampLightboxOffset(image, x, y, scale = lightboxZoom.scale) {
-    const maxX = Math.max(0, image.clientWidth * (scale - 1) / 2);
-    const maxY = Math.max(0, image.clientHeight * (scale - 1) / 2);
+    const maxX = Math.max(0, (image.clientWidth * (scale - 1)) / 2);
+    const maxY = Math.max(0, (image.clientHeight * (scale - 1)) / 2);
     return {
       x: clamp(x, -maxX, maxX),
       y: clamp(y, -maxY, maxY)
     };
   }
+
   function updateLightboxZoomButtons() {
     const zoomOutBtn = document.getElementById(LIGHTBOX_ZOOM_OUT_BUTTON_ID);
     const zoomInBtn = document.getElementById(LIGHTBOX_ZOOM_IN_BUTTON_ID);
     if (zoomOutBtn instanceof HTMLButtonElement) {
       zoomOutBtn.disabled = lightboxZoom.scale <= LIGHTBOX_MIN_SCALE;
-      zoomOutBtn.setAttribute("title", "\u7F29\u5C0F\u56FE\u7247");
-      zoomOutBtn.setAttribute("aria-label", "\u7F29\u5C0F\u56FE\u7247");
+      zoomOutBtn.setAttribute("title", "缩小图片");
+      zoomOutBtn.setAttribute("aria-label", "缩小图片");
     }
     if (zoomInBtn instanceof HTMLButtonElement) {
       zoomInBtn.disabled = lightboxZoom.scale >= LIGHTBOX_MAX_SCALE;
-      zoomInBtn.setAttribute("title", "\u653E\u5927\u56FE\u7247");
-      zoomInBtn.setAttribute("aria-label", "\u653E\u5927\u56FE\u7247");
+      zoomInBtn.setAttribute("title", "放大图片");
+      zoomInBtn.setAttribute("aria-label", "放大图片");
     }
   }
+
   function applyLightboxTransform() {
     const image = lightboxZoom.image;
     if (!(image instanceof HTMLElement) || !document.contains(image)) {
@@ -394,6 +448,7 @@
     image.classList.toggle("jp-lightbox-zoomed", lightboxZoom.scale > 1);
     updateLightboxZoomButtons();
   }
+
   function resetLightboxZoom({ keepImage = false } = {}) {
     if (lightboxZoom.image instanceof HTMLElement) {
       lightboxZoom.image.style.transform = "";
@@ -410,6 +465,7 @@
     if (!keepImage) lightboxZoom.image = null;
     updateLightboxZoomButtons();
   }
+
   function syncActiveLightboxImage() {
     const image = getActiveLightboxImage();
     if (!(image instanceof HTMLElement)) {
@@ -423,6 +479,7 @@
     }
     return image;
   }
+
   function setLightboxScale(nextScale) {
     const image = syncActiveLightboxImage();
     if (!image) return;
@@ -439,6 +496,7 @@
     }
     applyLightboxTransform();
   }
+
   function onLightboxPointerDown(event) {
     const image = syncActiveLightboxImage();
     if (!image || event.currentTarget !== image || lightboxZoom.scale <= 1 || event.button !== 0) return;
@@ -454,6 +512,7 @@
     applyLightboxTransform();
     event.preventDefault();
   }
+
   function onLightboxPointerMove(event) {
     const image = lightboxZoom.image;
     if (!(image instanceof HTMLElement) || event.currentTarget !== image || !lightboxZoom.dragging || lightboxZoom.pointerId !== event.pointerId) return;
@@ -471,6 +530,7 @@
     event.preventDefault();
     event.stopPropagation();
   }
+
   function onLightboxPointerEnd(event) {
     const image = lightboxZoom.image;
     if (!(image instanceof HTMLElement) || event.currentTarget !== image || lightboxZoom.pointerId !== event.pointerId) return;
@@ -482,11 +542,13 @@
     event.preventDefault();
     event.stopPropagation();
   }
+
   function onLightboxImageClick(event) {
     if (lightboxZoom.scale <= LIGHTBOX_MIN_SCALE) return;
     event.preventDefault();
     event.stopPropagation();
   }
+
   function panLightboxBy(deltaX, deltaY) {
     const image = syncActiveLightboxImage();
     if (!image || lightboxZoom.scale <= LIGHTBOX_MIN_SCALE) return;
@@ -499,12 +561,14 @@
     lightboxZoom.y = nextOffset.y;
     applyLightboxTransform();
   }
+
   function panLightboxByViewport(direction = 1) {
     const image = syncActiveLightboxImage();
     if (!image || lightboxZoom.scale <= LIGHTBOX_MIN_SCALE) return;
     const step = Math.max(120, Math.round(window.innerHeight * 0.72));
     panLightboxBy(0, direction * step);
   }
+
   function bindLightboxImage(image) {
     if (!(image instanceof HTMLElement) || image.dataset.jpZoomBound === "1") return;
     image.dataset.jpZoomBound = "1";
@@ -519,6 +583,7 @@
     image.addEventListener("click", onLightboxImageClick, true);
     image.addEventListener("dragstart", (event) => event.preventDefault());
   }
+
   function ensureLightboxZoomButton() {
     const lightbox = getOpenLightbox();
     if (!lightbox) {
@@ -566,6 +631,7 @@
     syncActiveLightboxImage();
     updateLightboxZoomButtons();
   }
+
   function scheduleLightboxSync() {
     if (lightboxRaf) return;
     lightboxRaf = requestAnimationFrame(() => {
@@ -573,6 +639,7 @@
       ensureLightboxZoomButton();
     });
   }
+
   function mutationTouchesLightbox(node) {
     if (node instanceof Element) {
       return !!(node.matches?.(".yarl__portal") || node.closest?.(".yarl__portal"));
@@ -580,6 +647,7 @@
     if (node instanceof DocumentFragment && node.querySelector?.(".yarl__portal")) return true;
     return false;
   }
+
   function isLightboxMutationRelevant(mutations) {
     for (const m of mutations) {
       if (m.type === "childList") {
@@ -598,9 +666,11 @@
     }
     return false;
   }
+
   function onLightboxDomMutations(mutations) {
     if (isLightboxMutationRelevant(mutations)) scheduleLightboxSync();
   }
+
   function bootLightboxZoom() {
     lightboxObserver = new MutationObserver(onLightboxDomMutations);
     lightboxObserver.observe(document.body, {
@@ -609,6 +679,7 @@
       attributes: true,
       attributeFilter: ["class", "aria-hidden", "src"]
     });
+
     document.addEventListener("click", (event) => {
       const target = event.target;
       if (!(target instanceof HTMLElement) || !target.closest(".yarl__navigation_prev, .yarl__navigation_next")) return;
@@ -617,6 +688,7 @@
         scheduleLightboxSync();
       });
     }, true);
+
     document.addEventListener("keydown", (event) => {
       if (!getOpenLightbox()) return;
       if (event.key === "Escape") {
@@ -662,6 +734,7 @@
         setLightboxScale(LIGHTBOX_MIN_SCALE);
       }
     }, true);
+
     document.addEventListener("wheel", (event) => {
       const lightbox = getOpenLightbox();
       const target = event.target;
@@ -676,6 +749,7 @@
       const next = lightboxZoom.scale + (event.deltaY < 0 ? 0.25 : -0.25);
       setLightboxScale(next);
     }, { passive: false, capture: true });
+
     document.addEventListener("click", (event) => {
       const lightbox = getOpenLightbox();
       const target = event.target;
@@ -685,8 +759,10 @@
       event.preventDefault();
       event.stopPropagation();
     }, true);
+
     scheduleLightboxSync();
   }
+
   function renderLoadingCard(anchor) {
     removePopup();
     const card = document.createElement("div");
@@ -714,6 +790,7 @@
     bindCardControls(card);
     positionCard(card, anchor);
   }
+
   function renderErrorCard(anchor, message) {
     removePopup();
     const card = document.createElement("div");
@@ -721,7 +798,7 @@
     card.innerHTML = `
       <div class="jp-scroll">
         <div class="jp-status">
-          <div class="jp-status-title">\u8D44\u6599\u6682\u65F6\u4E0D\u53EF\u7528</div>
+          <div class="jp-status-title">资料暂时不可用</div>
           <div class="jp-status-text">${esc(message)}</div>
         </div>
       </div>
@@ -731,10 +808,12 @@
     bindCardControls(card);
     positionCard(card, anchor);
   }
+
   function renderCard(user, anchor) {
     removePopup();
     const card = document.createElement("div");
     card.id = POPUP_ID;
+
     const avatar = user.avatarImage?.thumbnailUrl || user.avatarImage?.picUrl || "";
     const name = esc(user.screenName || "");
     const bio = esc(user.bio || user.briefIntro || "");
@@ -744,33 +823,37 @@
     const profileUrl = `https://web.okjike.com/u/${user.username || ""}`;
     const isFollowing = !!user.following;
     const isSelf = user.isSelf;
+
     let genderIcon = "";
     if (user.gender === "MALE") {
-      genderIcon = '<span class="jp-tag jp-gender-m">\u2642</span>';
+      genderIcon = '<span class="jp-tag jp-gender-m">♂</span>';
     } else if (user.gender === "FEMALE") {
-      genderIcon = '<span class="jp-tag jp-gender-f">\u2640</span>';
+      genderIcon = '<span class="jp-tag jp-gender-f">♀</span>';
     }
     const province = user.province ? `<span class="jp-tag">${esc(user.province)}</span>` : "";
     const industry = user.industry ? `<span class="jp-tag">${esc(user.industry)}</span>` : "";
+
     const tags = [genderIcon, province, industry].filter(Boolean);
+
     card.innerHTML = `
       <div class="jp-scroll">
         <div class="jp-head">
           <a href="${profileUrl}" class="jp-av-link"><img class="jp-av" src="${avatar}"></a>
           <div class="jp-info">
-            <a href="${profileUrl}" class="jp-name">${name}${verified ? '<span class="jp-badge">\u2713</span>' : ""}</a>
+            <a href="${profileUrl}" class="jp-name">${name}${verified ? '<span class="jp-badge">✓</span>' : ""}</a>
             <div class="jp-stats">
-              <span><b>${following}</b> \u5173\u6CE8</span>
-              <span><b>${followers}</b> \u88AB\u5173\u6CE8</span>
+              <span><b>${following}</b> 关注</span>
+              <span><b>${followers}</b> 被关注</span>
             </div>
           </div>
         </div>
         ${tags.length ? `<div class="jp-tags">${tags.join("")}</div>` : ""}
         ${bio ? `<div class="jp-bio">${bio}</div>` : ""}
-        ${!isSelf ? `<button class="jp-follow ${isFollowing ? "jp-following" : ""}">${isFollowing ? "\u5DF2\u5173\u6CE8" : "\u5173\u6CE8"}</button>` : ""}
+        ${!isSelf ? `<button class="jp-follow ${isFollowing ? "jp-following" : ""}">${isFollowing ? "已关注" : "关注"}</button>` : ""}
       </div>
     `;
     applyPopupTheme(card);
+
     const btn = card.querySelector(".jp-follow");
     if (btn) {
       let state = isFollowing;
@@ -781,7 +864,7 @@
         const ok = await toggleFollow(user.username, state);
         if (ok) {
           state = !state;
-          btn.textContent = state ? "\u5DF2\u5173\u6CE8" : "\u5173\u6CE8";
+          btn.textContent = state ? "已关注" : "关注";
           btn.classList.toggle("jp-following", state);
           const activeId = extractId(activeLink);
           if (activeId) CACHE.delete(activeId);
@@ -789,10 +872,12 @@
         btn.disabled = false;
       });
     }
+
     document.body.appendChild(card);
     bindCardControls(card);
     positionCard(card, anchor);
   }
+
   function scheduleShow(link, { immediate = false } = {}) {
     cancelHover();
     activeLink = link;
@@ -803,6 +888,7 @@
     }
     hoverTimer = setTimeout(run, SHOW_DELAY);
   }
+
   async function showCard(link) {
     if (activeLink !== link) return;
     cancelHide();
@@ -817,14 +903,14 @@
       log("hover", id);
       renderLoadingCard(link);
       if (!t) {
-        renderErrorCard(link, "\u672A\u68C0\u6D4B\u5230\u767B\u5F55\u72B6\u6001\uFF0C\u65E0\u6CD5\u52A0\u8F7D\u7528\u6237\u8D44\u6599\u3002");
+        renderErrorCard(link, "未检测到登录状态，无法加载用户资料。");
         return;
       }
       const user = await fetchUser(id, ac.signal);
       if (seq !== requestSeq || activeLink !== link) return;
       if (ac.signal.aborted) return;
       if (!user) {
-        renderErrorCard(link, "\u63A5\u53E3\u6CA1\u6709\u8FD4\u56DE\u8D44\u6599\uFF0C\u53EF\u80FD\u662F\u7F51\u7EDC\u6CE2\u52A8\u6216\u9875\u9762\u7ED3\u6784\u5DF2\u53D8\u66F4\u3002");
+        renderErrorCard(link, "接口没有返回资料，可能是网络波动或页面结构已变更。");
         return;
       }
       renderCard(user, link);
@@ -832,6 +918,7 @@
       if (profileFetchAbort === ac) profileFetchAbort = null;
     }
   }
+
   function injectStyles() {
     if (document.getElementById("jike-polish-css")) return;
     const s = document.createElement("style");
@@ -893,6 +980,7 @@
 `;
     document.head.appendChild(s);
   }
+
   async function injectUserStyle() {
     if (document.getElementById("jike-polish-userstyle")) return;
     try {
@@ -904,7 +992,8 @@
       const url = runtime.getURL("jike-twitter-font.user.css");
       const res = await fetch(url, { cache: "no-store" });
       const raw = await res.text();
-      const inner = raw.replace(/\/\*[\s\S]*?==\/UserStyle== \*\//, "").match(/@-moz-document\s+domain\("web\.okjike\.com"\)\s*\{([\s\S]*)\}\s*$/)?.[1] || raw;
+      const inner = raw.replace(/\/\*[\s\S]*?==\/UserStyle== \*\//, "")
+        .match(/@-moz-document\s+domain\("web\.okjike\.com"\)\s*\{([\s\S]*)\}\s*$/)?.[1] || raw;
       const s = document.createElement("style");
       s.id = "jike-polish-userstyle";
       s.textContent = inner;
@@ -913,10 +1002,12 @@
       log("style err", e);
     }
   }
+
   function syncOpenPopupTheme() {
     const card = document.getElementById(POPUP_ID);
     if (card) applyPopupTheme(card);
   }
+
   function boot() {
     installSpaLocationHook();
     installJpLayoutWidthTracking();
@@ -925,6 +1016,7 @@
       scheduleJpLayoutSync();
     });
     bootLightboxZoom();
+
     themeObserver = new MutationObserver(() => syncOpenPopupTheme());
     themeObserver.observe(document.documentElement, {
       attributes: true,
@@ -933,6 +1025,7 @@
     if (document.body) {
       themeObserver.observe(document.body, { attributes: true, attributeFilter: ["class"] });
     }
+
     document.body.addEventListener("mouseover", (e) => {
       const link = getLink(e.target);
       if (link) {
@@ -965,5 +1058,6 @@
     });
     log("ready");
   }
+
   boot();
 })();
