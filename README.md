@@ -1,6 +1,7 @@
 # 即刻 Web 美化
 
-即刻 Web 的个人增强插件，提升阅读与交互体验。支持 Chrome（MV3）和 Firefox。
+即刻 Web 的美化插件，提升阅读与交互体验。支持 Chrome（MV3）和 Firefox。
+
 
 ![插件效果](./screenshot.png)
 
