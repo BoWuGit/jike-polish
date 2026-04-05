@@ -1,14 +1,3 @@
-/* ==UserStyle==
-@name         即刻 Web 美化 — Twitter 风格字体优化
-@description  将即刻 Web 版的字体、字重、行高改为类 Twitter（Chirp）风格，提升可读性；同时附带若干体验优化。
-@version      1.6.2
-@author       Manus
-@namespace    https://web.okjike.com
-@homepageURL  https://web.okjike.com
-@match        https://web.okjike.com/*
-@license      MIT
-==/UserStyle== */
-
 @-moz-document domain("web.okjike.com") {
 
   /* ============================================================
@@ -34,6 +23,22 @@
      v1.6.1 桌面布局：收紧 Mantine 容器选择器，避免详情页布局被误改。
      v1.6.2 桌面布局：feed 列在视口内水平居中（左右留白对称），
              左侧导航挂在 feed 左缘外固定间距，对齐 Twitter/X 主次关系。
+     v1.6.3 详情页：由扩展在 /u/*/post|repost/* 为 html 加 .jp-detail-post，
+             仅跳过对主栏 Container 的覆盖，恢复原生内边距与分隔线对齐。
+     v1.6.4 详情页仍保持 nav 与 --jp-feed-left 计算；仅对 Container 取消覆盖。
+             居中计算优先用 --jp-layout-width（扩展写入 clientWidth，避免 100vw 含滚动条导致左右不齐）。
+     v1.6.5 对称：扩展用 visualViewport/clientWidth/innerWidth 取最小宽度更新 --jp-layout-width；
+             主栏使用左右相等的 margin，避免仅靠 margin-right:auto 与包含块宽度产生残差。
+     v1.6.6 导航：提高 left 规则优先级（含 ScrollArea 直接子 Stack），避免即刻 !important 把 nav 打回 0
+             而 feed 仍有 margin，造成「侧栏贴左、主栏偏右、中间大空白」。
+     v1.6.7 对称：扩展按 feed 的 getBoundingClientRect 测量左右空隙差，写入 --jp-feed-symmetry-nudge
+             微调 margin（CSS 理论宽度与实渲染常有亚像素偏差）。
+     v1.6.8 详情页：主栏为 37.5rem（600px 级）时，在 html.jp-detail-post 上按该宽度重算 --jp-nav-left，
+             避免仍按 ~736px feed 挂 nav 导致「侧栏与主栏之间异常大空白、主栏视觉偏右」。
+     v1.6.9 详情页：统一 --page-container-width 与主栏宽度；扩展在 SPA 进详情后用 ResizeObserver
+             监听 ScrollArea 子列 + 延迟/多帧重同步（子节点不变时 childList MO 不触发）。
+     v1.7.0 详情页主栏与 cxm8d 固定层改用与信息流相同的 --jp-feed-width / used-width / margin，
+             不再使用 Mantine 默认 37.5rem（~600px），避免「点进详情突然变窄」。
      ============================================================ */
 
   /* ============================================================
@@ -464,46 +469,86 @@
 
   /* ============================================================
      体验优化 E：桌面端主布局（Twitter 式：feed 居中，nav 左挂）
-     思路：先按 feed 实际占位宽度算出左右对称留白，使 feed 中线落在视口正中；
-     左导航绝对定位在「feed 左缘 − 间距 − 导航宽」，nav 与 feed 间距恒为 --jp-nav-gap。
-     即刻右侧常为空白或次要栏，对称的是「feed 两侧的视口留白」，而非 nav 与右侧某栏等宽。
+     思路：feed 在视口中水平居中（左右留白对称），
+     nav 绝对定位在 feed 左缘外侧固定间距处。
+     这样「左留白 + nav + gap」≈「右留白」，视觉上与 Twitter 一致。
      ============================================================ */
   @media (min-width: 960px) {
     :root {
       --jp-nav-width: calc(5.25rem * var(--mantine-scale));
       --jp-nav-gap: clamp(8px, 0.9vw, 16px);
       --jp-feed-width: clamp(640px, 45vw, 736px);
-      /* feed 实际渲染宽度（与下方 width 规则一致），用于居中计算 */
-      --jp-feed-used-width: min(var(--jp-feed-width), calc(100vw - 32px));
-      /* feed 左缘：视口内水平居中 */
-      --jp-feed-left: max(16px, calc((100vw - var(--jp-feed-used-width)) / 2));
-      /* 导航左缘：紧贴 feed 左侧，保持固定间距（极窄视口时不小于 16px） */
+      /*
+       * JS 在 document_idle 时写入 clientWidth（不含滚动条）。
+       * 初始值 100vw 可能含滚动条宽度，但 JS 会在首帧内修正。
+       */
+      --jp-layout-width: 100vw;
+      /* feed 实际渲染宽度 */
+      --jp-feed-used-width: min(var(--jp-feed-width), calc(var(--jp-layout-width) - 32px));
+      /* feed 居中：左右等距 */
+      --jp-feed-margin-side: max(16px, calc((var(--jp-layout-width) - var(--jp-feed-used-width)) / 2));
+      /* nav 紧贴 feed 左缘外侧 */
       --jp-nav-left: max(
         16px,
-        calc(var(--jp-feed-left) - var(--jp-nav-gap) - var(--jp-nav-width))
+        calc(var(--jp-feed-margin-side) - var(--jp-nav-gap) - var(--jp-nav-width))
       );
     }
 
-    /* 左栏：feed 居中后挂在 feed 左侧 */
+    /* 详情顶栏 max-width；主栏/cxm8d 宽度与 feed 共用 :root 变量，--jp-nav-left 无需再单独一套 */
+    html.jp-detail-post {
+      --page-container-width: var(--jp-feed-used-width);
+    }
+
+    /* 左栏定位 */
     [class*="navbar_desktopStack_"],
     [class*="_desktopStack_"] {
       left: var(--jp-nav-left) !important;
     }
 
-    /* feed 容器：页面正中（排除详情页容器 _container_cxm8d_） */
-    .mantine-ScrollArea-content > .mantine-Container-root[data-size="md"]:not([class*="_container_cxm8d_"]) {
+    .mantine-ScrollArea-content > .mantine-Stack-root[class*="navbar"][class*="_desktopStack_"],
+    .mantine-ScrollArea-content > .mantine-Stack-root[class*="navbar_desktopStack_"],
+    .mantine-ScrollArea-content > .mantine-Stack-root[class*="_desktopStack_"],
+    .mantine-ScrollArea-content > [class*="navbar_desktopStack_"],
+    .mantine-ScrollArea-content > [class*="_desktopStack_"] {
+      left: var(--jp-nav-left) !important;
+    }
+
+    /* feed 主栏：居中 */
+    html:not(.jp-detail-post) .mantine-ScrollArea-content > .mantine-Container-root[data-size="md"]:not([class*="_container_cxm8d_"]),
+    html:not(.jp-detail-post)
+      .mantine-ScrollArea-content
+      > [class*="_container_"].mantine-Container-root[data-size="md"]:not([class*="_container_cxm8d_"]) {
       --container-size: var(--jp-feed-width) !important;
-      width: min(var(--jp-feed-width), calc(100vw - 32px)) !important;
+      width: var(--jp-feed-used-width) !important;
       max-width: var(--jp-feed-width) !important;
-      margin-left: var(--jp-feed-left) !important;
-      margin-right: auto !important;
+      margin-left: var(--jp-feed-margin-side) !important;
+      margin-right: var(--jp-feed-margin-side) !important;
       padding-inline: 0 !important;
     }
 
-    /* 个人页等非 feed 容器：与 feed 对齐（排除详情页容器） */
-    .mantine-ScrollArea-content > .mantine-Container-root:not([data-size="md"]):not([class*="_container_cxm8d_"]) {
-      margin-left: var(--jp-feed-left) !important;
-      margin-right: auto !important;
+    /* 个人页等非 feed 容器：与 feed 对齐 */
+    html:not(.jp-detail-post) .mantine-ScrollArea-content > .mantine-Container-root:not([data-size="md"]):not([class*="_container_cxm8d_"]) {
+      margin-left: var(--jp-feed-margin-side) !important;
+      margin-right: var(--jp-feed-margin-side) !important;
+      max-width: var(--jp-feed-width) !important;
+    }
+
+    /* 详情页：主栏与信息流同宽；cxm8d 固定层一并拉齐，避免竖线/浮层与正文宽度不一致 */
+    html.jp-detail-post .mantine-ScrollArea-content > .mantine-Container-root[data-size="md"]:not([class*="_container_cxm8d_"]),
+    html.jp-detail-post
+      .mantine-ScrollArea-content
+      > [class*="_container_"].mantine-Container-root[data-size="md"]:not([class*="_container_cxm8d_"]) {
+      --container-size: var(--jp-feed-width) !important;
+      width: var(--jp-feed-used-width) !important;
+      max-width: var(--jp-feed-width) !important;
+      margin-left: var(--jp-feed-margin-side) !important;
+      margin-right: var(--jp-feed-margin-side) !important;
+      padding-inline: 0 !important;
+    }
+
+    html.jp-detail-post .mantine-ScrollArea-content > .mantine-Container-root[class*="_container_cxm8d_"] {
+      --container-size: var(--jp-feed-width) !important;
+      width: var(--jp-feed-used-width) !important;
       max-width: var(--jp-feed-width) !important;
     }
   }
