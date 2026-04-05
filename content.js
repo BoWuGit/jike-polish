@@ -45,6 +45,124 @@
   function extensionRuntime() {
     return globalThis.browser?.runtime ?? globalThis.chrome?.runtime;
   }
+  const POST_DETAIL_PATH = /\/u\/[^/]+\/(?:post|repost)\//i;
+  function syncPostDetailLayoutClass() {
+    document.documentElement.classList.toggle("jp-detail-post", POST_DETAIL_PATH.test(location.pathname));
+  }
+  function readLayoutWidthPx() {
+    const parts = [];
+    const scrollVp = document.querySelector(".mantine-ScrollArea-viewport");
+    if (scrollVp && scrollVp.clientWidth > 0) parts.push(scrollVp.clientWidth);
+    const root = document.documentElement;
+    const vv = window.visualViewport;
+    if (vv && typeof vv.width === "number" && vv.width > 0) parts.push(vv.width);
+    if (root && root.clientWidth > 0) parts.push(root.clientWidth);
+    if (window.innerWidth > 0) parts.push(window.innerWidth);
+    if (!parts.length) return 0;
+    return Math.floor(Math.min.apply(null, parts));
+  }
+  function syncJpNavInlineLeft() {
+    if (window.matchMedia && !window.matchMedia("(min-width: 960px)").matches) {
+      const nav2 = document.querySelector('.mantine-ScrollArea-content > [class*="_desktopStack_"]');
+      if (nav2 instanceof HTMLElement) nav2.style.removeProperty("left");
+      return;
+    }
+    const nav = document.querySelector('.mantine-ScrollArea-content > [class*="_desktopStack_"]');
+    if (!(nav instanceof HTMLElement)) return;
+    const left = getComputedStyle(document.documentElement).getPropertyValue("--jp-nav-left").trim();
+    if (left) nav.style.setProperty("left", left, "important");
+  }
+  function syncJpLayoutWidthVar() {
+    const el = document.documentElement;
+    if (!el) return;
+    const w = readLayoutWidthPx();
+    if (w > 0) el.style.setProperty("--jp-layout-width", `${w}px`);
+    syncJpNavInlineLeft();
+  }
+  function jpLayoutTick() {
+    syncPostDetailLayoutClass();
+    syncJpLayoutWidthVar();
+    bindScrollAreaChildResizeObservers();
+  }
+  let jpLayoutSyncExtraTimers = [];
+  function scheduleJpLayoutSync() {
+    for (const t of jpLayoutSyncExtraTimers) clearTimeout(t);
+    jpLayoutSyncExtraTimers = [];
+    jpLayoutTick();
+    queueMicrotask(jpLayoutTick);
+    requestAnimationFrame(() => {
+      jpLayoutTick();
+      requestAnimationFrame(() => {
+        jpLayoutTick();
+        requestAnimationFrame(jpLayoutTick);
+      });
+    });
+    for (const ms of [0, 55, 160, 320]) {
+      jpLayoutSyncExtraTimers.push(setTimeout(jpLayoutTick, ms));
+    }
+  }
+  let jpScrollChildrenRo = null;
+  let jpScrollChildrenDebounce = 0;
+  function bindScrollAreaChildResizeObservers() {
+    const content = document.querySelector(".mantine-ScrollArea-content");
+    if (!content) return;
+    if (!jpScrollChildrenRo) {
+      jpScrollChildrenRo = new ResizeObserver(() => {
+        clearTimeout(jpScrollChildrenDebounce);
+        jpScrollChildrenDebounce = setTimeout(() => {
+          jpLayoutTick();
+        }, 32);
+      });
+    }
+    jpScrollChildrenRo.disconnect();
+    for (const node of content.children) {
+      if (node instanceof Element) jpScrollChildrenRo.observe(node);
+    }
+  }
+  let jpLayoutWidthRo = null;
+  function installJpLayoutWidthTracking() {
+    syncJpLayoutWidthVar();
+    bindScrollAreaChildResizeObservers();
+    const bump = () => queueMicrotask(syncJpLayoutWidthVar);
+    window.visualViewport?.addEventListener?.("resize", bump);
+    window.visualViewport?.addEventListener?.("scroll", bump);
+    window.addEventListener("resize", bump);
+    window.addEventListener("load", bump, { once: true });
+    try {
+      jpLayoutWidthRo = new ResizeObserver(bump);
+      jpLayoutWidthRo.observe(document.documentElement);
+      if (document.body) jpLayoutWidthRo.observe(document.body);
+      const scrollVp = document.querySelector(".mantine-ScrollArea-viewport");
+      if (scrollVp) jpLayoutWidthRo.observe(scrollVp);
+    } catch (_) {
+    }
+    requestAnimationFrame(() => {
+      syncJpLayoutWidthVar();
+      requestAnimationFrame(syncJpLayoutWidthVar);
+    });
+  }
+  function installSpaLocationHook() {
+    scheduleJpLayoutSync();
+    window.addEventListener("popstate", scheduleJpLayoutSync);
+    for (const key of ["pushState", "replaceState"]) {
+      const orig = history[key];
+      history[key] = function(...args) {
+        const ret = orig.apply(history, args);
+        scheduleJpLayoutSync();
+        return ret;
+      };
+    }
+    try {
+      const scrollContent = document.querySelector(".mantine-ScrollArea-content");
+      if (scrollContent) {
+        new MutationObserver(() => scheduleJpLayoutSync()).observe(scrollContent, {
+          childList: true,
+          subtree: false
+        });
+      }
+    } catch (_) {
+    }
+  }
   function isDarkModeActive() {
     const root = document.documentElement;
     const body = document.body;
@@ -773,7 +891,7 @@
         return;
       }
       const url = runtime.getURL("jike-twitter-font.user.css");
-      const raw = await fetch(url).then((r) => r.text());
+      const raw = await fetch(url, { cache: "no-store" }).then((r) => r.text());
       const inner = raw.replace(/\/\*[\s\S]*?==\/UserStyle== \*\//, "").match(/@-moz-document\s+domain\("web\.okjike\.com"\)\s*\{([\s\S]*)\}\s*$/)?.[1] || raw;
       const s = document.createElement("style");
       s.id = "jike-polish-userstyle";
@@ -788,8 +906,12 @@
     if (card) applyPopupTheme(card);
   }
   function boot() {
+    installSpaLocationHook();
+    installJpLayoutWidthTracking();
     injectStyles();
-    injectUserStyle();
+    injectUserStyle().then(() => {
+      scheduleJpLayoutSync();
+    });
     bootLightboxZoom();
     themeObserver = new MutationObserver(() => syncOpenPopupTheme());
     themeObserver.observe(document.documentElement, {

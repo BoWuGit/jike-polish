@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "即刻 Web Polish",
-  "version": "1.1.2",
-  "description": "即刻 Web 增强：字体、布局优化、用户悬浮卡片、图片灯箱缩放",
+  "name": "即刻 Web 美化",
+  "version": "1.1.4",
+  "description": "即刻 Web 美化：字体、布局优化、用户悬浮卡片、图片灯箱缩放",
   "browser_specific_settings": {
     "gecko": {
       "id": "jike-polish@local",

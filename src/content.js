@@ -41,6 +41,148 @@
   function extensionRuntime() {
     return globalThis.browser?.runtime ?? globalThis.chrome?.runtime;
   }
+
+  /** 单条动态详情（含转发）：与信息流共用 DOM 骨架；仅跳过对主栏 Container 的覆盖以免分隔线错位 */
+  const POST_DETAIL_PATH = /\/u\/[^/]+\/(?:post|repost)\//i;
+
+  function syncPostDetailLayoutClass() {
+    document.documentElement.classList.toggle("jp-detail-post", POST_DETAIL_PATH.test(location.pathname));
+  }
+
+  /** 取实际可排版宽度写入 --jp-layout-width，排除滚动条。
+   *  即刻使用 Mantine ScrollArea 管理滚动，滚动条在 .mantine-ScrollArea-viewport 内，
+   *  因此需优先取该元素的 clientWidth（不含滚动条），而非 html.clientWidth / innerWidth。
+   */
+  function readLayoutWidthPx() {
+    const parts = [];
+    const scrollVp = document.querySelector(".mantine-ScrollArea-viewport");
+    if (scrollVp && scrollVp.clientWidth > 0) parts.push(scrollVp.clientWidth);
+    const root = document.documentElement;
+    const vv = window.visualViewport;
+    if (vv && typeof vv.width === "number" && vv.width > 0) parts.push(vv.width);
+    if (root && root.clientWidth > 0) parts.push(root.clientWidth);
+    if (window.innerWidth > 0) parts.push(window.innerWidth);
+    if (!parts.length) return 0;
+    return Math.floor(Math.min.apply(null, parts));
+  }
+
+  /** 内联 left !important，压过即刻对侧栏的定位；与 --jp-nav-left 同步 */
+  function syncJpNavInlineLeft() {
+    if (window.matchMedia && !window.matchMedia("(min-width: 960px)").matches) {
+      const nav = document.querySelector('.mantine-ScrollArea-content > [class*="_desktopStack_"]');
+      if (nav instanceof HTMLElement) nav.style.removeProperty("left");
+      return;
+    }
+    const nav = document.querySelector('.mantine-ScrollArea-content > [class*="_desktopStack_"]');
+    if (!(nav instanceof HTMLElement)) return;
+    const left = getComputedStyle(document.documentElement).getPropertyValue("--jp-nav-left").trim();
+    if (left) nav.style.setProperty("left", left, "important");
+  }
+
+  function syncJpLayoutWidthVar() {
+    const el = document.documentElement;
+    if (!el) return;
+    const w = readLayoutWidthPx();
+    if (w > 0) el.style.setProperty("--jp-layout-width", `${w}px`);
+    syncJpNavInlineLeft();
+  }
+
+  /** 路由/DOM 变化后的一帧布局同步（class、宽度变量、nav 内联、子列 ResizeObserver） */
+  function jpLayoutTick() {
+    syncPostDetailLayoutClass();
+    syncJpLayoutWidthVar();
+    bindScrollAreaChildResizeObservers();
+  }
+
+  let jpLayoutSyncExtraTimers = [];
+
+  /**
+   * SPA 进详情时 ScrollArea 的「直接子节点」往往不变，仅子列宽度从 ~736 变为 ~600，childList MO 不会触发。
+   * 用多帧 + 短延迟再跑一遍，等 React 提交后再读 --jp-nav-left / 详情样式。
+   */
+  function scheduleJpLayoutSync() {
+    for (const t of jpLayoutSyncExtraTimers) clearTimeout(t);
+    jpLayoutSyncExtraTimers = [];
+    jpLayoutTick();
+    queueMicrotask(jpLayoutTick);
+    requestAnimationFrame(() => {
+      jpLayoutTick();
+      requestAnimationFrame(() => {
+        jpLayoutTick();
+        requestAnimationFrame(jpLayoutTick);
+      });
+    });
+    for (const ms of [0, 55, 160, 320]) {
+      jpLayoutSyncExtraTimers.push(setTimeout(jpLayoutTick, ms));
+    }
+  }
+
+  let jpScrollChildrenRo = null;
+  let jpScrollChildrenDebounce = 0;
+
+  function bindScrollAreaChildResizeObservers() {
+    const content = document.querySelector(".mantine-ScrollArea-content");
+    if (!content) return;
+    if (!jpScrollChildrenRo) {
+      jpScrollChildrenRo = new ResizeObserver(() => {
+        clearTimeout(jpScrollChildrenDebounce);
+        jpScrollChildrenDebounce = setTimeout(() => {
+          jpLayoutTick();
+        }, 32);
+      });
+    }
+    jpScrollChildrenRo.disconnect();
+    for (const node of content.children) {
+      if (node instanceof Element) jpScrollChildrenRo.observe(node);
+    }
+  }
+
+  let jpLayoutWidthRo = null;
+
+  function installJpLayoutWidthTracking() {
+    syncJpLayoutWidthVar();
+    bindScrollAreaChildResizeObservers();
+    const bump = () => queueMicrotask(syncJpLayoutWidthVar);
+    window.visualViewport?.addEventListener?.("resize", bump);
+    window.visualViewport?.addEventListener?.("scroll", bump);
+    window.addEventListener("resize", bump);
+    window.addEventListener("load", bump, { once: true });
+    try {
+      jpLayoutWidthRo = new ResizeObserver(bump);
+      jpLayoutWidthRo.observe(document.documentElement);
+      if (document.body) jpLayoutWidthRo.observe(document.body);
+      const scrollVp = document.querySelector(".mantine-ScrollArea-viewport");
+      if (scrollVp) jpLayoutWidthRo.observe(scrollVp);
+    } catch (_) { /* ignore */ }
+    requestAnimationFrame(() => {
+      syncJpLayoutWidthVar();
+      requestAnimationFrame(syncJpLayoutWidthVar);
+    });
+  }
+
+  function installSpaLocationHook() {
+    scheduleJpLayoutSync();
+    window.addEventListener("popstate", scheduleJpLayoutSync);
+    for (const key of ["pushState", "replaceState"]) {
+      const orig = history[key];
+      history[key] = function (...args) {
+        const ret = orig.apply(history, args);
+        scheduleJpLayoutSync();
+        return ret;
+      };
+    }
+    /* 直接子节点不变时（feed→详情仍 nav+md+cxm8d），childList 不触发；子列尺寸变化由 ResizeObserver 处理 */
+    try {
+      const scrollContent = document.querySelector(".mantine-ScrollArea-content");
+      if (scrollContent) {
+        new MutationObserver(() => scheduleJpLayoutSync()).observe(scrollContent, {
+          childList: true,
+          subtree: false
+        });
+      }
+    } catch (_) { /* ignore */ }
+  }
+
   function isDarkModeActive() {
     const root = document.documentElement;
     const body = document.body;
@@ -833,7 +975,7 @@
         return;
       }
       const url = runtime.getURL("jike-twitter-font.user.css");
-      const raw = await fetch(url).then(r => r.text());
+      const raw = await fetch(url, { cache: "no-store" }).then((r) => r.text());
       const inner = raw.replace(/\/\*[\s\S]*?==\/UserStyle== \*\//, "")
         .match(/@-moz-document\s+domain\("web\.okjike\.com"\)\s*\{([\s\S]*)\}\s*$/)?.[1] || raw;
       const s = document.createElement("style");
@@ -849,8 +991,12 @@
   }
 
   function boot() {
+    installSpaLocationHook();
+    installJpLayoutWidthTracking();
     injectStyles();
-    injectUserStyle();
+    injectUserStyle().then(() => {
+      scheduleJpLayoutSync();
+    });
     bootLightboxZoom();
 
     themeObserver = new MutationObserver(() => syncOpenPopupTheme());
