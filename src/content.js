@@ -224,6 +224,7 @@
   }
 
   function extractId(link) {
+    if (!(link instanceof Element)) return null;
     const m = (link.getAttribute("href") || "").match(/\/u\/([^/?#]+)/i);
     return m ? decodeURIComponent(m[1]) : null;
   }
@@ -866,7 +867,7 @@
           state = !state;
           btn.textContent = state ? "已关注" : "关注";
           btn.classList.toggle("jp-following", state);
-          const activeId = extractId(activeLink);
+          const activeId = extractId(anchor);
           if (activeId) CACHE.delete(activeId);
         }
         btn.disabled = false;
