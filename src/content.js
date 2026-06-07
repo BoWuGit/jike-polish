@@ -4,6 +4,10 @@
   const POPUP_ID = "jike-polish-popup";
   const LIGHTBOX_ZOOM_OUT_BUTTON_ID = "jike-polish-lightbox-zoom-out";
   const LIGHTBOX_ZOOM_IN_BUTTON_ID = "jike-polish-lightbox-zoom-in";
+  const MAIN_SCROLL_VIEWPORT_SELECTOR = ".mantine-ScrollArea-viewport, [class*='ScrollArea-viewport'], [class*='ScrollArea_viewport']";
+  const KEYBOARD_SCROLL_KEYS = new Set(["ArrowDown", "ArrowUp", "PageDown", "PageUp", " ", "Spacebar", "Home", "End"]);
+  const KEYBOARD_SCROLL_LINE_PX = 48;
+  const KEYBOARD_SCROLL_PAGE_RATIO = 0.9;
   const CACHE = new Map();
   const PENDING = new Map();
   const SHOW_DELAY = 140;
@@ -19,6 +23,9 @@
   let themeObserver = null;
   let lightboxRaf = 0;
   let profileFetchAbort = null;
+  let keyboardScrollObserver = null;
+  let keyboardScrollRaf = 0;
+  let keyboardScrollNeedsFocus = false;
 
   const lightboxZoom = {
     image: null,
@@ -91,6 +98,7 @@
   function jpLayoutTick() {
     syncPostDetailLayoutClass();
     syncJpLayoutWidthVar();
+    syncKeyboardScrollTarget();
     bindScrollAreaChildResizeObservers();
   }
 
@@ -325,6 +333,11 @@
     card.style.top = `${top}px`;
   }
 
+  function getMainScrollViewport() {
+    return Array.from(document.querySelectorAll(MAIN_SCROLL_VIEWPORT_SELECTOR))
+      .find((el) => el instanceof HTMLElement && el.scrollHeight > el.clientHeight + 4) || null;
+  }
+
   function findScrollableContainer(startNode = document.body) {
     const start = startNode instanceof HTMLElement ? startNode : document.body;
     for (let el = start; el; el = el.parentElement) {
@@ -335,11 +348,113 @@
       }
     }
 
-    const viewport = Array.from(document.querySelectorAll(".mantine-ScrollArea-viewport, [class*='ScrollArea-viewport'], [class*='ScrollArea_viewport']"))
-      .find((el) => el instanceof HTMLElement && el.scrollHeight > el.clientHeight + 4);
+    const viewport = getMainScrollViewport();
     if (viewport instanceof HTMLElement) return viewport;
 
     return document.scrollingElement || document.documentElement;
+  }
+
+  function isDocumentRootFocus(el) {
+    return !el || el === document.body || el === document.documentElement;
+  }
+
+  function isEditableKeyboardTarget(el) {
+    if (!(el instanceof HTMLElement)) return false;
+    if (el.isContentEditable) return true;
+    return !!el.closest("input, textarea, select, [contenteditable=''], [contenteditable='true'], [role='textbox']");
+  }
+
+  function focusKeyboardScrollTarget(scroller) {
+    try {
+      scroller.focus({ preventScroll: true });
+    } catch {
+      scroller.focus();
+    }
+  }
+
+  function shouldFocusKeyboardScrollTarget(scroller) {
+    if (!document.hasFocus() || getOpenLightbox()) return false;
+    const active = document.activeElement;
+    return isDocumentRootFocus(active) || active === scroller;
+  }
+
+  function syncKeyboardScrollTarget({ focus = false } = {}) {
+    const scroller = getMainScrollViewport();
+    if (!(scroller instanceof HTMLElement)) return null;
+    scroller.classList.add("jp-keyboard-scroll-target");
+    if (!scroller.hasAttribute("tabindex")) scroller.setAttribute("tabindex", "-1");
+    if (focus && shouldFocusKeyboardScrollTarget(scroller)) focusKeyboardScrollTarget(scroller);
+    return scroller;
+  }
+
+  function scheduleKeyboardScrollTargetSync(focus = false) {
+    keyboardScrollNeedsFocus = keyboardScrollNeedsFocus || focus;
+    if (keyboardScrollRaf) return;
+    keyboardScrollRaf = requestAnimationFrame(() => {
+      keyboardScrollRaf = 0;
+      const shouldFocus = keyboardScrollNeedsFocus;
+      keyboardScrollNeedsFocus = false;
+      syncKeyboardScrollTarget({ focus: shouldFocus });
+    });
+  }
+
+  function shouldHandleKeyboardScroll(event, scroller) {
+    if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.altKey || getOpenLightbox()) return false;
+    if (!(scroller instanceof HTMLElement)) return false;
+    const active = document.activeElement;
+    if (active instanceof HTMLElement && isEditableKeyboardTarget(active)) return false;
+    return isDocumentRootFocus(active) || active === scroller;
+  }
+
+  function scrollMainViewportFromKey(scroller, event) {
+    const pageStep = Math.max(1, Math.floor(scroller.clientHeight * KEYBOARD_SCROLL_PAGE_RATIO));
+    if (event.key === "ArrowDown") {
+      scroller.scrollBy({ top: KEYBOARD_SCROLL_LINE_PX, behavior: "auto" });
+      return true;
+    }
+    if (event.key === "ArrowUp") {
+      scroller.scrollBy({ top: -KEYBOARD_SCROLL_LINE_PX, behavior: "auto" });
+      return true;
+    }
+    if (event.key === "PageDown") {
+      scroller.scrollBy({ top: pageStep, behavior: "auto" });
+      return true;
+    }
+    if (event.key === "PageUp") {
+      scroller.scrollBy({ top: -pageStep, behavior: "auto" });
+      return true;
+    }
+    if (event.key === " " || event.key === "Spacebar") {
+      scroller.scrollBy({ top: event.shiftKey ? -pageStep : pageStep, behavior: "auto" });
+      return true;
+    }
+    if (event.key === "Home") {
+      scroller.scrollTo({ top: 0, behavior: "auto" });
+      return true;
+    }
+    if (event.key === "End") {
+      scroller.scrollTo({ top: scroller.scrollHeight, behavior: "auto" });
+      return true;
+    }
+    return false;
+  }
+
+  function handleKeyboardScroll(event) {
+    if (!KEYBOARD_SCROLL_KEYS.has(event.key)) return;
+    const scroller = syncKeyboardScrollTarget();
+    if (!shouldHandleKeyboardScroll(event, scroller)) return;
+    if (!scrollMainViewportFromKey(scroller, event)) return;
+    event.preventDefault();
+    if (document.activeElement !== scroller) focusKeyboardScrollTarget(scroller);
+  }
+
+  function installKeyboardScrollFix() {
+    syncKeyboardScrollTarget({ focus: true });
+    scheduleKeyboardScrollTargetSync(true);
+    document.addEventListener("keydown", handleKeyboardScroll, { capture: true });
+    if (!document.body || keyboardScrollObserver) return;
+    keyboardScrollObserver = new MutationObserver(() => scheduleKeyboardScrollTargetSync());
+    keyboardScrollObserver.observe(document.body, { childList: true, subtree: true });
   }
 
   function forwardNativeHoverCardWheel(event) {
@@ -974,6 +1089,7 @@
 :is([data-mantine-color-scheme="dark"], [data-theme="dark"], html.dark, body.dark) #${POPUP_ID} .jp-skeleton,#${POPUP_ID}.jp-dark .jp-skeleton{background:rgba(255,255,255,.09)}
 :is([data-mantine-color-scheme="dark"], [data-theme="dark"], html.dark, body.dark) #${POPUP_ID} .jp-skeleton::after,#${POPUP_ID}.jp-dark .jp-skeleton::after{background:linear-gradient(90deg,transparent,rgba(255,255,255,.12),transparent)}
 .mantine-HoverCard-dropdown [class*="_bio"],.mantine-HoverCard-dropdown [class*="_briefIntro"],.mantine-HoverCard-dropdown [class*="_desc"]{-webkit-line-clamp:unset !important;display:block !important;overflow:visible !important;max-height:none !important;text-overflow:unset !important}
+.jp-keyboard-scroll-target:focus{outline:none}
 .jp-lightbox-zoom-button svg{display:block;width:22px;height:22px}
 .jp-lightbox-zoom-button:disabled{opacity:.45;cursor:default}
 .yarl__slide_image.jp-lightbox-zoomed{max-width:none;will-change:transform;touch-action:none;user-select:none}
@@ -1017,6 +1133,7 @@
       scheduleJpLayoutSync();
     });
     bootLightboxZoom();
+    installKeyboardScrollFix();
 
     themeObserver = new MutationObserver(() => syncOpenPopupTheme());
     themeObserver.observe(document.documentElement, {
