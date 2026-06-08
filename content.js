@@ -4,10 +4,12 @@
   const POPUP_ID = "jike-polish-popup";
   const LIGHTBOX_ZOOM_OUT_BUTTON_ID = "jike-polish-lightbox-zoom-out";
   const LIGHTBOX_ZOOM_IN_BUTTON_ID = "jike-polish-lightbox-zoom-in";
+  const WINDOW_SCROLL_BRIDGE_ID = "jike-polish-window-scroll-bridge";
   const MAIN_SCROLL_VIEWPORT_SELECTOR = ".mantine-ScrollArea-viewport, [class*='ScrollArea-viewport'], [class*='ScrollArea_viewport']";
   const KEYBOARD_SCROLL_KEYS = /* @__PURE__ */ new Set(["ArrowDown", "ArrowUp", "PageDown", "PageUp", " ", "Spacebar", "Home", "End"]);
   const KEYBOARD_SCROLL_LINE_PX = 48;
   const KEYBOARD_SCROLL_PAGE_RATIO = 0.9;
+  const SCROLL_SYNC_EPSILON = 1;
   const CACHE = /* @__PURE__ */ new Map();
   const PENDING = /* @__PURE__ */ new Map();
   const SHOW_DELAY = 140;
@@ -22,9 +24,12 @@
   let themeObserver = null;
   let lightboxRaf = 0;
   let profileFetchAbort = null;
-  let keyboardScrollObserver = null;
-  let keyboardScrollRaf = 0;
-  let keyboardScrollNeedsFocus = false;
+  let scrollBridgeObserver = null;
+  let scrollBridgeRaf = 0;
+  let scrollBridgeNeedsFocus = false;
+  let bridgedMainScroller = null;
+  let syncingMainScroller = false;
+  let syncingWindowScroller = false;
   const lightboxZoom = {
     image: null,
     scale: 1,
@@ -90,6 +95,7 @@
     syncPostDetailLayoutClass();
     syncJpLayoutWidthVar();
     syncKeyboardScrollTarget();
+    syncWindowScrollBridge();
     bindScrollAreaChildResizeObservers();
   }
   let jpLayoutSyncExtraTimers = [];
@@ -296,6 +302,69 @@
   function getMainScrollViewport() {
     return Array.from(document.querySelectorAll(MAIN_SCROLL_VIEWPORT_SELECTOR)).find((el) => el instanceof HTMLElement && el.scrollHeight > el.clientHeight + 4) || null;
   }
+  function getDocumentScroller() {
+    return document.scrollingElement || document.documentElement;
+  }
+  function ensureWindowScrollBridgeSpacer() {
+    let spacer = document.getElementById(WINDOW_SCROLL_BRIDGE_ID);
+    if (spacer instanceof HTMLElement) return spacer;
+    spacer = document.createElement("div");
+    spacer.id = WINDOW_SCROLL_BRIDGE_ID;
+    spacer.setAttribute("aria-hidden", "true");
+    document.body.appendChild(spacer);
+    return spacer;
+  }
+  function syncWindowScrollBridgeHeight(scroller) {
+    const spacer = ensureWindowScrollBridgeSpacer();
+    const docClientHeight = getDocumentScroller().clientHeight || window.innerHeight || scroller.clientHeight;
+    const scrollHeight = scroller.scrollHeight + docClientHeight - scroller.clientHeight;
+    const height = `${Math.ceil(Math.max(scrollHeight, docClientHeight + 1))}px`;
+    if (spacer.style.height !== height) spacer.style.height = height;
+  }
+  function syncWindowScrollToMainScroller(top) {
+    const docScroller = getDocumentScroller();
+    if (Math.abs(docScroller.scrollTop - top) <= SCROLL_SYNC_EPSILON) return;
+    syncingWindowScroller = true;
+    docScroller.scrollTop = top;
+    requestAnimationFrame(() => {
+      syncingWindowScroller = false;
+    });
+  }
+  function bindWindowScrollBridgeScroller(scroller) {
+    if (bridgedMainScroller === scroller) return;
+    if (bridgedMainScroller) {
+      bridgedMainScroller.removeEventListener("scroll", handleMainScrollerBridgeScroll);
+    }
+    bridgedMainScroller = scroller;
+    bridgedMainScroller.addEventListener("scroll", handleMainScrollerBridgeScroll, { passive: true });
+  }
+  function syncWindowScrollBridge({ syncWindow = true } = {}) {
+    const scroller = getMainScrollViewport();
+    if (!(scroller instanceof HTMLElement)) return null;
+    document.documentElement.classList.add("jp-window-scroll-bridge");
+    syncWindowScrollBridgeHeight(scroller);
+    bindWindowScrollBridgeScroller(scroller);
+    if (syncWindow) syncWindowScrollToMainScroller(scroller.scrollTop);
+    return scroller;
+  }
+  function handleMainScrollerBridgeScroll() {
+    if (syncingMainScroller) return;
+    const scroller = syncWindowScrollBridge({ syncWindow: false });
+    if (!(scroller instanceof HTMLElement)) return;
+    syncWindowScrollToMainScroller(scroller.scrollTop);
+  }
+  function handleWindowBridgeScroll() {
+    if (syncingWindowScroller) return;
+    const scroller = syncWindowScrollBridge({ syncWindow: false });
+    if (!(scroller instanceof HTMLElement)) return;
+    const top = getDocumentScroller().scrollTop;
+    if (Math.abs(scroller.scrollTop - top) <= SCROLL_SYNC_EPSILON) return;
+    syncingMainScroller = true;
+    scroller.scrollTop = top;
+    requestAnimationFrame(() => {
+      syncingMainScroller = false;
+    });
+  }
   function findScrollableContainer(startNode = document.body) {
     const start = startNode instanceof HTMLElement ? startNode : document.body;
     for (let el = start; el; el = el.parentElement) {
@@ -337,14 +406,15 @@
     if (focus && shouldFocusKeyboardScrollTarget(scroller)) focusKeyboardScrollTarget(scroller);
     return scroller;
   }
-  function scheduleKeyboardScrollTargetSync(focus = false) {
-    keyboardScrollNeedsFocus = keyboardScrollNeedsFocus || focus;
-    if (keyboardScrollRaf) return;
-    keyboardScrollRaf = requestAnimationFrame(() => {
-      keyboardScrollRaf = 0;
-      const shouldFocus = keyboardScrollNeedsFocus;
-      keyboardScrollNeedsFocus = false;
+  function scheduleScrollBridgeSync(focus = false) {
+    scrollBridgeNeedsFocus = scrollBridgeNeedsFocus || focus;
+    if (scrollBridgeRaf) return;
+    scrollBridgeRaf = requestAnimationFrame(() => {
+      scrollBridgeRaf = 0;
+      const shouldFocus = scrollBridgeNeedsFocus;
+      scrollBridgeNeedsFocus = false;
       syncKeyboardScrollTarget({ focus: shouldFocus });
+      syncWindowScrollBridge();
     });
   }
   function shouldHandleKeyboardScroll(event, scroller) {
@@ -394,13 +464,15 @@
     event.preventDefault();
     if (document.activeElement !== scroller) focusKeyboardScrollTarget(scroller);
   }
-  function installKeyboardScrollFix() {
+  function installScrollBridge() {
     syncKeyboardScrollTarget({ focus: true });
-    scheduleKeyboardScrollTargetSync(true);
+    syncWindowScrollBridge();
+    scheduleScrollBridgeSync(true);
+    window.addEventListener("scroll", handleWindowBridgeScroll, { passive: true });
     document.addEventListener("keydown", handleKeyboardScroll, { capture: true });
-    if (!document.body || keyboardScrollObserver) return;
-    keyboardScrollObserver = new MutationObserver(() => scheduleKeyboardScrollTargetSync());
-    keyboardScrollObserver.observe(document.body, { childList: true, subtree: true });
+    if (!document.body || scrollBridgeObserver) return;
+    scrollBridgeObserver = new MutationObserver(() => scheduleScrollBridgeSync());
+    scrollBridgeObserver.observe(document.body, { childList: true, subtree: true });
   }
   function forwardNativeHoverCardWheel(event) {
     const target = event.target;
@@ -991,6 +1063,11 @@
 :is([data-mantine-color-scheme="dark"], [data-theme="dark"], html.dark, body.dark) #${POPUP_ID} .jp-skeleton,#${POPUP_ID}.jp-dark .jp-skeleton{background:rgba(255,255,255,.09)}
 :is([data-mantine-color-scheme="dark"], [data-theme="dark"], html.dark, body.dark) #${POPUP_ID} .jp-skeleton::after,#${POPUP_ID}.jp-dark .jp-skeleton::after{background:linear-gradient(90deg,transparent,rgba(255,255,255,.12),transparent)}
 .mantine-HoverCard-dropdown [class*="_bio"],.mantine-HoverCard-dropdown [class*="_briefIntro"],.mantine-HoverCard-dropdown [class*="_desc"]{-webkit-line-clamp:unset !important;display:block !important;overflow:visible !important;max-height:none !important;text-overflow:unset !important}
+.jp-window-scroll-bridge{overflow-y:auto !important;scrollbar-width:none}
+.jp-window-scroll-bridge::-webkit-scrollbar{display:none}
+.jp-window-scroll-bridge body{min-height:100vh !important;overflow:visible !important}
+.jp-window-scroll-bridge #root{position:fixed !important;inset:0 !important;width:100% !important;height:100% !important;overflow:hidden !important}
+#${WINDOW_SCROLL_BRIDGE_ID}{display:block !important;width:1px !important;min-height:100vh !important;pointer-events:none !important;opacity:0 !important}
 .jp-keyboard-scroll-target:focus{outline:none}
 .jp-lightbox-zoom-button svg{display:block;width:22px;height:22px}
 .jp-lightbox-zoom-button:disabled{opacity:.45;cursor:default}
@@ -1024,14 +1101,14 @@
     if (card) applyPopupTheme(card);
   }
   function boot() {
+    injectStyles();
     installSpaLocationHook();
     installJpLayoutWidthTracking();
-    injectStyles();
     injectUserStyle().then(() => {
       scheduleJpLayoutSync();
     });
     bootLightboxZoom();
-    installKeyboardScrollFix();
+    installScrollBridge();
     themeObserver = new MutationObserver(() => syncOpenPopupTheme());
     themeObserver.observe(document.documentElement, {
       attributes: true,
