@@ -6,6 +6,12 @@
   const LIGHTBOX_ZOOM_IN_BUTTON_ID = "jike-polish-lightbox-zoom-in";
   const WINDOW_SCROLL_BRIDGE_ID = "jike-polish-window-scroll-bridge";
   const MAIN_SCROLL_VIEWPORT_SELECTOR = ".mantine-ScrollArea-viewport, [class*='ScrollArea-viewport'], [class*='ScrollArea_viewport']";
+  const PROFILE_LINK_SELECTOR = 'a[href*="/u/"]';
+  const PROFILE_HOVER_CONTENT_SELECTOR = '[class*="_mentionUser_"], [class*="_name_1rdwv_"], [class*="_avatar_1rdwv_"], [class*="_root_1y0hs_"]';
+  const USER_CARD_TRIGGER_SELECTOR = '[class*="_userCard_"]';
+  const USER_CARD_MAX_ANCESTOR_DEPTH = 8;
+  const USER_CARD_MAX_HEIGHT = 220;
+  const USER_CARD_MIN_WIDTH = 120;
   const KEYBOARD_SCROLL_KEYS = new Set(["ArrowDown", "ArrowUp", "PageDown", "PageUp", " ", "Spacebar", "Home", "End"]);
   const KEYBOARD_SCROLL_LINE_PX = 48;
   const KEYBOARD_SCROLL_PAGE_RATIO = 0.9;
@@ -222,24 +228,52 @@
     card.classList.toggle("jp-dark", isDarkModeActive());
   }
 
-  function isBodyMention(el) {
+  function isProfileHoverLink(el) {
     if (!(el instanceof HTMLElement)) return false;
-    const link = el.closest('a[href*="/u/"]');
-    if (!link) return false;
-    if (!link.querySelector('[class*="_mentionUser_"], [class*="_name_1rdwv_"], [class*="_avatar_1rdwv_"]')) return false;
-    return true;
+    return el.matches(PROFILE_HOVER_CONTENT_SELECTOR) || !!el.querySelector(PROFILE_HOVER_CONTENT_SELECTOR);
+  }
+
+  function hasUserCardBounds(el) {
+    const rect = el.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) return true;
+    return rect.width >= USER_CARD_MIN_WIDTH && rect.height <= USER_CARD_MAX_HEIGHT;
+  }
+
+  function isUserCardTrigger(el) {
+    if (!(el instanceof HTMLElement) || !hasUserCardBounds(el)) return false;
+    if (!el.matches(USER_CARD_TRIGGER_SELECTOR)) return false;
+    return Array.from(el.querySelectorAll(PROFILE_LINK_SELECTOR)).some(isProfileHoverLink);
+  }
+
+  function findUserCardTrigger(el) {
+    let node = el;
+    for (let depth = 0; node && node !== document.body && depth < USER_CARD_MAX_ANCESTOR_DEPTH; depth += 1) {
+      if (isUserCardTrigger(node)) return node;
+      node = node.parentElement;
+    }
+    return null;
+  }
+
+  function getProfileLink(el) {
+    if (!(el instanceof Element)) return null;
+    if (el.matches(PROFILE_LINK_SELECTOR)) return el;
+    const links = Array.from(el.querySelectorAll(PROFILE_LINK_SELECTOR));
+    return links.find(isProfileHoverLink) || links[0] || null;
   }
 
   function getLink(el) {
     if (!(el instanceof HTMLElement)) return null;
-    const link = el.closest('a[href*="/u/"]');
-    if (!link || !isBodyMention(el)) return null;
+    const card = findUserCardTrigger(el);
+    if (card) return card;
+    const link = el.closest(PROFILE_LINK_SELECTOR);
+    if (!link || !isProfileHoverLink(link)) return null;
     return link;
   }
 
   function extractId(link) {
-    if (!(link instanceof Element)) return null;
-    const m = (link.getAttribute("href") || "").match(/\/u\/([^/?#]+)/i);
+    const profileLink = getProfileLink(link);
+    if (!profileLink) return null;
+    const m = (profileLink.getAttribute("href") || "").match(/\/u\/([^/?#]+)/i);
     return m ? decodeURIComponent(m[1]) : null;
   }
 
@@ -1250,7 +1284,7 @@
     document.addEventListener("mousedown", (e) => {
       const target = e.target;
       if (!(target instanceof HTMLElement)) return;
-      if (!target.closest(`#${POPUP_ID}`) && !target.closest('a[href*="/u/"]')) closePopup();
+      if (!target.closest(`#${POPUP_ID}`) && !target.closest(PROFILE_LINK_SELECTOR) && !getLink(target)) closePopup();
     });
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape" && document.getElementById(POPUP_ID)) closePopup();
