@@ -29,7 +29,7 @@
   let lightboxObserver = null;
   let themeObserver = null;
   let lightboxRaf = 0;
-  let profileFetchAbort = null;
+  let profileRequestAbort = null;
   let scrollBridgeObserver = null;
   let scrollBridgeRaf = 0;
   let scrollBridgeNeedsFocus = false;
@@ -243,20 +243,19 @@
     const m = (profileLink.getAttribute("href") || "").match(/\/u\/([^/?#]+)/i);
     return m ? decodeURIComponent(m[1]) : null;
   }
-  async function fetchUser(id, signal) {
+  async function fetchUser(id) {
     if (CACHE.has(id)) return CACHE.get(id);
     if (PENDING.has(id)) return PENDING.get(id);
     const t = token();
     if (!t) return null;
-    const isUuid = /^[0-9a-f]{8}-/.test(id);
+    const isUuid = /^[0-9a-f]{8}-/i.test(id);
     const qs = isUuid ? [`username=${encodeURIComponent(id)}`, `id=${encodeURIComponent(id)}`] : [`username=${encodeURIComponent(id)}`];
     const task = (async () => {
       try {
         for (const q of qs) {
           try {
             const r = await fetch(`${API_BASE}/users/profile?${q}`, {
-              headers: { "X-Jike-Access-Token": t },
-              signal
+              headers: { "X-Jike-Access-Token": t }
             });
             if (!r.ok) continue;
             const j = await r.json();
@@ -265,7 +264,6 @@
               return j.user;
             }
           } catch (e) {
-            if (e?.name === "AbortError") return null;
             log("fetch err", q, e);
           }
         }
@@ -307,7 +305,7 @@
     clearTimeout(hoverTimer);
   }
   function closePopup() {
-    profileFetchAbort?.abort();
+    profileRequestAbort?.abort();
     cancelHide();
     cancelHover();
     removePopup();
@@ -1013,9 +1011,9 @@
   async function showCard(link) {
     if (activeLink !== link) return;
     cancelHide();
-    profileFetchAbort?.abort();
+    profileRequestAbort?.abort();
     const ac = new AbortController();
-    profileFetchAbort = ac;
+    profileRequestAbort = ac;
     try {
       const id = extractId(link);
       if (!id) return;
@@ -1027,7 +1025,7 @@
         renderErrorCard(link, "\u672A\u68C0\u6D4B\u5230\u767B\u5F55\u72B6\u6001\uFF0C\u65E0\u6CD5\u52A0\u8F7D\u7528\u6237\u8D44\u6599\u3002");
         return;
       }
-      const user = await fetchUser(id, ac.signal);
+      const user = await fetchUser(id);
       if (seq !== requestSeq || activeLink !== link) return;
       if (ac.signal.aborted) return;
       if (!user) {
@@ -1036,7 +1034,7 @@
       }
       renderCard(user, link);
     } finally {
-      if (profileFetchAbort === ac) profileFetchAbort = null;
+      if (profileRequestAbort === ac) profileRequestAbort = null;
     }
   }
   function injectStyles() {
