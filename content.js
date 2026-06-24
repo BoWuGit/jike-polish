@@ -1,5 +1,7 @@
 (() => {
-  const API_BASE = "https://api.ruguoapp.com/1.0";
+  const API_ORIGIN = "https://api.ruguoapp.com";
+  const API_BASE = `${API_ORIGIN}/1.0`;
+  const AUTH_REFRESH_PATH = "/app_auth_tokens.refresh";
   const DEBUG = localStorage.getItem("JIKE_POLISH_DEBUG") === "1";
   const POPUP_ID = "jike-polish-popup";
   const LIGHTBOX_ZOOM_OUT_BUTTON_ID = "jike-polish-lightbox-zoom-out";
@@ -18,6 +20,7 @@
   const SCROLL_SYNC_EPSILON = 1;
   const CACHE = /* @__PURE__ */ new Map();
   const PENDING = /* @__PURE__ */ new Map();
+  const AUTH_EXPIRED = Symbol("auth-expired");
   const SHOW_DELAY = 140;
   const LIGHTBOX_MIN_SCALE = 1;
   const LIGHTBOX_MAX_SCALE = 6;
@@ -30,6 +33,7 @@
   let themeObserver = null;
   let lightboxRaf = 0;
   let profileRequestAbort = null;
+  let authRefreshTask = null;
   let scrollBridgeObserver = null;
   let scrollBridgeRaf = 0;
   let scrollBridgeNeedsFocus = false;
@@ -54,6 +58,15 @@
   }
   function token() {
     return localStorage.getItem("JK_ACCESS_TOKEN");
+  }
+  function refreshToken() {
+    return localStorage.getItem("JK_REFRESH_TOKEN");
+  }
+  function deviceId() {
+    return localStorage.getItem("JK_DEVICE_ID");
+  }
+  function hasAuthToken() {
+    return !!(token() || refreshToken());
   }
   const escEl = document.createElement("div");
   function esc(s) {
@@ -243,23 +256,95 @@
     const m = (profileLink.getAttribute("href") || "").match(/\/u\/([^/?#]+)/i);
     return m ? decodeURIComponent(m[1]) : null;
   }
+  function authHeaders(accessToken, extraHeaders = {}) {
+    const headers = {
+      ...extraHeaders,
+      platform: "web"
+    };
+    if (accessToken) headers["x-jike-access-token"] = accessToken;
+    const device = deviceId();
+    if (device) headers["x-jike-device-id"] = device;
+    return headers;
+  }
+  function refreshHeaders(refreshValue) {
+    const headers = {
+      "x-jike-refresh-token": refreshValue,
+      "Content-Type": "application/json",
+      platform: "web"
+    };
+    const device = deviceId();
+    if (device) headers["x-jike-device-id"] = device;
+    return headers;
+  }
+  async function refreshAccessToken() {
+    if (authRefreshTask) return authRefreshTask;
+    const currentRefreshToken = refreshToken();
+    if (!currentRefreshToken) return null;
+    authRefreshTask = (async () => {
+      try {
+        const r = await fetch(`${API_ORIGIN}${AUTH_REFRESH_PATH}`, {
+          method: "POST",
+          headers: refreshHeaders(currentRefreshToken),
+          body: "{}"
+        });
+        if (!r.ok) return null;
+        const j = await r.json();
+        const nextToken = j?.["x-jike-access-token"];
+        const nextRefreshToken = j?.["x-jike-refresh-token"];
+        if (!nextToken) return null;
+        localStorage.setItem("JK_ACCESS_TOKEN", nextToken);
+        if (nextRefreshToken) localStorage.setItem("JK_REFRESH_TOKEN", nextRefreshToken);
+        return nextToken;
+      } catch (e) {
+        log("refresh err", e);
+        return null;
+      } finally {
+        authRefreshTask = null;
+      }
+    })();
+    return authRefreshTask;
+  }
+  async function requestJike(path, options = {}) {
+    const { headers: extraHeaders, ...fetchOptions } = options;
+    const url = path.startsWith("http") ? path : `${API_BASE}/${path.replace(/^\/+/, "")}`;
+    let accessToken = token() || await refreshAccessToken();
+    if (!accessToken) return null;
+    let r = await fetch(url, {
+      ...fetchOptions,
+      headers: authHeaders(accessToken, extraHeaders)
+    });
+    if (r.status !== 401 || fetchOptions.signal?.aborted) return r;
+    accessToken = await refreshAccessToken();
+    if (!accessToken || fetchOptions.signal?.aborted) return r;
+    return fetch(url, {
+      ...fetchOptions,
+      headers: authHeaders(accessToken, extraHeaders)
+    });
+  }
+  function sameIdentifier(a, b) {
+    return String(a || "").toLowerCase() === String(b || "").toLowerCase();
+  }
+  function userMatchesProfileQuery(user, query) {
+    if (!user) return false;
+    if (query.key === "username") return sameIdentifier(user.username, query.value);
+    if (query.key === "id") return sameIdentifier(user.id, query.value);
+    return false;
+  }
   async function fetchUser(id) {
     if (CACHE.has(id)) return CACHE.get(id);
     if (PENDING.has(id)) return PENDING.get(id);
-    const t = token();
-    if (!t) return null;
     const isUuid = /^[0-9a-f]{8}-/i.test(id);
-    const qs = isUuid ? [`username=${encodeURIComponent(id)}`, `id=${encodeURIComponent(id)}`] : [`username=${encodeURIComponent(id)}`];
+    const queries = isUuid ? [{ key: "username", value: id }, { key: "id", value: id }] : [{ key: "username", value: id }];
     const task = (async () => {
       try {
-        for (const q of qs) {
+        for (const query of queries) {
+          const q = `${query.key}=${encodeURIComponent(query.value)}`;
           try {
-            const r = await fetch(`${API_BASE}/users/profile?${q}`, {
-              headers: { "X-Jike-Access-Token": t }
-            });
+            const r = await requestJike(`/users/profile?${q}`);
+            if (!r || r.status === 401) return AUTH_EXPIRED;
             if (!r.ok) continue;
             const j = await r.json();
-            if (j.user) {
+            if (userMatchesProfileQuery(j.user, query)) {
               CACHE.set(id, j.user);
               return j.user;
             }
@@ -276,19 +361,17 @@
     return task;
   }
   async function toggleFollow(username, isFollowing) {
-    const t = token();
-    if (!t || !username) return null;
+    if (!username || !hasAuthToken()) return null;
     const endpoint = isFollowing ? "userRelation/unfollow" : "userRelation/follow";
     try {
-      const r = await fetch(`${API_BASE}/${endpoint}`, {
+      const r = await requestJike(endpoint, {
         method: "POST",
         headers: {
-          "X-Jike-Access-Token": t,
           "Content-Type": "application/json"
         },
         body: JSON.stringify({ username })
       });
-      return r.ok;
+      return !!r?.ok;
     } catch (e) {
       log("follow err", e);
       return false;
@@ -1017,17 +1100,20 @@
     try {
       const id = extractId(link);
       if (!id) return;
-      const t = token();
       const seq = ++requestSeq;
       log("hover", id);
       renderLoadingCard(link);
-      if (!t) {
+      if (!hasAuthToken()) {
         renderErrorCard(link, "\u672A\u68C0\u6D4B\u5230\u767B\u5F55\u72B6\u6001\uFF0C\u65E0\u6CD5\u52A0\u8F7D\u7528\u6237\u8D44\u6599\u3002");
         return;
       }
       const user = await fetchUser(id);
       if (seq !== requestSeq || activeLink !== link) return;
       if (ac.signal.aborted) return;
+      if (user === AUTH_EXPIRED) {
+        renderErrorCard(link, "\u767B\u5F55\u72B6\u6001\u5DF2\u8FC7\u671F\uFF0C\u8BF7\u5237\u65B0\u9875\u9762\u6216\u91CD\u65B0\u767B\u5F55\u540E\u518D\u8BD5\u3002");
+        return;
+      }
       if (!user) {
         renderErrorCard(link, "\u63A5\u53E3\u6CA1\u6709\u8FD4\u56DE\u8D44\u6599\uFF0C\u53EF\u80FD\u662F\u7F51\u7EDC\u6CE2\u52A8\u6216\u9875\u9762\u7ED3\u6784\u5DF2\u53D8\u66F4\u3002");
         return;
