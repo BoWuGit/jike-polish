@@ -460,6 +460,15 @@
     outline-offset: 2px !important;
   }
 
+  /* 发帖/编辑输入区使用即刻原生焦点状态，避免出现多余蓝色边框 */
+  ._editor_nlk79_1:focus-visible,
+  ._editor_j2i5m_1:focus-visible,
+  [contenteditable="true"][data-placeholder]:focus-visible,
+  [role="textbox"][contenteditable="true"]:focus-visible {
+    outline: none !important;
+    outline-offset: 0 !important;
+  }
+
   /* 左栏默认更克制，hover/active 再抬起来 */
   [class*="navbar_desktopStack_"] a:not(.jike-logo),
   [class*="_desktopStack_"] a:not(.jike-logo) {
