@@ -324,10 +324,27 @@
         ._content_1kp3y_20 使用 -webkit-line-clamp:2 截断文字。
         line-height 必须与原版保持一致（calc(1.5rem * scale) = 24px），
         否则截断高度和容器高度不匹配，底部出现白缝「污点」。
+        Hover/键盘聚焦引用卡片时解除 2 行截断，长内容限制高度并在卡片内滚动。
      ============================================================ */
 
   ._content_1kp3y_20 {
     line-height: calc(1.5rem * var(--mantine-scale)) !important;
+    max-height: calc(3rem * var(--mantine-scale)) !important;
+    transition: max-height .16s ease !important;
+  }
+
+  ._root_1kp3y_1:is(:hover, :focus-within) ._main_1kp3y_9 {
+    overflow: visible !important;
+  }
+
+  ._root_1kp3y_1:is(:hover, :focus-within) ._content_1kp3y_20 {
+    display: block !important;
+    -webkit-line-clamp: unset !important;
+    -webkit-box-orient: initial !important;
+    max-height: min(14.5rem, 52vh) !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain !important;
+    text-overflow: clip !important;
   }
 
   /* ============================================================
