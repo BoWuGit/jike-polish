@@ -460,7 +460,11 @@
     outline-offset: 2px !important;
   }
 
-  /* 发帖/编辑输入区使用即刻原生焦点状态，避免出现多余蓝色边框 */
+  /* 文本输入控件使用即刻原生焦点状态，避免出现多余蓝色边框 */
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible,
+  [role="searchbox"]:focus-visible,
   ._editor_nlk79_1:focus-visible,
   ._editor_j2i5m_1:focus-visible,
   [contenteditable="true"][data-placeholder]:focus-visible,
