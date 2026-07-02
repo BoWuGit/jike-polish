@@ -350,18 +350,18 @@
   ._root_1kp3y_1 .jp-repost-media {
     display: grid !important;
     gap: 4px !important;
-    margin-top: 0 !important;
+    width: calc(100% - 3.25rem * var(--mantine-scale)) !important;
+    margin-top: var(--jp-repost-media-offset, 0px) !important;
+    margin-left: calc(3.25rem * var(--mantine-scale)) !important;
     overflow: hidden !important;
     border-radius: calc(.75rem * var(--mantine-scale)) !important;
     background: var(--bg-on-body-2, #f2f3f5) !important;
   }
 
-  ._root_1kp3y_1 .jp-repost-media[data-compact-gap="1"] {
-    margin-top: calc(-.5rem * var(--mantine-scale)) !important;
-  }
-
   ._root_1kp3y_1 .jp-repost-media[data-count="1"] {
     display: block !important;
+    width: min(var(--jp-repost-media-width, calc(100% - 3.25rem * var(--mantine-scale))), calc(100% - 3.25rem * var(--mantine-scale))) !important;
+    aspect-ratio: var(--jp-repost-media-aspect-ratio, auto) !important;
     background: var(--bg-on-body-2, #f2f3f5) !important;
   }
 
@@ -395,7 +395,8 @@
   }
 
   ._root_1kp3y_1 .jp-repost-media[data-count="1"] .jp-repost-media-item {
-    max-height: min(16rem, 38vh) !important;
+    height: 100% !important;
+    max-height: none !important;
     border-radius: calc(.75rem * var(--mantine-scale)) !important;
   }
 
@@ -409,9 +410,9 @@
   }
 
   ._root_1kp3y_1 .jp-repost-media[data-count="1"] .jp-repost-media-img {
-    height: auto !important;
-    max-height: min(16rem, 38vh) !important;
-    object-fit: contain !important;
+    height: 100% !important;
+    max-height: none !important;
+    object-fit: cover !important;
   }
 
   ._root_1kp3y_1 .jp-repost-media-more {

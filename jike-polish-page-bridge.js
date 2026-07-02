@@ -1,6 +1,10 @@
 (() => {
-  if (window.__JIKE_POLISH_REPOST_MEDIA_BRIDGE__) return;
-  window.__JIKE_POLISH_REPOST_MEDIA_BRIDGE__ = true;
+  const existingBridge = window.__JIKE_POLISH_REPOST_MEDIA_BRIDGE__;
+  if (existingBridge && typeof existingBridge.rescan === "function") {
+    existingBridge.rescan();
+    return;
+  }
+  window.__JIKE_POLISH_REPOST_MEDIA_BRIDGE__ = { rescan: null };
 
   const API_ORIGIN = "https://api.ruguoapp.com";
   const QUOTE_CARD_SELECTOR = "._root_1kp3y_1";
@@ -17,7 +21,7 @@
   };
 
   const detailCache = new Map();
-  let scanRaf = 0;
+  let scanTimer = 0;
   let lightboxState = null;
 
   function getReactFiber(el) {
@@ -118,12 +122,31 @@
     card.appendChild(media);
   }
 
-  function isSingleLineQuoteContent(card) {
+  function actualContentBottom(content) {
+    const range = document.createRange();
+    range.selectNodeContents(content);
+    const rects = Array.from(range.getClientRects()).filter((rect) => rect.width > 0 && rect.height > 0);
+    range.detach?.();
+    if (!rects.length) return content.getBoundingClientRect().bottom;
+    return Math.max(...rects.map((rect) => rect.bottom));
+  }
+
+  function syncMediaGapOffset(card, media) {
+    const main = card.querySelector(QUOTE_MAIN_SELECTOR);
     const content = card.querySelector("._content_1kp3y_20");
-    if (!(content instanceof HTMLElement)) return false;
-    const lineHeight = Number.parseFloat(getComputedStyle(content).lineHeight);
-    if (!Number.isFinite(lineHeight) || lineHeight <= 0) return false;
-    return content.getBoundingClientRect().height <= lineHeight * 1.35;
+    if (!(main instanceof HTMLElement) || !(content instanceof HTMLElement)) return;
+
+    const mainBottom = main.getBoundingClientRect().bottom;
+    const contentBottom = actualContentBottom(content);
+    const rowGap = Number.parseFloat(getComputedStyle(card).rowGap) || 0;
+    const desiredGap = 15;
+    const offset = Math.min(0, Math.round(contentBottom + desiredGap - mainBottom - rowGap));
+
+    if (offset < 0) {
+      media.style.setProperty("--jp-repost-media-offset", `${offset}px`);
+      return;
+    }
+    media.style.removeProperty("--jp-repost-media-offset");
   }
 
   function createLightboxButton(className, label, svgPath) {
@@ -247,17 +270,37 @@
     openLightbox(pictures, index);
   }
 
+  function syncSingleImageWidth(media, picture) {
+    const width = Number(picture?.width) || 0;
+    const height = Number(picture?.height) || 0;
+    if (width <= 0 || height <= 0) return;
+
+    const ratio = width / height;
+    const baseSize = 260;
+    const maxHeight = 607;
+    const displayWidth = ratio >= 1
+      ? baseSize * ratio
+      : Math.min(baseSize, maxHeight * ratio);
+    media.style.setProperty("--jp-repost-media-width", `${Math.round(displayWidth)}px`);
+    media.style.setProperty("--jp-repost-media-aspect-ratio", `${width} / ${height}`);
+  }
+
   function renderMedia(card, source, pictures) {
     const mediaKey = `${source.type || "UNKNOWN"}:${source.id}:${pictures.map((picture) => picture.key || fullPictureUrl(picture)).join(",")}`;
-    if (card.dataset.jpRepostMediaKey === mediaKey && getExistingMedia(card)) return;
+    const existingMedia = getExistingMedia(card);
+    if (card.dataset.jpRepostMediaKey === mediaKey && existingMedia) {
+      syncMediaGapOffset(card, existingMedia);
+      return;
+    }
 
-    getExistingMedia(card)?.remove();
+    existingMedia?.remove();
     const shownPictures = pictures.slice(0, 4);
     const media = document.createElement("div");
     media.className = MEDIA_CLASS;
     media.dataset.count = String(shownPictures.length);
     media.dataset.total = String(pictures.length);
-    if (isSingleLineQuoteContent(card)) media.dataset.compactGap = "1";
+    if (shownPictures.length === 1) syncSingleImageWidth(media, shownPictures[0]);
+    syncMediaGapOffset(card, media);
 
     shownPictures.forEach((picture, index) => {
       const item = document.createElement("div");
@@ -334,14 +377,24 @@
   }
 
   function scheduleScan() {
-    if (scanRaf) return;
-    scanRaf = requestAnimationFrame(() => {
-      scanRaf = 0;
+    if (scanTimer) return;
+    scanTimer = setTimeout(() => {
+      scanTimer = 0;
       scanQuoteCards();
-    });
+    }, 32);
   }
 
-  scheduleScan();
+  function scheduleWarmupScans() {
+    scheduleScan();
+    for (const delay of [120, 360, 800, 1600, 3000, 5000]) {
+      setTimeout(scheduleScan, delay);
+    }
+  }
+
+  window.__JIKE_POLISH_REPOST_MEDIA_BRIDGE__.rescan = scheduleWarmupScans;
+  scheduleWarmupScans();
+  window.addEventListener("pageshow", scheduleWarmupScans);
+  setInterval(scheduleScan, 1800);
 
   const observer = new MutationObserver(scheduleScan);
   observer.observe(document.body, { childList: true, subtree: true });

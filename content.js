@@ -1191,8 +1191,10 @@
 `;
     document.head.appendChild(s);
   }
-  function injectPageBridge() {
-    if (document.getElementById("jike-polish-page-bridge")) return;
+  function injectPageBridge({ force = false } = {}) {
+    const existing = document.getElementById("jike-polish-page-bridge");
+    if (existing && !force) return;
+    existing?.remove();
     try {
       const runtime = extensionRuntime();
       if (!runtime?.getURL) {
@@ -1201,7 +1203,7 @@
       }
       const script = document.createElement("script");
       script.id = "jike-polish-page-bridge";
-      script.src = runtime.getURL(PAGE_BRIDGE_SCRIPT);
+      script.src = `${runtime.getURL(PAGE_BRIDGE_SCRIPT)}?v=${Date.now()}`;
       script.async = false;
       (document.head || document.documentElement).appendChild(script);
     } catch (e) {
@@ -1216,7 +1218,7 @@
         log("style err: extension runtime unavailable");
         return;
       }
-      const url = runtime.getURL("jike-twitter-font.user.css");
+      const url = `${runtime.getURL("jike-twitter-font.user.css")}?v=${Date.now()}`;
       const res = await fetch(url, { cache: "no-store" });
       const raw = await res.text();
       const inner = raw.replace(/\/\*[\s\S]*?==\/UserStyle== \*\//, "").match(/@-moz-document\s+domain\("web\.okjike\.com"\)\s*\{([\s\S]*)\}\s*$/)?.[1] || raw;
@@ -1235,6 +1237,7 @@
   function boot() {
     injectStyles();
     injectPageBridge();
+    setTimeout(() => injectPageBridge({ force: true }), 1800);
     installSpaLocationHook();
     installJpLayoutWidthTracking();
     injectUserStyle().then(() => {
