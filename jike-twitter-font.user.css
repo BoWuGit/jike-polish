@@ -358,7 +358,7 @@
 
   ._root_1kp3y_1 .jp-repost-media[data-count="1"] {
     display: block !important;
-    background: transparent !important;
+    background: var(--bg-on-body-2, #f2f3f5) !important;
   }
 
   ._root_1kp3y_1 .jp-repost-media[data-count="2"] {
@@ -387,7 +387,7 @@
     min-width: 0 !important;
     min-height: 0 !important;
     overflow: hidden !important;
-    background: var(--bg-body-1, #fff) !important;
+    background: var(--bg-on-body-2, #f2f3f5) !important;
   }
 
   ._root_1kp3y_1 .jp-repost-media[data-count="1"] .jp-repost-media-item {
@@ -400,6 +400,7 @@
     width: 100% !important;
     height: 100% !important;
     object-fit: cover !important;
+    background: var(--bg-on-body-2, #f2f3f5) !important;
     user-select: none !important;
   }
 
