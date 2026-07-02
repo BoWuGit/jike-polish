@@ -350,10 +350,14 @@
   ._root_1kp3y_1 .jp-repost-media {
     display: grid !important;
     gap: 4px !important;
-    margin-top: calc(.5rem * var(--mantine-scale)) !important;
+    margin-top: 0 !important;
     overflow: hidden !important;
     border-radius: calc(.75rem * var(--mantine-scale)) !important;
     background: var(--bg-on-body-2, #f2f3f5) !important;
+  }
+
+  ._root_1kp3y_1 .jp-repost-media[data-compact-gap="1"] {
+    margin-top: calc(-.5rem * var(--mantine-scale)) !important;
   }
 
   ._root_1kp3y_1 .jp-repost-media[data-count="1"] {

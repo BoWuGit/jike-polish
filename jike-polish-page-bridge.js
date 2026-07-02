@@ -118,6 +118,14 @@
     card.appendChild(media);
   }
 
+  function isSingleLineQuoteContent(card) {
+    const content = card.querySelector("._content_1kp3y_20");
+    if (!(content instanceof HTMLElement)) return false;
+    const lineHeight = Number.parseFloat(getComputedStyle(content).lineHeight);
+    if (!Number.isFinite(lineHeight) || lineHeight <= 0) return false;
+    return content.getBoundingClientRect().height <= lineHeight * 1.35;
+  }
+
   function createLightboxButton(className, label, svgPath) {
     const button = document.createElement("button");
     button.type = "button";
@@ -249,6 +257,7 @@
     media.className = MEDIA_CLASS;
     media.dataset.count = String(shownPictures.length);
     media.dataset.total = String(pictures.length);
+    if (isSingleLineQuoteContent(card)) media.dataset.compactGap = "1";
 
     shownPictures.forEach((picture, index) => {
       const item = document.createElement("div");
