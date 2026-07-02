@@ -7,6 +7,7 @@
   const LIGHTBOX_ZOOM_OUT_BUTTON_ID = "jike-polish-lightbox-zoom-out";
   const LIGHTBOX_ZOOM_IN_BUTTON_ID = "jike-polish-lightbox-zoom-in";
   const WINDOW_SCROLL_BRIDGE_ID = "jike-polish-window-scroll-bridge";
+  const PAGE_BRIDGE_SCRIPT = "jike-polish-page-bridge.js";
   const MAIN_SCROLL_VIEWPORT_SELECTOR = ".mantine-ScrollArea-viewport, [class*='ScrollArea-viewport'], [class*='ScrollArea_viewport']";
   const PROFILE_LINK_SELECTOR = 'a[href*="/u/"]';
   const PROFILE_HOVER_CONTENT_SELECTOR = '[class*="_mentionUser_"], [class*="_name_1rdwv_"], [class*="_avatar_1rdwv_"], [class*="_root_1y0hs_"]';
@@ -1302,6 +1303,24 @@
     document.head.appendChild(s);
   }
 
+  function injectPageBridge() {
+    if (document.getElementById("jike-polish-page-bridge")) return;
+    try {
+      const runtime = extensionRuntime();
+      if (!runtime?.getURL) {
+        log("page bridge err: extension runtime unavailable");
+        return;
+      }
+      const script = document.createElement("script");
+      script.id = "jike-polish-page-bridge";
+      script.src = runtime.getURL(PAGE_BRIDGE_SCRIPT);
+      script.async = false;
+      (document.head || document.documentElement).appendChild(script);
+    } catch (e) {
+      log("page bridge err", e);
+    }
+  }
+
   async function injectUserStyle() {
     if (document.getElementById("jike-polish-userstyle")) return;
     try {
@@ -1331,6 +1350,7 @@
 
   function boot() {
     injectStyles();
+    injectPageBridge();
     installSpaLocationHook();
     installJpLayoutWidthTracking();
     injectUserStyle().then(() => {

@@ -14,6 +14,6 @@ VERSION=$(grep '"version"' manifest.json | sed 's/.*: "\(.*\)".*/\1/')
 OUTPUT="jike-polish-v${VERSION}.zip"
 
 rm -f "$OUTPUT"
-zip "$OUTPUT" manifest.json content.js icon.png jike-twitter-font.user.css
+zip "$OUTPUT" manifest.json content.js icon.png jike-twitter-font.user.css jike-polish-page-bridge.js
 
 echo "✅ 已生成 $OUTPUT"

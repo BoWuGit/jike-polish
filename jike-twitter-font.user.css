@@ -347,6 +347,80 @@
     text-overflow: clip !important;
   }
 
+  ._root_1kp3y_1 .jp-repost-media {
+    display: grid !important;
+    gap: 4px !important;
+    margin-top: calc(.5rem * var(--mantine-scale)) !important;
+    overflow: hidden !important;
+    border-radius: calc(.75rem * var(--mantine-scale)) !important;
+    background: var(--bg-on-body-2, #f2f3f5) !important;
+  }
+
+  ._root_1kp3y_1 .jp-repost-media[data-count="1"] {
+    display: block !important;
+    background: transparent !important;
+  }
+
+  ._root_1kp3y_1 .jp-repost-media[data-count="2"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    height: min(14rem, 34vh) !important;
+  }
+
+  ._root_1kp3y_1 .jp-repost-media[data-count="3"] {
+    grid-template-columns: 2fr 1fr !important;
+    grid-template-rows: repeat(2, minmax(0, 1fr)) !important;
+    height: min(16rem, 38vh) !important;
+  }
+
+  ._root_1kp3y_1 .jp-repost-media[data-count="3"] .jp-repost-media-item:first-child {
+    grid-row: 1 / span 2 !important;
+  }
+
+  ._root_1kp3y_1 .jp-repost-media[data-count="4"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    grid-template-rows: repeat(2, minmax(0, 1fr)) !important;
+    height: min(16rem, 38vh) !important;
+  }
+
+  ._root_1kp3y_1 .jp-repost-media-item {
+    position: relative !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    background: var(--bg-body-1, #fff) !important;
+  }
+
+  ._root_1kp3y_1 .jp-repost-media[data-count="1"] .jp-repost-media-item {
+    max-height: min(16rem, 38vh) !important;
+    border-radius: calc(.75rem * var(--mantine-scale)) !important;
+  }
+
+  ._root_1kp3y_1 .jp-repost-media-img {
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    user-select: none !important;
+  }
+
+  ._root_1kp3y_1 .jp-repost-media[data-count="1"] .jp-repost-media-img {
+    height: auto !important;
+    max-height: min(16rem, 38vh) !important;
+    object-fit: contain !important;
+  }
+
+  ._root_1kp3y_1 .jp-repost-media-more {
+    position: absolute !important;
+    inset: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: rgba(0, 0, 0, .38) !important;
+    color: #fff !important;
+    font-size: 1.25rem !important;
+    font-weight: 650 !important;
+  }
+
   /* ============================================================
      11. 链接预览卡片
         ._header_8timl_20 同样使用 -webkit-line-clamp:2，

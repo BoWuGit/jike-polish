@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "即刻 Web 美化",
   "version": "1.2.1",
-  "description": "即刻 Web 美化：字体、布局优化、用户悬浮卡片、图片灯箱缩放",
+  "description": "即刻 Web 美化：字体、布局优化、引用卡片增强、用户悬浮卡片、图片灯箱缩放",
   "browser_specific_settings": {
     "gecko": {
       "id": "jike-polish@local",
@@ -31,7 +31,8 @@
   "web_accessible_resources": [
     {
       "resources": [
-        "jike-twitter-font.user.css"
+        "jike-twitter-font.user.css",
+        "jike-polish-page-bridge.js"
       ],
       "matches": [
         "https://web.okjike.com/*"
