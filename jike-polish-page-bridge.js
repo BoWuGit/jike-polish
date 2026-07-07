@@ -109,6 +109,11 @@
     return null;
   }
 
+  function shouldFetchLinkImage(source) {
+    const linkInfo = getLinkInfo(source);
+    return isPostLike(source) && !!linkInfo && !linkImageUrl(linkInfo);
+  }
+
   function hasOwn(value, key) {
     return !!value && Object.prototype.hasOwnProperty.call(value, key);
   }
@@ -534,6 +539,13 @@
       if (!document.contains(card) || !samePost(getQuoteData(card), data)) return;
       mediaSource = mediaSource || getMediaSource(detail);
       linkSource = linkSource || getLinkSource(detail);
+    }
+
+    if (shouldFetchLinkImage(linkSource)) {
+      const detail = await fetchPostDetail(linkSource);
+      if (!document.contains(card) || !samePost(getQuoteData(card), data)) return;
+      const detailedLinkSource = getLinkSource(detail);
+      if (linkImageUrl(getLinkInfo(detailedLinkSource))) linkSource = detailedLinkSource;
     }
 
     const linkInfo = getLinkInfo(linkSource);
