@@ -359,16 +359,16 @@
     margin-left: calc(3.25rem * var(--mantine-scale)) !important;
     padding: calc(.75rem * var(--mantine-scale)) !important;
     overflow: hidden !important;
-    border: 1px solid var(--tint-separator, rgba(15, 23, 42, .08)) !important;
+    border: 0 !important;
     border-radius: calc(.5rem * var(--mantine-scale)) !important;
-    background: var(--bg-body-1, #fff) !important;
+    background: var(--bg-on-body-2, #f0f3f5) !important;
     color: var(--color-text-primary, inherit) !important;
     text-decoration: none !important;
     cursor: pointer !important;
   }
 
   ._root_1kp3y_1 .jp-repost-link:is(:hover, :focus-visible) {
-    background: var(--bg-on-body-1, #fff) !important;
+    background: var(--bg-on-body-2, #f0f3f5) !important;
     text-decoration: none !important;
   }
 
