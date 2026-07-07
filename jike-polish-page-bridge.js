@@ -13,6 +13,13 @@
   const MEDIA_ITEM_CLASS = "jp-repost-media-item";
   const MEDIA_IMAGE_CLASS = "jp-repost-media-img";
   const MEDIA_MORE_CLASS = "jp-repost-media-more";
+  const LINK_CLASS = "jp-repost-link";
+  const LINK_IMAGE_CLASS = "jp-repost-link-image";
+  const LINK_PLACEHOLDER_CLASS = "jp-repost-link-placeholder";
+  const LINK_BODY_CLASS = "jp-repost-link-body";
+  const LINK_TITLE_CLASS = "jp-repost-link-title";
+  const LINK_FOOTER_CLASS = "jp-repost-link-footer";
+  const ATTACHMENT_SELECTOR = `.${LINK_CLASS}, .${MEDIA_CLASS}`;
   const LIGHTBOX_CLASS = "jp-repost-lightbox";
   const LIGHTBOX_PORTAL_SELECTOR = `.${LIGHTBOX_CLASS}`;
   const DETAIL_ENDPOINT_BY_TYPE = {
@@ -68,9 +75,37 @@
     return data.pictures.filter((picture) => pictureUrl(picture, data.pictures.length));
   }
 
+  function stringValue(value) {
+    return typeof value === "string" ? value.trim() : "";
+  }
+
+  function linkImageUrl(linkInfo) {
+    return stringValue(linkInfo?.pictureUrl)
+      || stringValue(linkInfo?.audio?.coverUrl)
+      || stringValue(linkInfo?.audio?.originCoverUrl)
+      || stringValue(linkInfo?.brandLogoImage?.thumbnailUrl)
+      || stringValue(linkInfo?.brandLogoImage?.smallPicUrl)
+      || stringValue(linkInfo?.brandLogoImage?.picUrl);
+  }
+
+  function hasUsableLinkInfo(linkInfo) {
+    if (!linkInfo || typeof linkInfo !== "object") return false;
+    return !!(stringValue(linkInfo.title) || stringValue(linkInfo.linkUrl) || linkImageUrl(linkInfo));
+  }
+
+  function getLinkInfo(data) {
+    return hasUsableLinkInfo(data?.linkInfo) ? data.linkInfo : null;
+  }
+
   function getMediaSource(data) {
     if (getPictures(data).length) return data;
     if (getPictures(data?.target).length) return data.target;
+    return null;
+  }
+
+  function getLinkSource(data) {
+    if (getLinkInfo(data)) return data;
+    if (getLinkInfo(data?.target)) return data.target;
     return null;
   }
 
@@ -108,18 +143,60 @@
     return Array.from(card.children).find((child) => child.classList?.contains(MEDIA_CLASS)) || null;
   }
 
+  function getExistingLink(card) {
+    return Array.from(card.children).find((child) => child.classList?.contains(LINK_CLASS)) || null;
+  }
+
+  function getAttachments(card) {
+    return Array.from(card.children).filter((child) => child.matches?.(ATTACHMENT_SELECTOR));
+  }
+
+  function attachmentOrder(attachment) {
+    return Number(attachment.dataset?.jpRepostAttachmentOrder) || 0;
+  }
+
+  function insertAfter(card, node, reference) {
+    if (reference?.nextSibling) {
+      card.insertBefore(node, reference.nextSibling);
+      return;
+    }
+    card.appendChild(node);
+  }
+
+  function insertAttachment(card, attachment) {
+    const order = attachmentOrder(attachment);
+    const siblings = getAttachments(card).filter((child) => child !== attachment);
+    const next = siblings.find((child) => attachmentOrder(child) > order);
+    if (next) {
+      card.insertBefore(attachment, next);
+      return;
+    }
+
+    for (let index = siblings.length - 1; index >= 0; index -= 1) {
+      if (attachmentOrder(siblings[index]) <= order) {
+        insertAfter(card, attachment, siblings[index]);
+        return;
+      }
+    }
+
+    const main = card.querySelector(QUOTE_MAIN_SELECTOR);
+    if (main) {
+      insertAfter(card, attachment, main);
+      return;
+    }
+    card.appendChild(attachment);
+  }
+
   function removeMedia(card, key) {
     getExistingMedia(card)?.remove();
     if (key) card.dataset.jpRepostMediaKey = key;
+    syncAttachmentGapOffset(card);
   }
 
-  function insertMedia(card, media) {
-    const main = card.querySelector(QUOTE_MAIN_SELECTOR);
-    if (main?.nextSibling) {
-      card.insertBefore(media, main.nextSibling);
-      return;
-    }
-    card.appendChild(media);
+  function removeLink(card, key) {
+    getExistingLink(card)?.remove();
+    if (key) card.dataset.jpRepostLinkKey = key;
+    syncAttachmentGapOffset(card);
   }
 
   function actualContentBottom(content) {
@@ -131,7 +208,13 @@
     return Math.max(...rects.map((rect) => rect.bottom));
   }
 
-  function syncMediaGapOffset(card, media) {
+  function syncAttachmentGapOffset(card) {
+    const attachments = getAttachments(card);
+    for (const attachment of attachments) {
+      attachment.style.removeProperty("--jp-repost-attachment-offset");
+    }
+    if (!attachments.length) return;
+
     const main = card.querySelector(QUOTE_MAIN_SELECTOR);
     const content = card.querySelector("._content_1kp3y_20");
     if (!(main instanceof HTMLElement) || !(content instanceof HTMLElement)) return;
@@ -143,10 +226,8 @@
     const offset = Math.min(0, Math.round(contentBottom + desiredGap - mainBottom - rowGap));
 
     if (offset < 0) {
-      media.style.setProperty("--jp-repost-media-offset", `${offset}px`);
-      return;
+      attachments[0].style.setProperty("--jp-repost-attachment-offset", `${offset}px`);
     }
-    media.style.removeProperty("--jp-repost-media-offset");
   }
 
   function createLightboxButton(className, label, svgPath) {
@@ -285,11 +366,107 @@
     media.style.setProperty("--jp-repost-media-aspect-ratio", `${width} / ${height}`);
   }
 
+  function safeHttpUrl(value) {
+    const raw = stringValue(value);
+    if (!raw) return "";
+    try {
+      const url = new URL(raw, location.href);
+      if (url.protocol === "http:" || url.protocol === "https:") return url.href;
+    } catch {
+      /* Invalid URL, render non-clickable preview. */
+    }
+    return "";
+  }
+
+  function hostFromUrl(value) {
+    try {
+      return new URL(value).hostname.replace(/^www\./, "");
+    } catch {
+      return "";
+    }
+  }
+
+  function linkFooterText(linkInfo, href) {
+    return stringValue(linkInfo?.audio?.author)
+      || stringValue(linkInfo?.source)
+      || hostFromUrl(href);
+  }
+
+  function bindLinkCardEvents(card) {
+    for (const eventName of ["click", "pointerdown", "keydown"]) {
+      card.addEventListener(eventName, (event) => event.stopPropagation());
+    }
+  }
+
+  function createLinkCard(linkInfo) {
+    const href = safeHttpUrl(linkInfo?.linkUrl);
+    const card = document.createElement(href ? "a" : "div");
+    card.className = LINK_CLASS;
+    card.dataset.jpRepostAttachmentOrder = "10";
+    if (href) {
+      card.href = href;
+      card.target = "_blank";
+      card.rel = "noopener noreferrer";
+    }
+    bindLinkCardEvents(card);
+
+    const imageUrl = linkImageUrl(linkInfo);
+    if (imageUrl) {
+      const image = document.createElement("img");
+      image.className = LINK_IMAGE_CLASS;
+      image.loading = "lazy";
+      image.decoding = "async";
+      image.referrerPolicy = "no-referrer";
+      image.alt = "";
+      image.src = imageUrl;
+      card.appendChild(image);
+    } else {
+      const placeholder = document.createElement("div");
+      placeholder.className = LINK_PLACEHOLDER_CLASS;
+      placeholder.textContent = "↗";
+      card.appendChild(placeholder);
+    }
+
+    const body = document.createElement("div");
+    body.className = LINK_BODY_CLASS;
+
+    const title = document.createElement("div");
+    title.className = LINK_TITLE_CLASS;
+    title.textContent = stringValue(linkInfo?.title) || href || "打开链接";
+    body.appendChild(title);
+
+    const footerText = linkFooterText(linkInfo, href);
+    if (footerText) {
+      const footer = document.createElement("div");
+      footer.className = LINK_FOOTER_CLASS;
+      footer.textContent = footerText;
+      body.appendChild(footer);
+    }
+
+    card.appendChild(body);
+    return card;
+  }
+
+  function renderLink(card, source, linkInfo) {
+    const linkKey = `${source.type || "UNKNOWN"}:${source.id}:${stringValue(linkInfo.linkUrl) || stringValue(linkInfo.title) || linkImageUrl(linkInfo)}`;
+    const existingLink = getExistingLink(card);
+    if (card.dataset.jpRepostLinkKey === linkKey && existingLink) {
+      syncAttachmentGapOffset(card);
+      return;
+    }
+
+    existingLink?.remove();
+    const link = createLinkCard(linkInfo);
+    insertAttachment(card, link);
+    card.dataset.jpRepostLinkKey = linkKey;
+    syncAttachmentGapOffset(card);
+  }
+
   function renderMedia(card, source, pictures) {
     const mediaKey = `${source.type || "UNKNOWN"}:${source.id}:${pictures.map((picture) => picture.key || fullPictureUrl(picture)).join(",")}`;
     const existingMedia = getExistingMedia(card);
     if (card.dataset.jpRepostMediaKey === mediaKey && existingMedia) {
-      syncMediaGapOffset(card, existingMedia);
+      syncAttachmentGapOffset(card);
       return;
     }
 
@@ -297,10 +474,10 @@
     const shownPictures = pictures.slice(0, 4);
     const media = document.createElement("div");
     media.className = MEDIA_CLASS;
+    media.dataset.jpRepostAttachmentOrder = "20";
     media.dataset.count = String(shownPictures.length);
     media.dataset.total = String(pictures.length);
     if (shownPictures.length === 1) syncSingleImageWidth(media, shownPictures[0]);
-    syncMediaGapOffset(card, media);
 
     shownPictures.forEach((picture, index) => {
       const item = document.createElement("div");
@@ -336,8 +513,9 @@
       media.appendChild(item);
     });
 
-    insertMedia(card, media);
+    insertAttachment(card, media);
     card.dataset.jpRepostMediaKey = mediaKey;
+    syncAttachmentGapOffset(card);
   }
 
   function samePost(a, b) {
@@ -349,25 +527,34 @@
     const data = getQuoteData(card);
     if (!isPostLike(data)) return;
 
-    let source = getMediaSource(data);
-    if (!source && shouldFetchDetail(data)) {
+    let mediaSource = getMediaSource(data);
+    let linkSource = getLinkSource(data);
+    if ((!mediaSource || !linkSource) && shouldFetchDetail(data)) {
       const detail = await fetchPostDetail(data);
       if (!document.contains(card) || !samePost(getQuoteData(card), data)) return;
-      source = getMediaSource(detail);
+      mediaSource = mediaSource || getMediaSource(detail);
+      linkSource = linkSource || getLinkSource(detail);
     }
 
-    if (!source) {
-      removeMedia(card, `${data.type}:${data.id}:none`);
+    const linkInfo = getLinkInfo(linkSource);
+    if (linkInfo) {
+      renderLink(card, linkSource, linkInfo);
+    } else {
+      removeLink(card, `${data.type}:${data.id}:link:none`);
+    }
+
+    if (!mediaSource) {
+      removeMedia(card, `${data.type}:${data.id}:media:none`);
       return;
     }
 
-    const pictures = getPictures(source);
+    const pictures = getPictures(mediaSource);
     if (!pictures.length) {
-      removeMedia(card, `${source.type}:${source.id}:none`);
+      removeMedia(card, `${mediaSource.type}:${mediaSource.id}:media:none`);
       return;
     }
 
-    renderMedia(card, source, pictures);
+    renderMedia(card, mediaSource, pictures);
   }
 
   function scanQuoteCards() {
