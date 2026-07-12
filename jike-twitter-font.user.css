@@ -347,6 +347,35 @@
     text-overflow: clip !important;
   }
 
+  /* 转发卡片里的话题恢复为原帖使用的胶囊标签，并与正文/附件左缘对齐 */
+  ._root_1kp3y_1 ._footer_1kp3y_30 {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-self: start !important;
+    gap: calc(.25rem * var(--mantine-scale)) !important;
+    width: fit-content !important;
+    margin-left: calc(3.25rem * var(--mantine-scale)) !important;
+    padding: calc(.1875rem * var(--mantine-scale)) calc(.375rem * var(--mantine-scale)) !important;
+    border-radius: calc(.9375rem * var(--mantine-scale)) !important;
+    box-shadow: none !important;
+    background: var(--bg-on-body-3, #fafafa) !important;
+    color: var(--tint-jike-blue, #03a9f4) !important;
+    font-size: calc(.75rem * var(--mantine-scale)) !important;
+    font-weight: 500 !important;
+    line-height: calc(1.125rem * var(--mantine-scale)) !important;
+    text-align: left !important;
+  }
+
+  ._root_1kp3y_1 ._footer_1kp3y_30::before {
+    content: "" !important;
+    width: calc(1.125rem * var(--mantine-scale)) !important;
+    height: calc(1.125rem * var(--mantine-scale)) !important;
+    flex: 0 0 auto !important;
+    box-sizing: border-box !important;
+    border: calc(.3125rem * var(--mantine-scale)) solid currentColor !important;
+    border-radius: 50% !important;
+  }
+
   ._root_1kp3y_1 .jp-repost-link {
     display: grid !important;
     grid-template-columns: calc(3.625rem * var(--mantine-scale)) minmax(0, 1fr) !important;
