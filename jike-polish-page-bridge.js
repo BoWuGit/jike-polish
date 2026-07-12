@@ -79,10 +79,14 @@
     return typeof value === "string" ? value.trim() : "";
   }
 
-  function linkImageUrl(linkInfo) {
+  function linkPreviewImageUrl(linkInfo) {
     return stringValue(linkInfo?.pictureUrl)
       || stringValue(linkInfo?.audio?.coverUrl)
-      || stringValue(linkInfo?.audio?.originCoverUrl)
+      || stringValue(linkInfo?.audio?.originCoverUrl);
+  }
+
+  function linkImageUrl(linkInfo) {
+    return linkPreviewImageUrl(linkInfo)
       || stringValue(linkInfo?.brandLogoImage?.thumbnailUrl)
       || stringValue(linkInfo?.brandLogoImage?.smallPicUrl)
       || stringValue(linkInfo?.brandLogoImage?.picUrl);
@@ -111,7 +115,7 @@
 
   function shouldFetchLinkImage(source) {
     const linkInfo = getLinkInfo(source);
-    return isPostLike(source) && !!linkInfo && !linkImageUrl(linkInfo);
+    return isPostLike(source) && !!linkInfo && !linkPreviewImageUrl(linkInfo);
   }
 
   function hasOwn(value, key) {
