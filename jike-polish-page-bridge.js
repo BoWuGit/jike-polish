@@ -387,18 +387,8 @@
     return "";
   }
 
-  function hostFromUrl(value) {
-    try {
-      return new URL(value).hostname.replace(/^www\./, "");
-    } catch {
-      return "";
-    }
-  }
-
-  function linkFooterText(linkInfo, href) {
-    return stringValue(linkInfo?.audio?.author)
-      || stringValue(linkInfo?.source)
-      || hostFromUrl(href);
+  function linkFooterText(linkInfo) {
+    return stringValue(linkInfo?.audio?.author);
   }
 
   function bindLinkCardEvents(card) {
@@ -444,7 +434,7 @@
     title.textContent = stringValue(linkInfo?.title) || href || "打开链接";
     body.appendChild(title);
 
-    const footerText = linkFooterText(linkInfo, href);
+    const footerText = linkFooterText(linkInfo);
     if (footerText) {
       const footer = document.createElement("div");
       footer.className = LINK_FOOTER_CLASS;

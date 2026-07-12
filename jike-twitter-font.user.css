@@ -423,12 +423,16 @@
   }
 
   ._root_1kp3y_1 .jp-repost-link-body {
+    align-self: stretch !important;
+    display: flex !important;
     min-width: 0 !important;
+    flex-direction: column !important;
+    justify-content: center !important;
   }
 
   ._root_1kp3y_1 .jp-repost-link-title {
     display: -webkit-box !important;
-    height: calc(2.375rem * var(--mantine-scale)) !important;
+    max-height: calc(2.375rem * var(--mantine-scale)) !important;
     overflow: hidden !important;
     color: var(--color-text-primary, #1d2129) !important;
     font-size: calc(1rem * var(--mantine-scale)) !important;
