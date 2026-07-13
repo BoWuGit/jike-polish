@@ -2,13 +2,14 @@
   "name": "jike-polish",
   "private": true,
   "type": "module",
-  "version": "1.2.3",
+  "version": "1.2.4",
   "description": "即刻 Web 浏览器扩展（内容脚本构建与校验）",
   "scripts": {
     "build": "esbuild src/content.js --outfile=content.js --platform=browser --target=chrome109",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
-    "check": "npm run lint && npm run build"
+    "check": "npm run lint && npm run build",
+    "release:extension": "node scripts/release-extension.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.21.0",

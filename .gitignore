@@ -3,6 +3,12 @@
 .cursor/
 .vscode/
 
+# Local credentials and environment
+.env
+.env.*
+!.env.example
+.secrets/
+
 # Logs
 *.log
 npm-debug.log*
