@@ -443,7 +443,7 @@
   }
 
   ._root_1kp3y_1 .jp-repost-link-footer {
-    margin-top: calc(.125rem * var(--mantine-scale)) !important;
+    min-height: calc(1.25rem * var(--mantine-scale)) !important;
     overflow: hidden !important;
     color: var(--jp-text-secondary, #707684) !important;
     font-size: .8125rem !important;

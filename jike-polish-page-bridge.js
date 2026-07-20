@@ -434,13 +434,11 @@
     title.textContent = stringValue(linkInfo?.title) || href || "打开链接";
     body.appendChild(title);
 
-    const footerText = linkFooterText(linkInfo);
-    if (footerText) {
-      const footer = document.createElement("div");
-      footer.className = LINK_FOOTER_CLASS;
-      footer.textContent = footerText;
-      body.appendChild(footer);
-    }
+    const footer = document.createElement("div");
+    footer.className = LINK_FOOTER_CLASS;
+    footer.textContent = linkFooterText(linkInfo);
+    if (!footer.textContent) footer.setAttribute("aria-hidden", "true");
+    body.appendChild(footer);
 
     card.appendChild(body);
     return card;
