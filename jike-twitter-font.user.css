@@ -390,14 +390,14 @@
     overflow: hidden !important;
     border: 0 !important;
     border-radius: calc(.5rem * var(--mantine-scale)) !important;
-    background: var(--bg-on-body-2, #f0f3f5) !important;
+    background: var(--bg-surface-body-2, #fafafa) !important;
     color: var(--color-text-primary, inherit) !important;
     text-decoration: none !important;
     cursor: pointer !important;
   }
 
   ._root_1kp3y_1 .jp-repost-link:is(:hover, :focus-visible) {
-    background: var(--bg-on-body-2, #f0f3f5) !important;
+    background: var(--bg-surface-body-2, #fafafa) !important;
     text-decoration: none !important;
   }
 
