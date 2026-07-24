@@ -3,11 +3,14 @@
 ## Build
 
 - Content script source: `src/content.js`. Run `npm run build` to emit root `content.js` (referenced by `manifest.json`).
+- The macOS Safari wrapper is in `safari/JikePolish`. Run `npm run safari:build` for an unsigned compile check; signing configuration and credentials must stay local.
+- Safari directly packages the shared root extension resources referenced by the Xcode project. Do not add the repository, `node_modules`, screenshots, archives, or credentials to the Extension target's Resources phase.
+- `assets/icon-1024.png` is the canonical icon master. Run `npm run safari:icons` to regenerate root `icon.png`, the Safari container image, and all macOS AppIcon sizes.
 
 ## Chrome Web Store release
 
 - The public Chrome Web Store item ID is `hnbakdoibeogigpihopfjfjbacfmcfck`; the release script pins this ID to prevent cross-project uploads.
-- Keep the version in `manifest.json`, `package.json`, and `package-lock.json` identical.
+- Keep the version in `manifest.json`, `package.json`, `package-lock.json`, and the Safari Xcode target `MARKETING_VERSION` settings identical.
 - Run `npm run release:extension` to validate and create `jike-polish-v<version>.zip` without uploading.
 - From a clean Git tree, run `npm run release:extension -- --mode submit --confirm` to upload the zip and submit it for review. Use `--mode upload` to upload a draft without submitting, or `--dry-run` to avoid API calls.
 - Upload/submit requires `CWS_CLIENT_ID`, `CWS_CLIENT_SECRET`, and `CWS_REFRESH_TOKEN` in the process environment. The OAuth refresh token must include the `https://www.googleapis.com/auth/chromewebstore` scope and belong to an account that can publish this item.

@@ -1,0 +1,613 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		9285A062301366B500974429 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9285A061301366B500974429 /* AppDelegate.swift */; };
+		9285A066301366B500974429 /* Main.html in Resources */ = {isa = PBXBuildFile; fileRef = 9285A064301366B500974429 /* Main.html */; };
+		9285A068301366B500974429 /* Icon.png in Resources */ = {isa = PBXBuildFile; fileRef = 9285A067301366B500974429 /* Icon.png */; };
+		9285A06A301366B500974429 /* Style.css in Resources */ = {isa = PBXBuildFile; fileRef = 9285A069301366B500974429 /* Style.css */; };
+		9285A06C301366B500974429 /* Script.js in Resources */ = {isa = PBXBuildFile; fileRef = 9285A06B301366B500974429 /* Script.js */; };
+		9285A06E301366B500974429 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9285A06D301366B500974429 /* ViewController.swift */; };
+		9285A071301366B500974429 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 9285A06F301366B500974429 /* Main.storyboard */; };
+		9285A073301366B800974429 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 9285A072301366B800974429 /* Assets.xcassets */; };
+		9285A07A301366B800974429 /* JikePolish Extension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 9285A079301366B800974429 /* JikePolish Extension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		9285A07F301366B800974429 /* SafariWebExtensionHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9285A07E301366B800974429 /* SafariWebExtensionHandler.swift */; };
+		9285A09E301366B900974429 /* icon.png in Resources */ = {isa = PBXBuildFile; fileRef = 9285A08B301366B900974429 /* icon.png */; };
+		9285A0A9301366B900974429 /* manifest.json in Resources */ = {isa = PBXBuildFile; fileRef = 9285A096301366B900974429 /* manifest.json */; };
+		9285A0AA301366B900974429 /* jike-polish-page-bridge.js in Resources */ = {isa = PBXBuildFile; fileRef = 9285A097301366B900974429 /* jike-polish-page-bridge.js */; };
+		9285A0AC301366B900974429 /* content.js in Resources */ = {isa = PBXBuildFile; fileRef = 9285A099301366B900974429 /* content.js */; };
+		9285A0AF301366B900974429 /* jike-twitter-font.user.css in Resources */ = {isa = PBXBuildFile; fileRef = 9285A09C301366B900974429 /* jike-twitter-font.user.css */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		9285A07B301366B800974429 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9285A056301366B500974429 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 9285A078301366B800974429;
+			remoteInfo = "JikePolish Extension";
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		9285A086301366B800974429 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				9285A07A301366B800974429 /* JikePolish Extension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		9285A05E301366B500974429 /* JikePolish.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = JikePolish.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		9285A061301366B500974429 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		9285A065301366B500974429 /* Base */ = {isa = PBXFileReference; lastKnownFileType = text.html; name = Base; path = Base.lproj/Main.html; sourceTree = "<group>"; };
+		9285A067301366B500974429 /* Icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Icon.png; sourceTree = "<group>"; };
+		9285A069301366B500974429 /* Style.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; path = Style.css; sourceTree = "<group>"; };
+		9285A06B301366B500974429 /* Script.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = Script.js; sourceTree = "<group>"; };
+		9285A06D301366B500974429 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
+		9285A070301366B500974429 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
+		9285A072301366B800974429 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		9285A074301366B800974429 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		9285A079301366B800974429 /* JikePolish Extension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "JikePolish Extension.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
+		9285A07E301366B800974429 /* SafariWebExtensionHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SafariWebExtensionHandler.swift; sourceTree = "<group>"; };
+		9285A080301366B800974429 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		9285A08B301366B900974429 /* icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = icon.png; path = ../../../icon.png; sourceTree = "<group>"; };
+		9285A096301366B900974429 /* manifest.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = manifest.json; path = ../../../manifest.json; sourceTree = "<group>"; };
+		9285A097301366B900974429 /* jike-polish-page-bridge.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; name = "jike-polish-page-bridge.js"; path = "../../../jike-polish-page-bridge.js"; sourceTree = "<group>"; };
+		9285A099301366B900974429 /* content.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; name = content.js; path = ../../../content.js; sourceTree = "<group>"; };
+		9285A09C301366B900974429 /* jike-twitter-font.user.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; name = "jike-twitter-font.user.css"; path = "../../../jike-twitter-font.user.css"; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		9285A05B301366B500974429 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9285A076301366B800974429 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		9285A055301366B500974429 = {
+			isa = PBXGroup;
+			children = (
+				9285A060301366B500974429 /* JikePolish */,
+				9285A07D301366B800974429 /* JikePolish Extension */,
+				9285A05F301366B500974429 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		9285A05F301366B500974429 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				9285A05E301366B500974429 /* JikePolish.app */,
+				9285A079301366B800974429 /* JikePolish Extension.appex */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		9285A060301366B500974429 /* JikePolish */ = {
+			isa = PBXGroup;
+			children = (
+				9285A061301366B500974429 /* AppDelegate.swift */,
+				9285A06D301366B500974429 /* ViewController.swift */,
+				9285A06F301366B500974429 /* Main.storyboard */,
+				9285A072301366B800974429 /* Assets.xcassets */,
+				9285A074301366B800974429 /* Info.plist */,
+				9285A063301366B500974429 /* Resources */,
+			);
+			path = JikePolish;
+			sourceTree = "<group>";
+		};
+		9285A063301366B500974429 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				9285A064301366B500974429 /* Main.html */,
+				9285A067301366B500974429 /* Icon.png */,
+				9285A069301366B500974429 /* Style.css */,
+				9285A06B301366B500974429 /* Script.js */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		9285A07D301366B800974429 /* JikePolish Extension */ = {
+			isa = PBXGroup;
+			children = (
+				9285A08A301366B900974429 /* Resources */,
+				9285A07E301366B800974429 /* SafariWebExtensionHandler.swift */,
+				9285A080301366B800974429 /* Info.plist */,
+			);
+			path = "JikePolish Extension";
+			sourceTree = "<group>";
+		};
+		9285A08A301366B900974429 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				9285A08B301366B900974429 /* icon.png */,
+				9285A096301366B900974429 /* manifest.json */,
+				9285A097301366B900974429 /* jike-polish-page-bridge.js */,
+				9285A099301366B900974429 /* content.js */,
+				9285A09C301366B900974429 /* jike-twitter-font.user.css */,
+			);
+			name = Resources;
+			path = "JikePolish Extension";
+			sourceTree = SOURCE_ROOT;
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		9285A05D301366B500974429 /* JikePolish */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 9285A087301366B800974429 /* Build configuration list for PBXNativeTarget "JikePolish" */;
+			buildPhases = (
+				9285A05A301366B500974429 /* Sources */,
+				9285A05B301366B500974429 /* Frameworks */,
+				9285A05C301366B500974429 /* Resources */,
+				9285A086301366B800974429 /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				9285A07C301366B800974429 /* PBXTargetDependency */,
+			);
+			name = JikePolish;
+			packageProductDependencies = (
+			);
+			productName = JikePolish;
+			productReference = 9285A05E301366B500974429 /* JikePolish.app */;
+			productType = "com.apple.product-type.application";
+		};
+		9285A078301366B800974429 /* JikePolish Extension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 9285A083301366B800974429 /* Build configuration list for PBXNativeTarget "JikePolish Extension" */;
+			buildPhases = (
+				9285A075301366B800974429 /* Sources */,
+				9285A076301366B800974429 /* Frameworks */,
+				9285A077301366B800974429 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "JikePolish Extension";
+			packageProductDependencies = (
+			);
+			productName = "JikePolish Extension";
+			productReference = 9285A079301366B800974429 /* JikePolish Extension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		9285A056301366B500974429 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2660;
+				LastUpgradeCheck = 2660;
+				TargetAttributes = {
+					9285A05D301366B500974429 = {
+						CreatedOnToolsVersion = 26.6;
+					};
+					9285A078301366B800974429 = {
+						CreatedOnToolsVersion = 26.6;
+					};
+				};
+			};
+			buildConfigurationList = 9285A059301366B500974429 /* Build configuration list for PBXProject "JikePolish" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 9285A055301366B500974429;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 9285A05F301366B500974429 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				9285A05D301366B500974429 /* JikePolish */,
+				9285A078301366B800974429 /* JikePolish Extension */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		9285A05C301366B500974429 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9285A068301366B500974429 /* Icon.png in Resources */,
+				9285A071301366B500974429 /* Main.storyboard in Resources */,
+				9285A06C301366B500974429 /* Script.js in Resources */,
+				9285A066301366B500974429 /* Main.html in Resources */,
+				9285A073301366B800974429 /* Assets.xcassets in Resources */,
+				9285A06A301366B500974429 /* Style.css in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9285A077301366B800974429 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9285A0AA301366B900974429 /* jike-polish-page-bridge.js in Resources */,
+				9285A0AF301366B900974429 /* jike-twitter-font.user.css in Resources */,
+				9285A0A9301366B900974429 /* manifest.json in Resources */,
+				9285A0AC301366B900974429 /* content.js in Resources */,
+				9285A09E301366B900974429 /* icon.png in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		9285A05A301366B500974429 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9285A06E301366B500974429 /* ViewController.swift in Sources */,
+				9285A062301366B500974429 /* AppDelegate.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9285A075301366B800974429 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9285A07F301366B800974429 /* SafariWebExtensionHandler.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		9285A07C301366B800974429 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 9285A078301366B800974429 /* JikePolish Extension */;
+			targetProxy = 9285A07B301366B800974429 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin PBXVariantGroup section */
+		9285A064301366B500974429 /* Main.html */ = {
+			isa = PBXVariantGroup;
+			children = (
+				9285A065301366B500974429 /* Base */,
+			);
+			name = Main.html;
+			sourceTree = "<group>";
+		};
+		9285A06F301366B500974429 /* Main.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				9285A070301366B500974429 /* Base */,
+			);
+			name = Main.storyboard;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		9285A081301366B800974429 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		9285A082301366B800974429 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = Release;
+		};
+		9285A084301366B800974429 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_USER_SELECTED_FILES = readonly;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "JikePolish Extension/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "即刻 Web 美化";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MARKETING_VERSION = 1.2.5;
+				OTHER_LDFLAGS = (
+					"-framework",
+					SafariServices,
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.bowugit.jikepolish.Extension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		9285A085301366B800974429 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_USER_SELECTED_FILES = readonly;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "JikePolish Extension/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "即刻 Web 美化";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MARKETING_VERSION = 1.2.5;
+				OTHER_LDFLAGS = (
+					"-framework",
+					SafariServices,
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.bowugit.jikepolish.Extension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		9285A088301366B800974429 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
+				ENABLE_USER_SELECTED_FILES = readonly;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = JikePolish/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "即刻 Web 美化";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSMainStoryboardFile = Main;
+				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.2.5;
+				OTHER_LDFLAGS = (
+					"-framework",
+					SafariServices,
+					"-framework",
+					WebKit,
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.bowugit.jikepolish;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		9285A089301366B800974429 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
+				ENABLE_USER_SELECTED_FILES = readonly;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = JikePolish/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "即刻 Web 美化";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSMainStoryboardFile = Main;
+				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.2.5;
+				OTHER_LDFLAGS = (
+					"-framework",
+					SafariServices,
+					"-framework",
+					WebKit,
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.bowugit.jikepolish;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		9285A059301366B500974429 /* Build configuration list for PBXProject "JikePolish" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9285A081301366B800974429 /* Debug */,
+				9285A082301366B800974429 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		9285A083301366B800974429 /* Build configuration list for PBXNativeTarget "JikePolish Extension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9285A084301366B800974429 /* Debug */,
+				9285A085301366B800974429 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		9285A087301366B800974429 /* Build configuration list for PBXNativeTarget "JikePolish" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9285A088301366B800974429 /* Debug */,
+				9285A089301366B800974429 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 9285A056301366B500974429 /* Project object */;
+}

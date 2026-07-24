@@ -16,6 +16,18 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
+# Apple signing and local Xcode state
+**/xcuserdata/
+*.xcuserstate
+*.xcarchive
+*.dSYM
+*.mobileprovision
+*.provisionprofile
+*.p12
+*.p8
+*.cer
+*.csr
+
 # Build / cache
 dist/
 build/

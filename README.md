@@ -1,6 +1,6 @@
 # 即刻 Web 美化
 
-即刻 Web 的美化插件，提升阅读与交互体验。支持 Chrome（MV3）和 Firefox。
+即刻 Web 的美化插件，提升阅读与交互体验。支持 Chrome（MV3）、Firefox，并提供 macOS Safari 版本。
 
 
 ![插件效果](./screenshot.png)
@@ -59,6 +59,17 @@
 7. Firefox 调试：打开 `about:debugging#/runtime/this-firefox`，点击「临时载入附加组件」，选择项目里的 `manifest.json`
 
 修改 `src/content.js` 后请重新执行 `npm run build` 再刷新扩展；修改 `jike-polish-page-bridge.js` 或样式文件后刷新扩展即可。商店 zip 可使用 `./pack.sh`（脚本内会先执行构建）。
+
+### Safari（macOS）
+
+Safari 版本要求 macOS 13+、Safari 16+ 和 Xcode：
+
+1. 执行 `npm run safari:build`，完成共享脚本构建、版本校验和 Xcode 编译检查
+2. 打开 `safari/JikePolish/JikePolish.xcodeproj`
+3. 为 App 和 Extension 两个 target 选择本地 Development Team 后运行
+4. 按容器 App 的提示在 Safari 设置中启用扩展，并允许访问 `web.okjike.com`
+
+签名、Bundle ID 修改和 Archive 发布步骤见 [`safari/README.md`](./safari/README.md)。
 
 ## 调试说明
 

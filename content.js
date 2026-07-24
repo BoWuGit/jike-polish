@@ -899,6 +899,7 @@
       attributeFilter: ["class", "aria-hidden", "src"]
     });
     document.addEventListener("click", (event) => {
+      scheduleLightboxSync();
       const target = event.target;
       if (!(target instanceof HTMLElement) || !target.closest(".yarl__navigation_prev, .yarl__navigation_next")) return;
       requestAnimationFrame(() => {

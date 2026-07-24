@@ -994,6 +994,9 @@
     });
 
     document.addEventListener("click", (event) => {
+      // Safari can delay MutationObserver delivery for DOM inserted by the page world.
+      // Sync after clicks as a fallback for both native and repost lightboxes.
+      scheduleLightboxSync();
       const target = event.target;
       if (!(target instanceof HTMLElement) || !target.closest(".yarl__navigation_prev, .yarl__navigation_next")) return;
       requestAnimationFrame(() => {

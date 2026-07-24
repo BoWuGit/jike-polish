@@ -17,5 +17,13 @@ export default [
     rules: {
       "no-unused-vars": ["warn", { argsIgnorePattern: "^_", caughtErrors: "none" }]
     }
+  },
+  {
+    files: ["scripts/**/*.mjs"],
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: "module",
+      globals: globals.node
+    }
   }
 ];
