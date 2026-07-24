@@ -2,7 +2,6 @@
 
 `screenshots/` 中的图片为 macOS App Store 可用的 2880×1800 PNG，均来自 Safari 中的公开即刻页面：
 
-- `safari-repost-media.png`：引用卡片图片补全与详情页布局
 - `safari-user-card.png`：用户资料悬浮卡片
 - `safari-lightbox-zoom.png`：图片灯箱缩放控制
 

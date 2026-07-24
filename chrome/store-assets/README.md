@@ -2,7 +2,6 @@
 
 `screenshots/` 中的图片为 Chrome Web Store 可用的 1280×800 PNG，均来自 Chrome 中的公开即刻页面：
 
-- `chrome-repost-media.png`：引用卡片图片补全与详情页布局
 - `chrome-user-card.png`：用户资料悬浮卡片
 - `chrome-lightbox-zoom.png`：图片灯箱 2× 缩放控制
 

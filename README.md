@@ -7,10 +7,6 @@
 
 ## 效果预览
 
-### 转发/引用卡片媒体补全
-
-![转发引用卡片媒体补全](./chrome/store-assets/screenshots/chrome-repost-media.png)
-
 ### 用户信息悬浮卡片
 
 ![用户信息悬浮卡片](./chrome/store-assets/screenshots/chrome-user-card.png)
