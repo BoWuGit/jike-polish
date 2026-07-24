@@ -3,11 +3,21 @@
 即刻 Web 的美化插件，提升阅读与交互体验。支持 Chrome（MV3）、Firefox，并提供 macOS Safari 版本。
 
 
-![插件效果](./screenshot.png)
-
-![原生效果](./screenshot-native.png)
-
 👉 [Chrome Web Store 安装](https://chromewebstore.google.com/detail/hnbakdoibeogigpihopfjfjbacfmcfck)
+
+## 效果预览
+
+### 转发/引用卡片媒体补全
+
+![转发引用卡片媒体补全](./chrome/store-assets/screenshots/chrome-repost-media.png)
+
+### 用户信息悬浮卡片
+
+![用户信息悬浮卡片](./chrome/store-assets/screenshots/chrome-user-card.png)
+
+### 图片灯箱缩放
+
+![图片灯箱缩放](./chrome/store-assets/screenshots/chrome-lightbox-zoom.png)
 
 ## 功能
 
@@ -36,8 +46,6 @@
 ### 图片灯箱缩放
 
 在即刻自带的图片灯箱中增加缩放控制：
-
-![图片灯箱缩放](./lightbox_control_image.png)
 
 - 双击放大/还原
 - 滚轮缩放（1×–6×）
