@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { spawnSync } from "node:child_process";
-import { copyFile, readFile } from "node:fs/promises";
+import { copyFile, readFile, rm } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -72,6 +72,7 @@ async function generateIcons() {
 
   for (const [relativePath, size] of ICON_OUTPUTS) {
     const output = path.join(ROOT, relativePath);
+    await rm(output, { force: true });
     if (size === 1024) {
       await copyFile(path.join(ROOT, ICON_MASTER), output);
       continue;
