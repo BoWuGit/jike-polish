@@ -8,6 +8,7 @@
 .env.*
 !.env.example
 .secrets/
+.asc/
 
 # Logs
 *.log
