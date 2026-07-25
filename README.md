@@ -15,11 +15,11 @@
 
 ### 用户信息悬浮卡片
 
-![用户信息悬浮卡片](./chrome/store-assets/screenshots/chrome-user-card.png)
+![悬浮查看用户信息](./chrome/store-assets/screenshots/chrome-user-hover-card.png)
 
 ### 图片灯箱缩放
 
-![图片灯箱缩放](./chrome/store-assets/screenshots/chrome-lightbox-zoom.png)
+![图片灯箱缩放 2×](./chrome/store-assets/screenshots/chrome-lightbox-zoom-2x.png)
 
 ## 功能
 
