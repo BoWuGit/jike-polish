@@ -1,6 +1,6 @@
 # Safari 商店截图
 
-`screenshots/` 中的图片为 macOS App Store 可用的 2880×1800 PNG，均来自 Safari 中的公开即刻页面：
+`screenshots/` 中的图片为 macOS App Store 可用的 2880×1800 PNG，均来自 Safari 中已登录的即刻页面，并在左上角使用红色标签说明功能：
 
 - `safari-user-card.png`：用户资料悬浮卡片
 - `safari-lightbox-zoom.png`：图片灯箱缩放控制
