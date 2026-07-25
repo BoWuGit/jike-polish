@@ -5,7 +5,13 @@
 
 👉 [Chrome Web Store 安装](https://chromewebstore.google.com/detail/hnbakdoibeogigpihopfjfjbacfmcfck)
 
-## 效果预览
+## 布局与字体对比
+
+![开启插件后的即刻 Web](./screenshot.png)
+
+![即刻 Web 原生效果](./screenshot-native.png)
+
+## 功能演示
 
 ### 用户信息悬浮卡片
 
