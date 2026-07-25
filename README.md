@@ -19,7 +19,7 @@
 
 ### 图片灯箱缩放
 
-![图片灯箱缩放 2×](./chrome/store-assets/screenshots/chrome-lightbox-zoom-2x.png)
+![图片灯箱多级缩放](./chrome/store-assets/screenshots/chrome-lightbox-multi-zoom.png)
 
 ## 功能
 
