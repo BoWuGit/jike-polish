@@ -13,9 +13,9 @@
 
 ## 功能演示
 
-### 用户信息悬浮卡片
+### 转发详情与用户悬浮卡片
 
-![悬浮查看用户信息](./chrome/store-assets/screenshots/chrome-user-hover-card.png)
+![转发详情与用户悬浮卡片](./chrome/store-assets/screenshots/chrome-user-hover-card.png)
 
 ### 图片灯箱缩放
 
