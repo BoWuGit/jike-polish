@@ -41,7 +41,11 @@ npm run safari:build
 3. 在 App 和 Extension 两个 target 的 Signing & Capabilities 中选择自己的 Development Team。团队信息只保存在本地，不提交到仓库。
 4. 如果默认 Bundle ID 不属于你的团队，同时修改 App、Extension 的 Bundle ID，以及 `JikePolish/ViewController.swift` 中的 `extensionBundleIdentifier`。
 5. 选择 `JikePolish` scheme 并运行。
-6. 在容器 App 中打开 Safari 设置，启用“即刻 Web 美化”，并允许访问 `web.okjike.com`。
+6. 在容器 App 中打开 Safari 设置，启用“清阅 Web 助手”，并允许访问 `web.okjike.com`。
+
+## 离线功能演示
+
+容器 App 的“打开离线功能演示”无需账号、网络或第三方 App，可独立演示排版优化、转发媒体与链接、用户悬浮卡片以及图片灯箱多级缩放。该模式用于 App Review 和本地功能检查，不会请求任何外部资源。
 
 ## 发布
 

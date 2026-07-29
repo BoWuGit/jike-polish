@@ -11,6 +11,8 @@ const PROJECT_FILE = path.join(PROJECT, "project.pbxproj");
 const DERIVED_DATA = path.join(ROOT, "build/safari");
 const APP_BUNDLE_IDENTIFIER = "com.bowugit.jikepolish";
 const EXTENSION_BUNDLE_IDENTIFIER = `${APP_BUNDLE_IDENTIFIER}.Extension`;
+const APP_DISPLAY_NAME = "清阅 Web 助手";
+const SAFARI_BUILD_NUMBER = "2";
 const EXTENSION_RESOURCES = [
   "manifest.json",
   "content.js",
@@ -90,12 +92,14 @@ async function generateIcons() {
 async function validate() {
   await validateIcons();
 
-  const [manifest, packageJson, packageLock, projectFile, viewController] = await Promise.all([
+  const [manifest, packageJson, packageLock, appInfo, projectFile, viewController, mainHtml] = await Promise.all([
     readJson("manifest.json"),
     readJson("package.json"),
     readJson("package-lock.json"),
+    readJson("app-store/metadata/app-info/zh-Hans.json"),
     readFile(PROJECT_FILE, "utf8"),
     readFile(path.join(ROOT, "safari/JikePolish/JikePolish/ViewController.swift"), "utf8"),
+    readFile(path.join(ROOT, "safari/JikePolish/JikePolish/Resources/Base.lproj/Main.html"), "utf8"),
   ]);
 
   const versions = new Map([
@@ -113,6 +117,23 @@ async function validate() {
   const xcodeVersions = [...projectFile.matchAll(/MARKETING_VERSION = ([^;]+);/g)].map((match) => match[1]);
   if (xcodeVersions.length !== 4 || xcodeVersions.some((version) => version !== manifest.version)) {
     throw new Error(`Safari MARKETING_VERSION must be ${manifest.version} in all four target configurations.`);
+  }
+
+  const xcodeBuildNumbers = [...projectFile.matchAll(/CURRENT_PROJECT_VERSION = ([^;]+);/g)].map((match) => match[1]);
+  if (xcodeBuildNumbers.length !== 4 || xcodeBuildNumbers.some((number) => number !== SAFARI_BUILD_NUMBER)) {
+    throw new Error(`Safari CURRENT_PROJECT_VERSION must be ${SAFARI_BUILD_NUMBER} in all four target configurations.`);
+  }
+
+  if (manifest.name !== APP_DISPLAY_NAME || appInfo.name !== APP_DISPLAY_NAME) {
+    throw new Error(`Browser and App Store names must both be ${APP_DISPLAY_NAME}.`);
+  }
+  const versionMetadata = await readJson(`app-store/metadata/version/${manifest.version}/zh-Hans.json`);
+  const publicMetadata = [manifest.name, manifest.description, appInfo.name, appInfo.subtitle, ...Object.values(versionMetadata)];
+  if (publicMetadata.some((value) => typeof value === "string" && value.includes("即刻"))) {
+    throw new Error("Public app metadata must not use the third-party product name.");
+  }
+  if (!mainHtml.includes("打开离线功能演示") || !mainHtml.includes("1×–6×")) {
+    throw new Error("Safari container must include the account-free offline feature demo.");
   }
 
   for (const bundleIdentifier of [APP_BUNDLE_IDENTIFIER, EXTENSION_BUNDLE_IDENTIFIER]) {

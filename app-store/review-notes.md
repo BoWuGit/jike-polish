@@ -2,38 +2,38 @@
 
 ## 中文
 
-这是一个用于 `web.okjike.com` 的开源、非官方 Safari Web Extension。扩展本身不提供或控制即刻账号登录。
+针对上次审核反馈，本版本已完成以下调整：
 
-重要说明：即刻网页版在未登录时无法访问内容。即刻官方目前只支持使用手机“即刻”App 扫描网页上的短期二维码登录，不提供可复用的用户名和密码，因此我们无法在“登录信息”中提供传统演示账号。
+1. 应用名称、副标题、扩展显示名称和图标均已更换为原创品牌“清阅 Web 助手”，不再在名称或图标中使用第三方品牌。
+2. 容器 App 新增完整的离线功能演示，无需账号、网络或安装其他 App，即可审核全部主要功能。
 
-测试步骤：
+离线审核步骤：
 
-1. 在 iPhone 上安装官方“即刻”App，并注册或登录即刻账号。
-2. 在 Mac 上启动本扩展的容器 App。
-3. 打开 Safari 设置，选择“扩展”，启用“即刻 Web 美化”，并允许访问 `web.okjike.com`。
-4. 访问 <https://web.okjike.com>，使用手机“即刻”App 扫描网页二维码。
-5. 登录后，可使用以下页面测试转发媒体、用户悬浮卡片和图片灯箱缩放：
-   - <https://web.okjike.com/u/34953782-20EA-4675-9108-FD005F127C53/repost/6a3c111c3d621d7862d5f30c>
-   - <https://web.okjike.com/u/28e960ee-9e3a-45bb-bee3-d859b34416c1/repost/69c14cecc5a1d4e6497efb7d>
+1. 启动“清阅 Web 助手”。
+2. 点击“打开离线功能演示”。
+3. 在“排版优化”中切换“原始布局”和“优化后”。
+4. 在“转发与用户卡片”中查看转发媒体与链接，并悬停或点击 `@清禾` 查看用户卡片。
+5. 在“图片灯箱”中打开示例图片，使用按钮、滚轮、双击或键盘体验 1×–6× 缩放和拖拽。
 
-提交的 App Store 截图展示了登录后的用户悬浮卡片和灯箱缩放效果。如果审核环境无法使用“即刻”移动 App 扫码，请通过 App Review 消息联系我们，我们可以立即提供录屏或配合验证。
+离线演示使用应用内置的虚构内容和本地资源，不会连接第三方服务。Safari 扩展的实际网站集成仅在 `web.okjike.com` 上运行；该第三方网站只支持手机 App 扫码登录，但登录并不是完成 App Review 所必需的。
 
-扩展不会向开发者发送任何数据，且与即刻官方不存在隶属、授权或合作关系。
+扩展不会向开发者发送任何数据，且与目标网站的运营方不存在隶属、授权或合作关系。
 
 ## English
 
-This is an open-source, unofficial Safari Web Extension for `web.okjike.com`. The extension does not provide or control Jike account authentication.
+In response to the previous review feedback, this build includes the following changes:
 
-Important: Jike Web does not expose content while signed out. The official service supports web sign-in only through a short-lived QR code scanned with the mobile Jike app; it does not provide reusable username/password credentials. We therefore cannot supply a traditional demo account in the Sign-In Information fields.
+1. The app name, subtitle, extension display name, and icon now use the original “清阅 Web 助手” identity and no longer use third-party branding in the app name or icon.
+2. The containing app now includes a complete offline demonstration. No account, network connection, or other app is required to review all primary features.
 
-To test:
+Offline review steps:
 
-1. Install the official Jike app on an iPhone and create or sign in to a Jike account.
-2. Launch this extension's containing app on the Mac.
-3. In Safari Settings, select Extensions, enable “即刻 Web 美化”, and allow access to `web.okjike.com`.
-4. Visit <https://web.okjike.com> and scan its QR code with the mobile Jike app.
-5. After signing in, use the two URLs above to test repost media, user hover cards, and image-lightbox zoom controls.
+1. Launch “清阅 Web 助手”.
+2. Click “打开离线功能演示” (Open Offline Feature Demo).
+3. Under “排版优化”, switch between the original and optimized layouts.
+4. Under “转发与用户卡片”, inspect the repost media and link, then hover over or click `@清禾` to display the profile card.
+5. Under “图片灯箱”, open the sample image and use the buttons, mouse wheel, double-click, keyboard, and drag gestures to test 1×–6× zoom.
 
-The submitted App Store screenshots show the authenticated hover card and lightbox controls. If the review environment cannot use the mobile Jike app, please contact us through App Review messages; we can promptly provide a screen recording or assist with verification.
+The offline demo uses fictional content and local resources only and does not connect to any third-party service. The Safari extension's live website integration is limited to `web.okjike.com`; that third-party site supports QR-code sign-in only, but signing in is not required to complete App Review.
 
-The extension sends no data to the developer and is not affiliated with Jike.
+The extension sends no data to the developer and is not affiliated with the operator of the supported website.

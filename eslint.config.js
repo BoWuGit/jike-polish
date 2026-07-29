@@ -4,7 +4,7 @@ import globals from "globals";
 export default [
   js.configs.recommended,
   {
-    files: ["src/**/*.js"],
+    files: ["src/**/*.js", "safari/**/Resources/*.js"],
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: "script",

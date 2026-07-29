@@ -4,24 +4,142 @@
     <meta charset="utf-8">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'">
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-    <title>即刻 Web 美化</title>
+    <title>清阅 Web 助手</title>
     <link rel="stylesheet" href="../Style.css">
     <script src="../Script.js" defer></script>
 </head>
 <body>
-    <main>
-        <img class="app-icon" src="../Icon.png" width="112" height="112" alt="">
-        <h1>即刻 Web 美化</h1>
-        <p class="summary">让即刻 Web 的阅读、引用卡片和图片浏览体验更顺手。</p>
+    <main class="app-shell">
+        <section class="overview" aria-labelledby="app-title">
+            <img class="app-icon" src="../Icon.png" width="96" height="96" alt="">
+            <h1 id="app-title">清阅 Web 助手</h1>
+            <p class="summary">优化网页排版、转发详情、用户卡片与图片浏览体验。</p>
 
-        <section class="status" aria-live="polite">
-            <p class="state-unknown">请在 Safari 的“扩展”设置中启用本扩展。</p>
-            <p class="state-on"><span class="dot" aria-hidden="true"></span>扩展已启用，打开即刻 Web 即可使用。</p>
-            <p class="state-off"><span class="dot" aria-hidden="true"></span>扩展尚未启用。</p>
+            <section class="status" aria-live="polite">
+                <p class="state-unknown">请在 Safari 的“扩展”设置中启用本扩展。</p>
+                <p class="state-on"><span class="dot" aria-hidden="true"></span>扩展已启用，可在支持的网页中使用。</p>
+                <p class="state-off"><span class="dot" aria-hidden="true"></span>扩展尚未启用。</p>
+            </section>
+
+            <div class="overview-actions">
+                <button class="open-demo primary" type="button">打开离线功能演示</button>
+                <button class="open-preferences secondary" type="button">打开 Safari 扩展设置…</button>
+            </div>
+            <p class="hint">离线演示无需账号或网络；扩展仅在 web.okjike.com 上运行。</p>
         </section>
 
-        <button class="open-preferences" type="button">退出并打开 Safari 设置…</button>
-        <p class="hint">只会在 web.okjike.com 上运行。</p>
+        <section class="demo" aria-labelledby="demo-title" hidden>
+            <header class="demo-header">
+                <button class="close-demo secondary compact" type="button" aria-label="返回应用首页">← 返回</button>
+                <div>
+                    <h2 id="demo-title">离线功能演示</h2>
+                    <p>使用本地示例完整体验扩展功能，无需登录或安装其他 App。</p>
+                </div>
+            </header>
+
+            <div class="demo-tabs" role="tablist" aria-label="演示功能">
+                <button class="demo-tab is-active" type="button" role="tab" aria-selected="true" data-tab="layout">排版优化</button>
+                <button class="demo-tab" type="button" role="tab" aria-selected="false" data-tab="card">转发与用户卡片</button>
+                <button class="demo-tab" type="button" role="tab" aria-selected="false" data-tab="lightbox">图片灯箱</button>
+            </div>
+
+            <div class="demo-stage">
+                <section class="demo-panel is-active" role="tabpanel" data-panel="layout">
+                    <div class="panel-copy">
+                        <h3>布局与字体对比</h3>
+                        <p>切换查看居中布局、舒适字重与行距带来的变化。</p>
+                    </div>
+                    <div class="layout-switch" role="group" aria-label="布局模式">
+                        <button type="button" data-layout="native">原始布局</button>
+                        <button class="is-active" type="button" data-layout="polished">优化后</button>
+                    </div>
+                    <div class="layout-preview is-polished">
+                        <aside aria-hidden="true">
+                            <span>⌂</span><span>⌕</span><span>◯</span><span>⋯</span>
+                        </aside>
+                        <div class="preview-feed">
+                            <article>
+                                <div class="avatar avatar-blue" aria-hidden="true"></div>
+                                <div>
+                                    <strong>林间来信</strong><small> 刚刚</small>
+                                    <p>好的阅读体验，不只是内容本身，也来自清晰的层级、合适的行距和专注的页面布局。</p>
+                                    <div class="metrics"><span>♡ 24</span><span>○ 3</span><span>↗ 1</span></div>
+                                </div>
+                            </article>
+                            <article>
+                                <div class="avatar avatar-violet" aria-hidden="true"></div>
+                                <div>
+                                    <strong>远山</strong><small> 12 分钟前</small>
+                                    <p>优化后的字体与留白，让长内容更容易浏览，也让交互区域更清楚。</p>
+                                </div>
+                            </article>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="demo-panel" role="tabpanel" data-panel="card" hidden>
+                    <div class="panel-copy">
+                        <h3>转发详情与悬浮用户卡片</h3>
+                        <p>转发内容直接展示媒体与链接；悬停或点击用户名可查看资料。</p>
+                    </div>
+                    <article class="repost-demo">
+                        <header><div class="avatar avatar-violet" aria-hidden="true"></div><div><strong>纸飞机</strong><small>今天 10:24</small></div></header>
+                        <p>这是一条包含完整上下文的转发详情，媒体内容无需再次跳转即可查看。</p>
+                        <div class="quoted-post">
+                            <strong>原帖 · 城市漫游</strong>
+                            <p>傍晚的蓝色时刻很短，但值得停下来认真看看。</p>
+                            <button class="media-preview open-lightbox" type="button" aria-label="打开示例图片灯箱">
+                                <span class="media-sun" aria-hidden="true"></span>
+                                <span class="media-hill hill-one" aria-hidden="true"></span>
+                                <span class="media-hill hill-two" aria-hidden="true"></span>
+                            </button>
+                            <div class="link-preview"><span aria-hidden="true">↗</span><div><strong>城市步行指南</strong><small>example.local</small></div></div>
+                        </div>
+                        <div class="mention-line">同行的人还有
+                            <span class="profile-demo">
+                                <button class="profile-trigger" type="button" aria-expanded="false">@清禾</button>
+                                <span class="profile-popover" role="dialog" aria-label="用户资料卡片">
+                                    <span class="profile-head"><span class="avatar avatar-blue" aria-hidden="true"></span><span><strong>清禾</strong><small>@qinghe</small></span></span>
+                                    <span class="profile-bio">记录城市、书和日常散步。</span>
+                                    <span class="profile-stats"><b>128</b> 关注　<b>2,406</b> 被关注</span>
+                                    <span class="follow-pill">关注</span>
+                                </span>
+                            </span>
+                        </div>
+                    </article>
+                </section>
+
+                <section class="demo-panel" role="tabpanel" data-panel="lightbox" hidden>
+                    <div class="panel-copy">
+                        <h3>图片灯箱多级缩放</h3>
+                        <p>点击图片后可使用按钮、滚轮、双击和键盘进行 1×–6× 缩放。</p>
+                    </div>
+                    <button class="lightbox-card open-lightbox" type="button">
+                        <span class="media-preview large" aria-hidden="true">
+                            <span class="media-sun"></span><span class="media-hill hill-one"></span><span class="media-hill hill-two"></span>
+                        </span>
+                        <span><strong>打开图片灯箱</strong><small>体验缩放与拖拽查看</small></span>
+                    </button>
+                </section>
+
+                <div class="lightbox" role="dialog" aria-modal="true" aria-label="图片灯箱演示" hidden>
+                    <div class="lightbox-toolbar">
+                        <button class="zoom-out" type="button" aria-label="缩小">−</button>
+                        <output class="zoom-level">1×</output>
+                        <button class="zoom-in" type="button" aria-label="放大">＋</button>
+                        <button class="reset-zoom" type="button" aria-label="还原缩放">还原</button>
+                        <button class="close-lightbox" type="button" aria-label="关闭灯箱">×</button>
+                    </div>
+                    <div class="lightbox-viewport">
+                        <div class="zoom-canvas" aria-hidden="true">
+                            <span class="media-sun"></span><span class="media-hill hill-one"></span><span class="media-hill hill-two"></span>
+                            <span class="canvas-caption">傍晚散步 · 离线示例图片</span>
+                        </div>
+                    </div>
+                    <p class="lightbox-help">滚轮或 ＋/− 缩放 · 双击切换 1×/2× · 方向键移动 · 0 还原</p>
+                </div>
+            </div>
+        </section>
     </main>
 </body>
 </html>

@@ -1,7 +1,0 @@
-{
-  "description": "即刻 Web 美化是一款面向 macOS Safari 的开源、非官方网页扩展，让即刻网页版更清爽、更易用。\n\n主要功能：\n• 优化字体、间距与页面布局\n• 增强转发和引用卡片，直接展示相关媒体\n• 鼠标悬停即可查看用户资料卡片\n• 为图片灯箱增加缩放和查看控制\n• 保留即刻网页版原有使用方式\n\n扩展只会在 web.okjike.com 上运行，不包含广告、分析、遥测或用户追踪。\n\n使用方法：\n1. 安装后打开“即刻 Web 美化”应用\n2. 在 Safari 设置的“扩展”中启用“即刻 Web 美化”\n3. 访问 web.okjike.com\n\n本项目与即刻官方不存在隶属、授权或合作关系。",
-  "keywords": "即刻,网页美化,Safari扩展,用户卡片,图片缩放,转发,社交网络",
-  "marketingUrl": "https://github.com/BoWuGit/jike-polish",
-  "promotionalText": "让即刻网页版拥有更清爽的布局、更完整的转发内容和更方便的图片浏览体验。",
-  "supportUrl": "https://github.com/BoWuGit/jike-polish/issues"
-}

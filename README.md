@@ -1,6 +1,6 @@
-# 即刻 Web 美化
+# 清阅 Web 助手
 
-即刻 Web 的美化插件，提升阅读与交互体验。支持 Chrome（MV3）、Firefox，并提供 macOS Safari 版本。
+适用于即刻 Web 的开源美化插件，提升阅读与交互体验。支持 Chrome（MV3）、Firefox，并提供 macOS Safari 版本。
 
 
 👉 [Chrome Web Store 安装](https://chromewebstore.google.com/detail/hnbakdoibeogigpihopfjfjbacfmcfck)
