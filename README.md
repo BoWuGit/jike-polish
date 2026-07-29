@@ -1,4 +1,4 @@
-# 清阅 Web 助手
+# 清阅
 
 适用于即刻 Web 的开源美化插件，提升阅读与交互体验。支持 Chrome（MV3）、Firefox，并提供 macOS Safari 版本。
 
