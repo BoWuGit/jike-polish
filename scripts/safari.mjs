@@ -11,8 +11,8 @@ const PROJECT_FILE = path.join(PROJECT, "project.pbxproj");
 const DERIVED_DATA = path.join(ROOT, "build/safari");
 const APP_BUNDLE_IDENTIFIER = "com.bowugit.jikepolish";
 const EXTENSION_BUNDLE_IDENTIFIER = `${APP_BUNDLE_IDENTIFIER}.Extension`;
-const APP_DISPLAY_NAME = "清阅";
-const SAFARI_BUILD_NUMBER = "3";
+const APP_DISPLAY_NAME = "阅赏";
+const SAFARI_BUILD_NUMBER = "4";
 const EXTENSION_RESOURCES = [
   "manifest.json",
   "content.js",
@@ -133,8 +133,8 @@ async function validate() {
   if (xcodeDisplayNames.length !== 4 || xcodeDisplayNames.some((name) => name !== APP_DISPLAY_NAME)) {
     throw new Error(`Safari CFBundleDisplayName must be ${APP_DISPLAY_NAME} in all four target configurations.`);
   }
-  if ((projectFile.match(/PRODUCT_NAME = "清阅";/g) ?? []).length !== 2) {
-    throw new Error("Safari container product name must be 清阅 in both configurations.");
+  if ((projectFile.match(/PRODUCT_NAME = "阅赏";/g) ?? []).length !== 2) {
+    throw new Error("Safari container product name must be 阅赏 in both configurations.");
   }
   const versionMetadata = await readJson(`app-store/metadata/version/${manifest.version}/zh-Hans.json`);
   const publicMetadata = [manifest.name, manifest.description, appInfo.name, appInfo.subtitle, ...Object.values(versionMetadata)];

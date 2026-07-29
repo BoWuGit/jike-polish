@@ -41,7 +41,7 @@ npm run safari:build
 3. 在 App 和 Extension 两个 target 的 Signing & Capabilities 中选择自己的 Development Team。团队信息只保存在本地，不提交到仓库。
 4. 如果默认 Bundle ID 不属于你的团队，同时修改 App、Extension 的 Bundle ID，以及 `JikePolish/ViewController.swift` 中的 `extensionBundleIdentifier`。
 5. 选择 `JikePolish` scheme 并运行。
-6. 在容器 App 中打开 Safari 设置，启用“清阅”，并允许访问 `web.okjike.com`。
+6. 在容器 App 中打开 Safari 设置，启用“阅赏”，并允许访问 `web.okjike.com`。
 
 ## 离线功能演示
 

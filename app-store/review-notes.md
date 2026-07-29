@@ -4,12 +4,12 @@
 
 针对上次审核反馈，本版本已完成以下调整：
 
-1. 应用名称、副标题、扩展显示名称和图标均已更换为原创品牌“清阅”，不再在名称或图标中使用第三方品牌。
+1. 应用名称、副标题、扩展显示名称和图标均已更换为原创品牌“阅赏”，不再在名称或图标中使用第三方品牌。
 2. 容器 App 新增完整的离线功能演示，无需账号、网络或安装其他 App，即可审核全部主要功能。
 
 离线审核步骤：
 
-1. 启动“清阅”。
+1. 启动“阅赏”。
 2. 点击“打开离线功能演示”。
 3. 在“排版优化”中切换“原始布局”和“优化后”。
 4. 在“转发与用户卡片”中查看转发媒体与链接，并悬停或点击 `@清禾` 查看用户卡片。
@@ -23,12 +23,12 @@
 
 In response to the previous review feedback, this build includes the following changes:
 
-1. The app name, subtitle, extension display name, and icon now use the original “清阅” identity and no longer use third-party branding in the app name or icon.
+1. The app name, subtitle, extension display name, and icon now use the original “阅赏” identity and no longer use third-party branding in the app name or icon.
 2. The containing app now includes a complete offline demonstration. No account, network connection, or other app is required to review all primary features.
 
 Offline review steps:
 
-1. Launch “清阅”.
+1. Launch “阅赏”.
 2. Click “打开离线功能演示” (Open Offline Feature Demo).
 3. Under “排版优化”, switch between the original and optimized layouts.
 4. Under “转发与用户卡片”, inspect the repost media and link, then hover over or click `@清禾` to display the profile card.
