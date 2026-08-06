@@ -520,6 +520,17 @@
     object-fit: cover !important;
   }
 
+  ._root_1kp3y_1 .jp-repost-video:not(:fullscreen) {
+    display: block !important;
+    width: fit-content !important;
+    max-width: calc(100% - 3.25rem * var(--mantine-scale)) !important;
+    height: calc(22.75rem * var(--mantine-scale)) !important;
+    margin-top: var(--jp-repost-attachment-offset, 0px) !important;
+    margin-left: calc(3.25rem * var(--mantine-scale)) !important;
+    border-radius: calc(.5rem * var(--mantine-scale)) !important;
+    object-fit: cover !important;
+  }
+
   ._root_1kp3y_1 .jp-repost-media-more {
     position: absolute !important;
     inset: 0 !important;

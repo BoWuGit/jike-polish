@@ -13,13 +13,14 @@
   const MEDIA_ITEM_CLASS = "jp-repost-media-item";
   const MEDIA_IMAGE_CLASS = "jp-repost-media-img";
   const MEDIA_MORE_CLASS = "jp-repost-media-more";
+  const VIDEO_CLASS = "jp-repost-video";
   const LINK_CLASS = "jp-repost-link";
   const LINK_IMAGE_CLASS = "jp-repost-link-image";
   const LINK_PLACEHOLDER_CLASS = "jp-repost-link-placeholder";
   const LINK_BODY_CLASS = "jp-repost-link-body";
   const LINK_TITLE_CLASS = "jp-repost-link-title";
   const LINK_FOOTER_CLASS = "jp-repost-link-footer";
-  const ATTACHMENT_SELECTOR = `.${LINK_CLASS}, .${MEDIA_CLASS}`;
+  const ATTACHMENT_SELECTOR = `.${LINK_CLASS}, .${MEDIA_CLASS}, .${VIDEO_CLASS}`;
   const LIGHTBOX_CLASS = "jp-repost-lightbox";
   const LIGHTBOX_PORTAL_SELECTOR = `.${LIGHTBOX_CLASS}`;
   const DETAIL_ENDPOINT_BY_TYPE = {
@@ -28,6 +29,7 @@
   };
 
   const detailCache = new Map();
+  const videoUrlCache = new Map();
   let scanTimer = 0;
   let lightboxState = null;
 
@@ -107,6 +109,12 @@
     return null;
   }
 
+  function getVideoSource(data) {
+    if (data?.video) return data;
+    if (data?.target?.video) return data.target;
+    return null;
+  }
+
   function getLinkSource(data) {
     if (getLinkInfo(data)) return data;
     if (getLinkInfo(data?.target)) return data.target;
@@ -148,8 +156,53 @@
     return result;
   }
 
+  function apiHeaders(extraHeaders = {}) {
+    const headers = { ...extraHeaders, platform: "web" };
+    const accessToken = localStorage.getItem("JK_ACCESS_TOKEN");
+    const deviceId = localStorage.getItem("JK_DEVICE_ID");
+    if (accessToken) headers["x-jike-access-token"] = accessToken;
+    if (deviceId) headers["x-jike-device-id"] = deviceId;
+    return headers;
+  }
+
+  function embeddedVideoUrl(video) {
+    const sources = Array.isArray(video?.source) ? video.source : [];
+    for (const source of sources) {
+      const url = safeHttpUrl(typeof source === "string" ? source : source?.url || source?.src);
+      if (url) return url;
+    }
+    return "";
+  }
+
+  async function fetchVideoUrl(source) {
+    const embeddedUrl = embeddedVideoUrl(source.video);
+    if (embeddedUrl) return embeddedUrl;
+
+    const cacheKey = `${source.type}:${source.id}`;
+    if (videoUrlCache.has(cacheKey)) return videoUrlCache.get(cacheKey);
+
+    const params = new URLSearchParams({ id: source.id, type: source.type });
+    const task = fetch(`${API_ORIGIN}/1.0/mediaMeta/interactive?${params}`, {
+      method: "POST",
+      headers: apiHeaders({ "Content-Type": "application/json" }),
+      body: "{}"
+    })
+      .then((response) => response.ok ? response.json() : null)
+      .then((json) => safeHttpUrl(json?.url))
+      .catch(() => "");
+
+    videoUrlCache.set(cacheKey, task);
+    const result = await task;
+    videoUrlCache.set(cacheKey, result);
+    return result;
+  }
+
   function getExistingMedia(card) {
     return Array.from(card.children).find((child) => child.classList?.contains(MEDIA_CLASS)) || null;
+  }
+
+  function getExistingVideo(card) {
+    return Array.from(card.children).find((child) => child.classList?.contains(VIDEO_CLASS)) || null;
   }
 
   function getExistingLink(card) {
@@ -199,6 +252,12 @@
   function removeMedia(card, key) {
     getExistingMedia(card)?.remove();
     if (key) card.dataset.jpRepostMediaKey = key;
+    syncAttachmentGapOffset(card);
+  }
+
+  function removeVideo(card, key) {
+    getExistingVideo(card)?.remove();
+    if (key) card.dataset.jpRepostVideoKey = key;
     syncAttachmentGapOffset(card);
   }
 
@@ -515,6 +574,35 @@
     syncAttachmentGapOffset(card);
   }
 
+  function renderVideo(card, source, url) {
+    const poster = safeHttpUrl(source.video?.thumbnailUrl);
+    const videoKey = `${source.type}:${source.id}:${url}`;
+    const existingVideo = getExistingVideo(card);
+    if (card.dataset.jpRepostVideoKey === videoKey && existingVideo) {
+      syncAttachmentGapOffset(card);
+      return;
+    }
+
+    existingVideo?.remove();
+    const video = document.createElement("video");
+    video.className = VIDEO_CLASS;
+    video.dataset.jpRepostAttachmentOrder = "30";
+    video.controls = true;
+    video.muted = true;
+    video.playsInline = true;
+    video.preload = "metadata";
+    video.src = url;
+    if (poster) video.poster = poster;
+    video.setAttribute("aria-label", "转发原帖视频");
+    for (const eventName of ["click", "pointerdown", "keydown"]) {
+      video.addEventListener(eventName, (event) => event.stopPropagation());
+    }
+
+    insertAttachment(card, video);
+    card.dataset.jpRepostVideoKey = videoKey;
+    syncAttachmentGapOffset(card);
+  }
+
   function samePost(a, b) {
     return !!a && !!b && a.id === b.id && a.type === b.type;
   }
@@ -525,11 +613,13 @@
     if (!isPostLike(data)) return;
 
     let mediaSource = getMediaSource(data);
+    let videoSource = getVideoSource(data);
     let linkSource = getLinkSource(data);
-    if ((!mediaSource || !linkSource) && shouldFetchDetail(data)) {
+    if ((!mediaSource || !videoSource || !linkSource) && shouldFetchDetail(data)) {
       const detail = await fetchPostDetail(data);
       if (!document.contains(card) || !samePost(getQuoteData(card), data)) return;
       mediaSource = mediaSource || getMediaSource(detail);
+      videoSource = videoSource || getVideoSource(detail);
       linkSource = linkSource || getLinkSource(detail);
     }
 
@@ -549,16 +639,21 @@
 
     if (!mediaSource) {
       removeMedia(card, `${data.type}:${data.id}:media:none`);
+    } else {
+      const pictures = getPictures(mediaSource);
+      if (pictures.length) renderMedia(card, mediaSource, pictures);
+      else removeMedia(card, `${mediaSource.type}:${mediaSource.id}:media:none`);
+    }
+
+    if (!videoSource) {
+      removeVideo(card, `${data.type}:${data.id}:video:none`);
       return;
     }
 
-    const pictures = getPictures(mediaSource);
-    if (!pictures.length) {
-      removeMedia(card, `${mediaSource.type}:${mediaSource.id}:media:none`);
-      return;
-    }
-
-    renderMedia(card, mediaSource, pictures);
+    const videoUrl = await fetchVideoUrl(videoSource);
+    if (!document.contains(card) || !samePost(getQuoteData(card), data)) return;
+    if (videoUrl) renderVideo(card, videoSource, videoUrl);
+    else removeVideo(card, `${videoSource.type}:${videoSource.id}:video:none`);
   }
 
   function scanQuoteCards() {
