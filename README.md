@@ -1,9 +1,11 @@
 # 阅赏
 
-适用于即刻 Web 的开源美化插件，提升阅读与交互体验。支持 Chrome（MV3）、Firefox，并提供 macOS Safari 版本。
+适用于即刻 Web 的开源美化插件，提升阅读与交互体验。支持 Chrome 和 Microsoft Edge（MV3）、Firefox，并提供 macOS Safari 版本。
 
 
 👉 [Chrome Web Store 安装](https://chromewebstore.google.com/detail/hnbakdoibeogigpihopfjfjbacfmcfck)
+
+Microsoft Edge Add-ons 首次提审材料见 [`edge/README.md`](./edge/README.md)。
 
 ## 布局与字体对比
 
@@ -62,13 +64,13 @@
 
 1. 安装依赖并构建：`npm install` → `npm run build`
 2. 代码检查：`npm run lint`（或 `npm run check`：lint + build）
-3. 打开 `chrome://extensions/`
+3. Chrome 打开 `chrome://extensions/`；Microsoft Edge 打开 `edge://extensions/`
 4. 开启「开发者模式」
 5. 点击「加载已解压的扩展程序」
 6. 选择本项目目录
 7. Firefox 调试：打开 `about:debugging#/runtime/this-firefox`，点击「临时载入附加组件」，选择项目里的 `manifest.json`
 
-修改 `src/content.js` 后请重新执行 `npm run build` 再刷新扩展；修改 `jike-polish-page-bridge.js` 或样式文件后刷新扩展即可。商店 zip 可使用 `./pack.sh`（脚本内会先执行构建）。
+修改 `src/content.js` 后请重新执行 `npm run build` 再刷新扩展；修改 `jike-polish-page-bridge.js` 或样式文件后刷新扩展即可。Chrome 商店 zip 可使用 `./pack.sh`（脚本内会先执行构建）；带离线审核演示的 Edge 包使用 `npm run edge:package`。
 
 ### Safari（macOS）
 

@@ -35,5 +35,6 @@ build/
 coverage/
 node_modules/
 
-# Packaged extension (pack.sh → jike-polish-v*.zip)
+# Packaged extensions
 jike-polish-v*.zip
+jike-polish-edge-v*.zip

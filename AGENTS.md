@@ -17,6 +17,12 @@
 - This is a public repository. Never commit credentials, tokens, `.env` files, downloaded OAuth JSON, or command output containing secrets. Keep secrets outside the repository and inject them through the shell environment or a secret manager.
 - API submission only starts Chrome Web Store review; it does not guarantee immediate publication. Check final status in the Developer Dashboard.
 
+## Microsoft Edge Add-ons release
+
+- For Edge compatibility, store metadata, privacy declarations, review notes, or submission work, read `edge/README.md` and use its current checklist.
+- Run `npm run edge:package` and upload `jike-polish-edge-v<version>.zip`; the generic Chrome package omits the Edge offline review demo.
+- The Edge demo sources are in `edge/demo/`; its generated package reuses the Safari container demo's `Style.css` and `Script.js`, so changes to those shared interactions must keep both demos working.
+
 ## Git
 
 - Commit messages must be in **English**.
