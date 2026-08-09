@@ -5,6 +5,10 @@ const API_BASE = "https://www.googleapis.com/chromewebstore/v1.1/items";
 const UPLOAD_BASE = "https://www.googleapis.com/upload/chromewebstore/v1.1/items";
 const API_VERSION = "2";
 const REQUIRED_ENV = ["CWS_EXTENSION_ID", "CWS_CLIENT_ID", "CWS_CLIENT_SECRET", "CWS_REFRESH_TOKEN"];
+const REQUEST_TIMEOUT_MS = 30_000;
+const UPLOAD_TIMEOUT_MS = 120_000;
+const UPLOAD_POLL_INTERVAL_MS = 2_000;
+const UPLOAD_POLL_TIMEOUT_MS = 120_000;
 
 function value(input) {
   return String(input || "").trim();
@@ -41,6 +45,9 @@ function errorDetail(payload) {
   if (payload.error?.message) return String(payload.error.message);
   if (typeof payload.error === "string") return payload.error;
   if (payload.error_description) return String(payload.error_description);
+  if (Array.isArray(payload.statusDetail)) {
+    return payload.statusDetail.filter(Boolean).join("; ");
+  }
   if (Array.isArray(payload.itemError)) {
     return payload.itemError
       .map((item) => item?.error_detail || item?.error_code)
@@ -50,14 +57,63 @@ function errorDetail(payload) {
   return "";
 }
 
-async function requestJson(url, options, label) {
-  const response = await fetch(url, options);
-  const payload = await responseBody(response);
+async function requestJson(url, options, label, timeoutMs = REQUEST_TIMEOUT_MS) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  let response;
+  let payload;
+  try {
+    response = await fetch(url, { ...options, signal: controller.signal });
+    payload = await responseBody(response);
+  } catch (error) {
+    if (controller.signal.aborted) {
+      throw new Error(`${label} timed out after ${timeoutMs}ms.`);
+    }
+    throw new Error(`${label} failed: ${error instanceof Error ? error.message : String(error)}`, { cause: error });
+  } finally {
+    clearTimeout(timeout);
+  }
   if (!response.ok) {
     const detail = errorDetail(payload);
     throw new Error(`${label} failed with HTTP ${response.status}${detail ? `: ${detail}` : ""}`);
   }
   return payload || {};
+}
+
+function assertSuccessfulUpload(payload) {
+  const state = value(payload.uploadState);
+  if (state === "SUCCESS") return payload;
+  const detail = errorDetail(payload);
+  if (!state) {
+    throw new Error("Chrome Web Store upload response did not include an upload state.");
+  }
+  throw new Error(`Chrome Web Store upload state was ${state}${detail ? `: ${detail}` : ""}`);
+}
+
+async function waitForUpload(config, token, initialPayload) {
+  if (initialPayload.uploadState !== "IN_PROGRESS") return assertSuccessfulUpload(initialPayload);
+
+  const deadline = Date.now() + UPLOAD_POLL_TIMEOUT_MS;
+  while (Date.now() < deadline) {
+    const remaining = deadline - Date.now();
+    await new Promise((resolve) => setTimeout(resolve, Math.min(UPLOAD_POLL_INTERVAL_MS, remaining)));
+    const requestBudget = deadline - Date.now();
+    if (requestBudget <= 0) break;
+    const payload = await requestJson(
+      `${API_BASE}/${encodeURIComponent(config.extensionId)}?projection=DRAFT`,
+      {
+        method: "GET",
+        headers: {
+          authorization: `Bearer ${token}`,
+          "x-goog-api-version": API_VERSION,
+        },
+      },
+      "Chrome Web Store upload status",
+      Math.min(REQUEST_TIMEOUT_MS, requestBudget),
+    );
+    if (payload.uploadState !== "IN_PROGRESS") return assertSuccessfulUpload(payload);
+  }
+  throw new Error(`Chrome Web Store upload remained IN_PROGRESS after ${UPLOAD_POLL_TIMEOUT_MS}ms.`);
 }
 
 async function accessToken(config) {
@@ -99,18 +155,14 @@ export async function uploadChromeWebStoreZip(config, zipPath) {
       body: zip,
     },
     "Chrome Web Store upload",
+    UPLOAD_TIMEOUT_MS,
   );
-
-  if (payload.uploadState && payload.uploadState !== "SUCCESS") {
-    const detail = errorDetail(payload);
-    throw new Error(`Chrome Web Store upload state was ${payload.uploadState}${detail ? `: ${detail}` : ""}`);
-  }
-  return payload;
+  return waitForUpload(config, token, payload);
 }
 
 export async function submitChromeWebStoreItem(config) {
   const token = await accessToken(config);
-  return requestJson(
+  const payload = await requestJson(
     `${API_BASE}/${encodeURIComponent(config.extensionId)}/publish`,
     {
       method: "POST",
@@ -121,4 +173,11 @@ export async function submitChromeWebStoreItem(config) {
     },
     "Chrome Web Store submit for review",
   );
+  const statuses = Array.isArray(payload.status) ? payload.status.map(value).filter(Boolean) : [];
+  if (!statuses.length || statuses.some((status) => status !== "OK")) {
+    const detail = errorDetail(payload);
+    const status = statuses.length ? statuses.join(", ") : "missing";
+    throw new Error(`Chrome Web Store submit status was ${status}${detail ? `: ${detail}` : ""}`);
+  }
+  return payload;
 }

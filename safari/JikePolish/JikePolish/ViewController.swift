@@ -36,8 +36,20 @@ final class ViewController: NSViewController, WKNavigationDelegate, WKScriptMess
             return
         }
 
-        SFSafariApplication.showPreferencesForExtension(withIdentifier: extensionBundleIdentifier) { _ in
+        SFSafariApplication.showPreferencesForExtension(withIdentifier: extensionBundleIdentifier) { error in
             DispatchQueue.main.async {
+                if let error {
+                    let alert = NSAlert()
+                    alert.alertStyle = .warning
+                    alert.messageText = "无法打开 Safari 扩展设置"
+                    alert.informativeText = error.localizedDescription
+                    if let window = self.view.window {
+                        alert.beginSheetModal(for: window)
+                    } else {
+                        alert.runModal()
+                    }
+                    return
+                }
                 NSApplication.shared.terminate(nil)
             }
         }

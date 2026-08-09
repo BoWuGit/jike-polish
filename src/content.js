@@ -502,9 +502,23 @@
     bridgedMainScroller.addEventListener("scroll", handleMainScrollerBridgeScroll, { passive: true });
   }
 
+  function teardownWindowScrollBridge() {
+    document.documentElement.classList.remove("jp-window-scroll-bridge");
+    document.getElementById(WINDOW_SCROLL_BRIDGE_ID)?.remove();
+    if (bridgedMainScroller) {
+      bridgedMainScroller.removeEventListener("scroll", handleMainScrollerBridgeScroll);
+      bridgedMainScroller = null;
+    }
+    syncingMainScroller = false;
+    syncingWindowScroller = false;
+  }
+
   function syncWindowScrollBridge({ syncWindow = true } = {}) {
     const scroller = getMainScrollViewport();
-    if (!(scroller instanceof HTMLElement)) return null;
+    if (!(scroller instanceof HTMLElement)) {
+      teardownWindowScrollBridge();
+      return null;
+    }
     document.documentElement.classList.add("jp-window-scroll-bridge");
     syncWindowScrollBridgeHeight(scroller);
     bindWindowScrollBridgeScroller(scroller);

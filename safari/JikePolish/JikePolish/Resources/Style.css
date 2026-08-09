@@ -140,7 +140,7 @@ button:active {
 
 .hint {
     margin: 14px 0 0;
-    color: #8b8e94;
+    color: var(--muted);
     font: -apple-system-caption1;
 }
 

@@ -14,6 +14,7 @@ let scale = 1;
 let offsetX = 0;
 let offsetY = 0;
 let dragStart = null;
+let lightboxOpener = null;
 
 window.show = (enabled) => {
     body.classList.toggle("state-on", enabled === true);
@@ -73,16 +74,32 @@ function setScale(nextScale) {
     updateZoom();
 }
 
-function openLightbox() {
+function openLightbox(event) {
+    lightboxOpener = event?.currentTarget instanceof HTMLElement
+        ? event.currentTarget
+        : document.activeElement;
     lightbox.hidden = false;
     setScale(1);
     document.querySelector(".close-lightbox")?.focus();
 }
 
 function closeLightbox() {
-    if (!lightbox) return;
+    if (!lightbox || lightbox.hidden) return;
     lightbox.hidden = true;
     dragStart = null;
+    viewport.classList.remove("is-dragging");
+    if (lightboxOpener?.isConnected && !lightboxOpener.closest("[hidden]")) {
+        lightboxOpener.focus({ preventScroll: true });
+    }
+    lightboxOpener = null;
+}
+
+function endDrag(event) {
+    if (!dragStart || ("pointerId" in event && event.pointerId !== dragStart.pointerId)) return;
+    dragStart = null;
+    if ("pointerId" in event && viewport.hasPointerCapture(event.pointerId)) {
+        viewport.releasePointerCapture(event.pointerId);
+    }
     viewport.classList.remove("is-dragging");
 }
 
@@ -121,25 +138,38 @@ viewport?.addEventListener("wheel", (event) => {
 viewport?.addEventListener("dblclick", () => setScale(scale === 1 ? 2 : 1));
 viewport?.addEventListener("pointerdown", (event) => {
     if (scale === 1) return;
-    dragStart = { x: event.clientX, y: event.clientY, offsetX, offsetY };
+    dragStart = { pointerId: event.pointerId, x: event.clientX, y: event.clientY, offsetX, offsetY };
     viewport.setPointerCapture(event.pointerId);
     viewport.classList.add("is-dragging");
 });
 viewport?.addEventListener("pointermove", (event) => {
-    if (!dragStart) return;
+    if (!dragStart || event.pointerId !== dragStart.pointerId) return;
     offsetX = dragStart.offsetX + event.clientX - dragStart.x;
     offsetY = dragStart.offsetY + event.clientY - dragStart.y;
     updateZoom();
 });
-viewport?.addEventListener("pointerup", (event) => {
-    dragStart = null;
-    viewport.releasePointerCapture(event.pointerId);
-    viewport.classList.remove("is-dragging");
-});
+viewport?.addEventListener("pointerup", endDrag);
+viewport?.addEventListener("pointercancel", endDrag);
+viewport?.addEventListener("lostpointercapture", endDrag);
 
 window.addEventListener("keydown", (event) => {
     if (lightbox?.hidden) return;
-    if (event.key === "Escape") closeLightbox();
+    if (event.key === "Tab") {
+        const controls = [...lightbox.querySelectorAll("button:not([disabled])")];
+        if (!controls.length) return;
+        const first = controls[0];
+        const last = controls[controls.length - 1];
+        if (event.shiftKey && (!lightbox.contains(document.activeElement) || document.activeElement === first)) {
+            event.preventDefault();
+            last.focus();
+        } else if (!event.shiftKey && (!lightbox.contains(document.activeElement) || document.activeElement === last)) {
+            event.preventDefault();
+            first.focus();
+        }
+    } else if (event.key === "Escape") {
+        event.preventDefault();
+        closeLightbox();
+    }
     else if (event.key === "+" || event.key === "=") setScale(scale + 1);
     else if (event.key === "-") setScale(scale - 1);
     else if (event.key === "0") setScale(1);

@@ -152,7 +152,8 @@
 
     detailCache.set(cacheKey, task);
     const result = await task;
-    detailCache.set(cacheKey, result);
+    if (result) detailCache.set(cacheKey, result);
+    else detailCache.delete(cacheKey);
     return result;
   }
 
@@ -193,7 +194,8 @@
 
     videoUrlCache.set(cacheKey, task);
     const result = await task;
-    videoUrlCache.set(cacheKey, result);
+    if (result) videoUrlCache.set(cacheKey, result);
+    else videoUrlCache.delete(cacheKey);
     return result;
   }
 
@@ -250,19 +252,25 @@
   }
 
   function removeMedia(card, key) {
-    getExistingMedia(card)?.remove();
+    const media = getExistingMedia(card);
+    if (!media && card.dataset.jpRepostMediaKey === key) return;
+    media?.remove();
     if (key) card.dataset.jpRepostMediaKey = key;
     syncAttachmentGapOffset(card);
   }
 
   function removeVideo(card, key) {
-    getExistingVideo(card)?.remove();
+    const video = getExistingVideo(card);
+    if (!video && card.dataset.jpRepostVideoKey === key) return;
+    video?.remove();
     if (key) card.dataset.jpRepostVideoKey = key;
     syncAttachmentGapOffset(card);
   }
 
   function removeLink(card, key) {
-    getExistingLink(card)?.remove();
+    const link = getExistingLink(card);
+    if (!link && card.dataset.jpRepostLinkKey === key) return;
+    link?.remove();
     if (key) card.dataset.jpRepostLinkKey = key;
     syncAttachmentGapOffset(card);
   }
@@ -310,9 +318,17 @@
 
   function closeLightbox() {
     if (!lightboxState) return;
+    const { opener } = lightboxState;
     lightboxState.portal.remove();
     document.removeEventListener("keydown", handleLightboxKeydown);
     lightboxState = null;
+    if (opener?.isConnected) {
+      try {
+        opener.focus({ preventScroll: true });
+      } catch {
+        opener.focus();
+      }
+    }
   }
 
   function renderLightboxSlide() {
@@ -342,6 +358,20 @@
       closeLightbox();
       return;
     }
+    if (event.key === "Tab") {
+      const controls = Array.from(lightboxState.portal.querySelectorAll("button:not([hidden]):not([disabled])"));
+      if (!controls.length) return;
+      const first = controls[0];
+      const last = controls[controls.length - 1];
+      if (event.shiftKey && (!lightboxState.portal.contains(document.activeElement) || document.activeElement === first)) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && (!lightboxState.portal.contains(document.activeElement) || document.activeElement === last)) {
+        event.preventDefault();
+        first.focus();
+      }
+      return;
+    }
     if (event.key === "ArrowLeft") {
       event.preventDefault();
       stepLightbox(-1);
@@ -354,6 +384,7 @@
   }
 
   function openLightbox(pictures, index) {
+    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     document.querySelector(LIGHTBOX_PORTAL_SELECTOR)?.remove();
     document.removeEventListener("keydown", handleLightboxKeydown);
 
@@ -408,9 +439,10 @@
     portal.addEventListener("wheel", (event) => event.preventDefault(), { passive: false });
 
     document.body.appendChild(portal);
-    lightboxState = { portal, image, count, prevButton, nextButton, pictures, index };
+    lightboxState = { portal, image, count, prevButton, nextButton, pictures, index, opener };
     document.addEventListener("keydown", handleLightboxKeydown);
     renderLightboxSlide();
+    closeButton.focus({ preventScroll: true });
   }
 
   function openLightboxFromMedia(event, pictures, index) {
@@ -506,10 +538,7 @@
   function renderLink(card, source, linkInfo) {
     const linkKey = `${source.type || "UNKNOWN"}:${source.id}:${stringValue(linkInfo.linkUrl) || stringValue(linkInfo.title) || linkImageUrl(linkInfo)}`;
     const existingLink = getExistingLink(card);
-    if (card.dataset.jpRepostLinkKey === linkKey && existingLink) {
-      syncAttachmentGapOffset(card);
-      return;
-    }
+    if (card.dataset.jpRepostLinkKey === linkKey && existingLink) return;
 
     existingLink?.remove();
     const link = createLinkCard(linkInfo);
@@ -521,10 +550,7 @@
   function renderMedia(card, source, pictures) {
     const mediaKey = `${source.type || "UNKNOWN"}:${source.id}:${pictures.map((picture) => picture.key || fullPictureUrl(picture)).join(",")}`;
     const existingMedia = getExistingMedia(card);
-    if (card.dataset.jpRepostMediaKey === mediaKey && existingMedia) {
-      syncAttachmentGapOffset(card);
-      return;
-    }
+    if (card.dataset.jpRepostMediaKey === mediaKey && existingMedia) return;
 
     existingMedia?.remove();
     const shownPictures = pictures.slice(0, 4);
@@ -578,10 +604,7 @@
     const poster = safeHttpUrl(source.video?.thumbnailUrl);
     const videoKey = `${source.type}:${source.id}:${url}`;
     const existingVideo = getExistingVideo(card);
-    if (card.dataset.jpRepostVideoKey === videoKey && existingVideo) {
-      syncAttachmentGapOffset(card);
-      return;
-    }
+    if (card.dataset.jpRepostVideoKey === videoKey && existingVideo) return;
 
     existingVideo?.remove();
     const video = document.createElement("video");

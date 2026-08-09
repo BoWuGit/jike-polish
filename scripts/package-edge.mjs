@@ -2,12 +2,14 @@
 
 import { spawnSync } from "node:child_process";
 import {
+  chmod,
   copyFile,
   mkdir,
   mkdtemp,
   readFile,
   rm,
   stat,
+  utimes,
   writeFile,
 } from "node:fs/promises";
 import os from "node:os";
@@ -29,9 +31,11 @@ const DEMO_FILES = new Map([
   ["safari/JikePolish/JikePolish/Resources/Style.css", "edge-demo/style.css"],
   ["safari/JikePolish/JikePolish/Resources/Script.js", "edge-demo/script.js"],
 ]);
+const PACKAGE_FILES = ["manifest.json", ...EXTENSION_FILES, ...DEMO_FILES.values()];
+const ARCHIVE_MTIME = new Date("1980-01-01T00:00:00.000Z");
 
-function run(command, args, cwd = ROOT) {
-  const result = spawnSync(command, args, { cwd, stdio: "inherit" });
+function run(command, args, cwd = ROOT, env = process.env) {
+  const result = spawnSync(command, args, { cwd, env, stdio: "inherit" });
   if (result.status !== 0) throw new Error(`${command} ${args.join(" ")} failed.`);
 }
 
@@ -78,6 +82,11 @@ async function packageEdge() {
       ...EXTENSION_FILES.map((file) => copyIntoStage(stage, file)),
       ...[...DEMO_FILES].map(([source, destination]) => copyIntoStage(stage, source, destination)),
     ]);
+    await Promise.all(PACKAGE_FILES.map(async (file) => {
+      const stagedFile = path.join(stage, file);
+      await chmod(stagedFile, 0o644);
+      await utimes(stagedFile, ARCHIVE_MTIME, ARCHIVE_MTIME);
+    }));
 
     await rm(output, { force: true });
     run(
@@ -86,11 +95,10 @@ async function packageEdge() {
         "-X",
         "-q",
         output,
-        "manifest.json",
-        ...EXTENSION_FILES,
-        ...DEMO_FILES.values(),
+        ...PACKAGE_FILES,
       ],
       stage,
+      { ...process.env, TZ: "UTC" },
     );
 
     const outputStat = await stat(output);
