@@ -1,5 +1,7 @@
 # Safari 商店截图
 
+公开页面：[阅赏 - Mac App Store](https://apps.apple.com/cn/app/%E9%98%85%E8%B5%8F/id6794301352?mt=12)
+
 `screenshots/` 中的图片为 macOS App Store 可用的 2880×1800 PNG，均来自 Safari 中已登录的即刻页面，并在左上角使用红色标签说明功能：
 
 - `safari-offline-demo.png`：无需账号或网络的内置功能演示

@@ -1,5 +1,7 @@
 # Safari 版本
 
+公开版本已在 [Mac App Store](https://apps.apple.com/cn/app/%E9%98%85%E8%B5%8F/id6794301352?mt=12) 上架，要求 macOS 13+ 和 Safari 16+。安装后启动“阅赏”，再按提示前往 Safari 的“扩展”设置启用即可。
+
 这里保存 macOS Safari Web Extension 的 Xcode 容器工程。扩展本身仍直接使用仓库根目录的以下文件，避免维护两份业务代码：
 
 - `manifest.json`
@@ -34,7 +36,7 @@ npm run safari:build
 
 该命令会先重新生成全部图标和根目录的 `content.js`，校验版本、图标尺寸和 Xcode 资源列表，再执行无需签名的 Debug 构建。产物位于 `build/safari`，仅用于编译检查。
 
-## 在 Safari 中运行
+## 从源码在 Safari 中运行
 
 1. 执行 `npm run build`。
 2. 打开 `safari/JikePolish/JikePolish.xcodeproj`。

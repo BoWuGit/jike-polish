@@ -2,10 +2,14 @@
 
 适用于即刻 Web 的开源美化插件，提升阅读与交互体验。支持 Chrome 和 Microsoft Edge（MV3）、Firefox，并提供 macOS Safari 版本。
 
+## 安装
 
-👉 [Chrome Web Store 安装](https://chromewebstore.google.com/detail/hnbakdoibeogigpihopfjfjbacfmcfck)
+- [Mac App Store：安装 macOS Safari 版](https://apps.apple.com/cn/app/%E9%98%85%E8%B5%8F/id6794301352?mt=12)
+- [Chrome Web Store：安装 Chrome 版](https://chromewebstore.google.com/detail/hnbakdoibeogigpihopfjfjbacfmcfck)
 
-Microsoft Edge Add-ons 首次提审材料见 [`edge/README.md`](./edge/README.md)。
+Microsoft Edge Add-ons 首次提审材料见 [`edge/README.md`](./edge/README.md)。Firefox 可按照下方本地开发步骤临时载入。
+
+[隐私政策](./PRIVACY.md) · [Safari 版本说明](./safari/README.md)
 
 ## 布局与字体对比
 
