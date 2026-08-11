@@ -10,6 +10,7 @@
   const PAGE_BRIDGE_SCRIPT = "jike-polish-page-bridge.js";
   const MAIN_SCROLL_VIEWPORT_SELECTOR = ".mantine-ScrollArea-viewport, [class*='ScrollArea-viewport'], [class*='ScrollArea_viewport']";
   const PROFILE_LINK_SELECTOR = 'a[href*="/u/"]';
+  const POST_LOCATION_SELECTOR = "._locationContainer_1mslw_69";
   const PROFILE_HOVER_CONTENT_SELECTOR = '[class*="_mentionUser_"], [class*="_name_1rdwv_"], [class*="_avatar_1rdwv_"], [class*="_root_1y0hs_"]';
   const USER_CARD_TRIGGER_SELECTOR = '[class*="_userCard_"]';
   const USER_CARD_MAX_ANCESTOR_DEPTH = 8;
@@ -37,6 +38,7 @@
   let authRefreshTask = null;
   let scrollBridgeObserver = null;
   let scrollBridgeRaf = 0;
+  let postLocationTooltipRaf = 0;
   let scrollBridgeNeedsFocus = false;
   let bridgedMainScroller = null;
   let syncingMainScroller = false;
@@ -250,6 +252,26 @@
     const link = el.closest(PROFILE_LINK_SELECTOR);
     if (!link || !isProfileHoverLink(link)) return null;
     return link;
+  }
+  function syncPostLocationTooltip(el) {
+    if (!(el instanceof Element)) return;
+    const location2 = el.closest(POST_LOCATION_SELECTOR);
+    if (!(location2 instanceof HTMLElement)) return;
+    const label = location2.querySelector(":scope > span");
+    if (!(label instanceof HTMLElement)) return;
+    const isTruncated = label.scrollWidth > label.clientWidth + 1;
+    if (isTruncated) {
+      location2.title = label.textContent?.trim() || "";
+    } else {
+      location2.removeAttribute("title");
+    }
+  }
+  function schedulePostLocationTooltipSync() {
+    if (postLocationTooltipRaf) return;
+    postLocationTooltipRaf = requestAnimationFrame(() => {
+      postLocationTooltipRaf = 0;
+      document.querySelectorAll(POST_LOCATION_SELECTOR).forEach(syncPostLocationTooltip);
+    });
   }
   function extractId(link) {
     const profileLink = getProfileLink(link);
@@ -593,10 +615,14 @@
     syncKeyboardScrollTarget({ focus: true });
     syncWindowScrollBridge();
     scheduleScrollBridgeSync(true);
+    schedulePostLocationTooltipSync();
     window.addEventListener("scroll", handleWindowBridgeScroll, { passive: true });
     document.addEventListener("keydown", handleKeyboardScroll, { capture: true });
     if (!document.body || scrollBridgeObserver) return;
-    scrollBridgeObserver = new MutationObserver(() => scheduleScrollBridgeSync());
+    scrollBridgeObserver = new MutationObserver(() => {
+      scheduleScrollBridgeSync();
+      schedulePostLocationTooltipSync();
+    });
     scrollBridgeObserver.observe(document.body, { childList: true, subtree: true });
   }
   function forwardNativeHoverCardWheel(event) {
@@ -1268,6 +1294,7 @@
       themeObserver.observe(document.body, { attributes: true, attributeFilter: ["class"] });
     }
     document.body.addEventListener("mouseover", (e) => {
+      syncPostLocationTooltip(e.target);
       const link = getLink(e.target);
       if (link) {
         if (activeLink === link && document.getElementById(POPUP_ID)) return;

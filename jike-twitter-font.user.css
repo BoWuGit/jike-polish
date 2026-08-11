@@ -195,10 +195,43 @@
   }
 
   ._desc_go2me_18 {
+    min-width: 0 !important;
     font-size: 0.8125rem !important;  /* 13px */
     line-height: 1.4 !important;
     font-weight: 400 !important;
     color: var(--jp-text-secondary, #707684) !important;
+  }
+
+  /*
+   * 时间与地点共用一行时，长地点会把时间压成「48分钟 / 前」。
+   * 固定时间的完整宽度，地点占用剩余空间并单行省略，保持元信息紧凑。
+   */
+  ._titleContainer_go2me_7 {
+    min-width: 0 !important;
+    flex: 1 1 auto !important;
+  }
+
+  ._descContainer_1mslw_63 {
+    min-width: 0 !important;
+    overflow: hidden !important;
+    white-space: nowrap !important;
+  }
+
+  ._locationContainer_1mslw_69 {
+    min-width: 0 !important;
+    flex: 1 1 auto !important;
+    overflow: hidden !important;
+  }
+
+  ._locationIcon_1mslw_74 {
+    flex: 0 0 auto !important;
+  }
+
+  ._locationContainer_1mslw_69 > span {
+    min-width: 0 !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
   }
 
   /* ============================================================
