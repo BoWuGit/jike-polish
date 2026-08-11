@@ -48,6 +48,7 @@
 
 - **Extension logo**：`edge/store-assets/logo-300.png`（300×300 PNG）
 - **Screenshot 1**：`edge/store-assets/screenshots/edge-offline-demo.png`（1280×800 PNG，Edge 151 实际运行；内容均为本地虚构示例）
+- **Screenshot 1 标题**：`转发与用户卡片离线演示`
 - **其他 Screenshots**：首次提交留空，避免把目标网站真实用户的资料或内容放入商店元数据
 - **Small promotional tile**：留空（可选）
 - **Large promotional tile**：留空（可选）

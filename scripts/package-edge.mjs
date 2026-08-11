@@ -23,6 +23,9 @@ const EXTENSION_FILES = [
   "jike-twitter-font.user.css",
   "jike-polish-page-bridge.js",
 ];
+const EDGE_LOCALE = "zh_CN";
+const EDGE_LOCALE_FILE = `_locales/${EDGE_LOCALE}/messages.json`;
+const ACTION_TITLE = "打开阅赏离线功能演示";
 const DEMO_FILES = new Map([
   ["edge/demo/launcher.html", "edge-demo/launcher.html"],
   ["edge/demo/launcher.css", "edge-demo/launcher.css"],
@@ -31,7 +34,12 @@ const DEMO_FILES = new Map([
   ["safari/JikePolish/JikePolish/Resources/Style.css", "edge-demo/style.css"],
   ["safari/JikePolish/JikePolish/Resources/Script.js", "edge-demo/script.js"],
 ]);
-const PACKAGE_FILES = ["manifest.json", ...EXTENSION_FILES, ...DEMO_FILES.values()];
+const PACKAGE_FILES = [
+  "manifest.json",
+  ...EXTENSION_FILES,
+  EDGE_LOCALE_FILE,
+  ...DEMO_FILES.values(),
+];
 const ARCHIVE_MTIME = new Date("1980-01-01T00:00:00.000Z");
 
 function run(command, args, cwd = ROOT, env = process.env) {
@@ -67,18 +75,30 @@ async function packageEdge() {
   try {
     const edgeManifest = structuredClone(manifest);
     delete edgeManifest.browser_specific_settings;
+    edgeManifest.name = "__MSG_extensionName__";
+    edgeManifest.description = "__MSG_extensionDescription__";
+    edgeManifest.default_locale = EDGE_LOCALE;
     edgeManifest.action = {
       default_icon: {
         16: "icon.png",
         48: "icon.png",
         128: "icon.png",
       },
-      default_title: "打开阅赏离线功能演示",
+      default_title: "__MSG_actionTitle__",
       default_popup: "edge-demo/launcher.html",
     };
-    await writeFile(path.join(stage, "manifest.json"), `${JSON.stringify(edgeManifest, null, 2)}\n`);
-
+    const localeMessages = {
+      extensionName: { message: manifest.name },
+      extensionDescription: { message: manifest.description },
+      actionTitle: { message: ACTION_TITLE },
+    };
+    await mkdir(path.join(stage, path.dirname(EDGE_LOCALE_FILE)), { recursive: true });
     await Promise.all([
+      writeFile(path.join(stage, "manifest.json"), `${JSON.stringify(edgeManifest, null, 2)}\n`),
+      writeFile(
+        path.join(stage, EDGE_LOCALE_FILE),
+        `${JSON.stringify(localeMessages, null, 2)}\n`,
+      ),
       ...EXTENSION_FILES.map((file) => copyIntoStage(stage, file)),
       ...[...DEMO_FILES].map(([source, destination]) => copyIntoStage(stage, source, destination)),
     ]);

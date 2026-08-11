@@ -13,8 +13,9 @@
 | 截图 | 已准备 | 1 张 1280×800 PNG，由 Edge 151 实际运行生成，内容均为本地虚构示例。 |
 | 商店文案 | 已准备 | 见 [`store-listing.zh-CN.md`](./store-listing.zh-CN.md)。 |
 | 审核说明 | 已准备 | 见 [`review-notes.md`](./review-notes.md)。 |
-| 隐私政策 | 已更新 | 提审前先把仓库改动发布到 `main`，再确认公开 URL 显示的是新版跨浏览器政策。 |
-| Partner Center 账号与首次提交 | 待账号所有者 | 需要 Microsoft 个人账号登录、选择账号类型并接受协议；这些身份操作不能代办。 |
+| 隐私政策 | 已发布 | 公开 URL 已显示新版跨浏览器政策。 |
+| Partner Center 草稿 | 已完成 | 已创建“阅赏”1.2.7 草稿；程序包、可用性、属性、隐私和简体中文 Store 一览均为 Complete。 |
+| 开发者验证与发布 | 待账号所有者 | Partner Center 当前返回 `NotAuthorizedDeveloper`；需要账号所有者在“帐户设置”完成开发者身份验证，最终检查后再点击 Publish。 |
 
 ## Edge 包与通用包的区别
 
@@ -23,6 +24,7 @@ Microsoft Edge 基于 Chromium。官方迁移文档说明 Chrome 扩展 API 与 
 仓库的实际网页增强代码无需 Edge 专属改动。`npm run edge:package` 会基于根 `manifest.json` 生成只用于 Edge 的 manifest：
 
 - 保留 Manifest V3、名称、版本、内容脚本和最小站点权限；
+- 把名称、简短说明和工具栏标题放入 `zh_CN` 本地化资源，使 Partner Center 正确识别简体中文商店语言；
 - 去掉仅供 Firefox 使用的 `browser_specific_settings.gecko`；
 - 增加无权限的工具栏入口，打开内置离线功能演示；
 - 把所有可执行 JavaScript 和 CSS 打进 zip。
@@ -46,6 +48,7 @@ unzip -l "$EDGE_ZIP"
 - `icon.png`
 - `jike-twitter-font.user.css`
 - `jike-polish-page-bridge.js`
+- `_locales/zh_CN/messages.json`
 - `edge-demo/launcher.html`
 - `edge-demo/launcher.css`
 - `edge-demo/index.html`
@@ -86,7 +89,7 @@ unzip -q "$EDGE_ZIP" -d /tmp/jike-polish-edge
 5. **Availability**：建议 `Public`、所有市场。目标网站的中文界面及登录限制已在文案中披露。
 6. **Properties**：按 [`store-listing.zh-CN.md`](./store-listing.zh-CN.md) 填写。
 7. **Privacy**：按下一节填写，并使用公开隐私政策 URL。
-8. **Store listings**：添加简体中文，将文案、Logo 和离线演示截图上传。
+8. **Store listings**：完成程序包识别出的简体中文，将文案、Logo 和离线演示截图上传。
 9. **Notes for certification**：粘贴 [`review-notes.md`](./review-notes.md) 的英文部分。
 10. 检查所有页面为 Complete 后点击 **Publish**。官方说明认证最长可能需要 7 个工作日。
 
