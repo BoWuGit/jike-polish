@@ -3,5 +3,6 @@
   "keywords": "网页美化,Safari扩展,用户卡片,图片缩放,转发,社交网络,阅读工具",
   "marketingUrl": "https://github.com/BoWuGit/jike-polish",
   "promotionalText": "优化网页排版、转发详情、用户卡片和图片浏览，并提供无需登录的离线功能演示。",
+  "whatsNew": "提升扩展运行稳定性，改进长内容的位置显示，并优化图片灯箱的键盘操作与焦点管理。",
   "supportUrl": "https://github.com/BoWuGit/jike-polish/issues"
 }

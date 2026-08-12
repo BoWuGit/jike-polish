@@ -2,10 +2,9 @@
 
 ## 中文
 
-针对上次审核反馈，本版本已完成以下调整：
+1.2.8 是一次小型稳定性更新，改进了长内容的位置显示、运行时容错，以及图片灯箱的键盘操作与焦点管理。
 
-1. 应用名称、副标题、扩展显示名称和图标均已更换为原创品牌“阅赏”，不再在名称或图标中使用第三方品牌。
-2. 容器 App 新增完整的离线功能演示，无需账号、网络或安装其他 App，即可审核全部主要功能。
+应用继续使用原创品牌“阅赏”，并提供完整的离线功能演示；无需账号、网络或安装其他 App，即可审核全部主要功能。
 
 离线审核步骤：
 
@@ -21,10 +20,9 @@
 
 ## English
 
-In response to the previous review feedback, this build includes the following changes:
+Version 1.2.8 is a small stability update. It improves location display for long content, runtime resilience, and keyboard/focus handling in the image lightbox.
 
-1. The app name, subtitle, extension display name, and icon now use the original “阅赏” identity and no longer use third-party branding in the app name or icon.
-2. The containing app now includes a complete offline demonstration. No account, network connection, or other app is required to review all primary features.
+The app continues to use the original “阅赏” identity and includes a complete offline demonstration. No account, network connection, or other app is required to review all primary features.
 
 Offline review steps:
 
