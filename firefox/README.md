@@ -129,6 +129,7 @@ AMO 列表创建后，到 [AMO API Keys](https://addons.mozilla.org/developers/a
 ```bash
 export WEB_EXT_API_KEY="<AMO_JWT_ISSUER>"
 export WEB_EXT_API_SECRET="<AMO_JWT_SECRET>"
+export AMO_EXISTING_LISTING="jike-polish@bowugit.github.io"
 npm run release:firefox -- --mode submit --confirm
 ```
 
@@ -139,7 +140,7 @@ npm run release:firefox
 npm run release:firefox -- --mode submit --dry-run
 ```
 
-提交模式要求 Git 工作区干净，会自动执行 lint、测试、跨平台版本/图标校验、构建、Mozilla lint，并把源码包一起上传。首次提交仍应走上方人工流程，确保隐私政策、许可证、支持链接和截图在提交审核前一起确认；脚本不依赖公开商店可见性判断，因此也不会误挡尚未公开或仍在审核中的已有 listing。
+提交模式要求 Git 工作区干净，会自动执行 lint、测试、跨平台版本/图标校验、构建、Mozilla lint，并把源码包一起上传。首次提交仍应走上方人工流程，确保隐私政策、许可证、支持链接和截图在提交审核前一起确认。脚本不依赖公开商店可见性判断；更新已有 listing 前，必须在 Developer Hub 确认后设置精确的 `AMO_EXISTING_LISTING` 值。只有明确要让 API 创建首次 listing 时，才额外传入 `--allow-new-listing`。
 
 凭据不得写入仓库、`.env`、命令输出或文档。AMO API 提交只表示进入签名/审核流程，不保证立即公开；最终状态在 [Developer Hub](https://addons.mozilla.org/developers/addons) 查看。
 

@@ -28,7 +28,7 @@
 - For Firefox compatibility, AMO metadata, privacy declarations, review notes, signing, or submission work, read `firefox/README.md` and use its current checklist.
 - Keep the Gecko ID `jike-polish@bowugit.github.io` stable and the Firefox minimum version at 142+ unless the data-consent design is intentionally revised.
 - Run `npm run firefox:package` and upload both the matching extension zip and source zip; AMO requires the source archive because the runtime scripts are bundled.
-- Keep `WEB_EXT_API_KEY` and `WEB_EXT_API_SECRET` outside the repository; `npm run release:firefox -- --mode submit --confirm` is for a clean Git tree.
+- Keep `WEB_EXT_API_KEY`, `WEB_EXT_API_SECRET`, and `AMO_EXISTING_LISTING` outside the repository; `npm run release:firefox -- --mode submit --confirm` is for a clean Git tree.
 
 ## Git
 

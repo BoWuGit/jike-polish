@@ -18,6 +18,7 @@ Options:
   --mode package       Validate and create extension/source packages (default)
   --mode submit        Submit a listed version to AMO for review
   --confirm            Required with --mode submit
+  --allow-new-listing  Required if no existing AMO listing has been confirmed
   --dry-run            Validate/package without calling AMO
   -h, --help           Show this help
 
@@ -29,6 +30,7 @@ function parseArgs(args) {
   const options = {
     mode: "package",
     confirm: false,
+    allowNewListing: false,
     dryRun: false,
     help: false,
   };
@@ -36,6 +38,7 @@ function parseArgs(args) {
   for (let index = 0; index < args.length; index += 1) {
     const arg = args[index];
     if (arg === "--confirm") options.confirm = true;
+    else if (arg === "--allow-new-listing") options.allowNewListing = true;
     else if (arg === "--dry-run") options.dryRun = true;
     else if (arg === "--help" || arg === "-h") options.help = true;
     else if (arg === "--mode") {
@@ -128,6 +131,12 @@ async function release(options) {
 
   assertCredential("WEB_EXT_API_KEY");
   assertCredential("WEB_EXT_API_SECRET");
+  if (!options.allowNewListing && process.env.AMO_EXISTING_LISTING !== FIREFOX_ID) {
+    throw new Error(
+      `Set AMO_EXISTING_LISTING=${FIREFOX_ID} after confirming the listing in Developer Hub, `
+      + "or pass --allow-new-listing only for an intentional API-created first submission.",
+    );
+  }
 
   const signedArtifacts = path.join(ROOT, "build/firefox-signed");
   await rm(signedArtifacts, { recursive: true, force: true });
