@@ -9,6 +9,8 @@
 !.env.example
 .secrets/
 .asc/
+.amo-upload-uuid
+.web-extension-id
 
 # Logs
 *.log
@@ -34,7 +36,10 @@ dist/
 build/
 coverage/
 node_modules/
+web-ext-artifacts/
 
 # Packaged extensions
 jike-polish-v*.zip
 jike-polish-edge-v*.zip
+jike-polish-firefox-v*.zip
+jike-polish-firefox-source-v*.zip

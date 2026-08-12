@@ -5,20 +5,26 @@
   "version": "1.2.8",
   "description": "即刻 Web 浏览器扩展（内容脚本构建与校验）",
   "scripts": {
-    "build": "esbuild src/content.js --outfile=content.js --platform=browser --target=chrome109,safari16",
-    "lint": "eslint src scripts safari/JikePolish/JikePolish/Resources/Script.js",
-    "lint:fix": "eslint src scripts --fix",
-    "check": "npm run lint && npm run build && npm run safari:check",
+    "build": "esbuild src/content.js src/jike-polish-page-bridge.js --bundle --outdir=. --format=iife --platform=browser --target=chrome109,firefox142,safari16",
+    "lint": "eslint src scripts safari/JikePolish/JikePolish/Resources/Script.js tests",
+    "lint:fix": "eslint src scripts safari/JikePolish/JikePolish/Resources/Script.js tests --fix",
+    "test": "node --test",
+    "check": "npm run lint && npm test && npm run firefox:check && npm run safari:check",
     "safari:check": "node scripts/safari.mjs check",
     "safari:icons": "node scripts/safari.mjs icons",
     "safari:build": "node scripts/safari.mjs build",
     "release:extension": "node scripts/release-extension.mjs",
-    "edge:package": "node scripts/package-edge.mjs"
+    "edge:package": "node scripts/package-edge.mjs",
+    "firefox:check": "node scripts/package-firefox.mjs check",
+    "firefox:package": "node scripts/package-firefox.mjs package",
+    "firefox:run": "npm run firefox:package && web-ext run --source-dir build/firefox --start-url https://web.okjike.com/ --no-config-discovery",
+    "release:firefox": "node scripts/release-firefox.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.21.0",
     "esbuild": "^0.25.0",
     "eslint": "^9.21.0",
-    "globals": "^15.15.0"
+    "globals": "^15.15.0",
+    "web-ext": "^10.6.0"
   }
 }

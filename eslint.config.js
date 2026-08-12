@@ -4,10 +4,10 @@ import globals from "globals";
 export default [
   js.configs.recommended,
   {
-    files: ["src/**/*.js", "safari/**/Resources/*.js"],
+    files: ["src/**/*.js"],
     languageOptions: {
       ecmaVersion: 2022,
-      sourceType: "script",
+      sourceType: "module",
       globals: {
         ...globals.browser,
         chrome: "readonly",
@@ -19,7 +19,15 @@ export default [
     }
   },
   {
-    files: ["scripts/**/*.mjs"],
+    files: ["safari/**/Resources/*.js"],
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: "script",
+      globals: globals.browser
+    }
+  },
+  {
+    files: ["scripts/**/*.mjs", "tests/**/*.js"],
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: "module",

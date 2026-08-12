@@ -1,674 +1,34 @@
 (() => {
-  const API_ORIGIN = "https://api.ruguoapp.com";
-  const API_BASE = `${API_ORIGIN}/1.0`;
-  const AUTH_REFRESH_PATH = "/app_auth_tokens.refresh";
-  const DEBUG = localStorage.getItem("JIKE_POLISH_DEBUG") === "1";
-  const POPUP_ID = "jike-polish-popup";
-  const LIGHTBOX_ZOOM_OUT_BUTTON_ID = "jike-polish-lightbox-zoom-out";
-  const LIGHTBOX_ZOOM_IN_BUTTON_ID = "jike-polish-lightbox-zoom-in";
-  const WINDOW_SCROLL_BRIDGE_ID = "jike-polish-window-scroll-bridge";
-  const PAGE_BRIDGE_SCRIPT = "jike-polish-page-bridge.js";
-  const MAIN_SCROLL_VIEWPORT_SELECTOR = ".mantine-ScrollArea-viewport, [class*='ScrollArea-viewport'], [class*='ScrollArea_viewport']";
-  const PROFILE_LINK_SELECTOR = 'a[href*="/u/"]';
-  const POST_LOCATION_SELECTOR = "._locationContainer_1mslw_69";
-  const PROFILE_HOVER_CONTENT_SELECTOR = '[class*="_mentionUser_"], [class*="_name_1rdwv_"], [class*="_avatar_1rdwv_"], [class*="_root_1y0hs_"]';
-  const USER_CARD_TRIGGER_SELECTOR = '[class*="_userCard_"]';
-  const USER_CARD_MAX_ANCESTOR_DEPTH = 8;
-  const USER_CARD_MAX_HEIGHT = 220;
-  const USER_CARD_MIN_WIDTH = 120;
-  const KEYBOARD_SCROLL_KEYS = /* @__PURE__ */ new Set(["ArrowDown", "ArrowUp", "PageDown", "PageUp", " ", "Spacebar", "Home", "End"]);
-  const KEYBOARD_SCROLL_LINE_PX = 48;
-  const KEYBOARD_SCROLL_PAGE_RATIO = 0.9;
-  const SCROLL_SYNC_EPSILON = 1;
-  const CACHE = /* @__PURE__ */ new Map();
-  const PENDING = /* @__PURE__ */ new Map();
-  const AUTH_EXPIRED = Symbol("auth-expired");
-  const SHOW_DELAY = 140;
-  const LIGHTBOX_MIN_SCALE = 1;
-  const LIGHTBOX_MAX_SCALE = 6;
-  const LIGHTBOX_SCALE_STEP = 0.5;
-  let activeLink = null;
-  let hideTimer = null;
-  let hoverTimer = null;
-  let requestSeq = 0;
-  let lightboxObserver = null;
-  let themeObserver = null;
-  let lightboxRaf = 0;
-  let profileRequestAbort = null;
-  let authRefreshTask = null;
-  let scrollBridgeObserver = null;
-  let scrollBridgeRaf = 0;
-  let postLocationTooltipRaf = 0;
-  let scrollBridgeNeedsFocus = false;
-  let bridgedMainScroller = null;
-  let syncingMainScroller = false;
-  let syncingWindowScroller = false;
-  const lightboxZoom = {
+  // src/shared/debug.js
+  var DEBUG = localStorage.getItem("JIKE_POLISH_DEBUG") === "1";
+  function log(...args) {
+    if (DEBUG) console.log("[jike-polish]", ...args);
+  }
+
+  // src/content/constants.js
+  var MAIN_SCROLL_VIEWPORT_SELECTOR = ".mantine-ScrollArea-viewport, [class*='ScrollArea-viewport'], [class*='ScrollArea_viewport']";
+  var POPUP_ID = "jike-polish-popup";
+  var WINDOW_SCROLL_BRIDGE_ID = "jike-polish-window-scroll-bridge";
+
+  // src/content/lightbox.js
+  var LIGHTBOX_ZOOM_OUT_BUTTON_ID = "jike-polish-lightbox-zoom-out";
+  var LIGHTBOX_ZOOM_IN_BUTTON_ID = "jike-polish-lightbox-zoom-in";
+  var LIGHTBOX_MIN_SCALE = 1;
+  var LIGHTBOX_MAX_SCALE = 6;
+  var LIGHTBOX_SCALE_STEP = 0.5;
+  var lightboxRaf = 0;
+  var lightboxZoom = {
     image: null,
     scale: 1,
     x: 0,
     y: 0,
     dragging: false,
-    moved: false,
     pointerId: null,
     startX: 0,
     startY: 0,
     originX: 0,
     originY: 0
   };
-  function log(...a) {
-    if (DEBUG) console.log("[jike-polish]", ...a);
-  }
-  function token() {
-    return localStorage.getItem("JK_ACCESS_TOKEN");
-  }
-  function refreshToken() {
-    return localStorage.getItem("JK_REFRESH_TOKEN");
-  }
-  function deviceId() {
-    return localStorage.getItem("JK_DEVICE_ID");
-  }
-  function hasAuthToken() {
-    return !!(token() || refreshToken());
-  }
-  const escEl = document.createElement("div");
-  function esc(s) {
-    escEl.textContent = s;
-    return escEl.innerHTML;
-  }
-  function extensionRuntime() {
-    return globalThis.browser?.runtime ?? globalThis.chrome?.runtime;
-  }
-  const POST_DETAIL_PATH = /\/u\/[^/]+\/(?:post|repost)\//i;
-  function syncPostDetailLayoutClass() {
-    document.documentElement.classList.toggle("jp-detail-post", POST_DETAIL_PATH.test(location.pathname));
-  }
-  function readLayoutWidthPx() {
-    const parts = [];
-    const scrollVp = document.querySelector(".mantine-ScrollArea-viewport");
-    if (scrollVp && scrollVp.clientWidth > 0) parts.push(scrollVp.clientWidth);
-    const root = document.documentElement;
-    const vv = window.visualViewport;
-    if (vv && typeof vv.width === "number" && vv.width > 0) parts.push(vv.width);
-    if (root && root.clientWidth > 0) parts.push(root.clientWidth);
-    if (window.innerWidth > 0) parts.push(window.innerWidth);
-    if (!parts.length) return 0;
-    return Math.floor(Math.min(...parts));
-  }
-  const NAV_DESKTOP_STACK_SELECTOR = '.mantine-ScrollArea-content > [class*="_desktopStack_"]';
-  function syncJpNavInlineLeft() {
-    const nav = document.querySelector(NAV_DESKTOP_STACK_SELECTOR);
-    if (!(nav instanceof HTMLElement)) return;
-    if (window.matchMedia && !window.matchMedia("(min-width: 960px)").matches) {
-      nav.style.removeProperty("left");
-      return;
-    }
-    const left = getComputedStyle(document.documentElement).getPropertyValue("--jp-nav-left").trim();
-    if (left) nav.style.setProperty("left", left, "important");
-  }
-  function syncJpLayoutWidthVar() {
-    const el = document.documentElement;
-    if (!el) return;
-    const w = readLayoutWidthPx();
-    if (w > 0) el.style.setProperty("--jp-layout-width", `${w}px`);
-    syncJpNavInlineLeft();
-  }
-  function jpLayoutTick() {
-    syncPostDetailLayoutClass();
-    syncJpLayoutWidthVar();
-    syncKeyboardScrollTarget();
-    syncWindowScrollBridge();
-    bindScrollAreaChildResizeObservers();
-  }
-  let jpLayoutSyncExtraTimers = [];
-  function scheduleJpLayoutSyncRafChain(remaining) {
-    if (remaining <= 0) return;
-    requestAnimationFrame(() => {
-      jpLayoutTick();
-      scheduleJpLayoutSyncRafChain(remaining - 1);
-    });
-  }
-  function scheduleJpLayoutSync() {
-    for (const t of jpLayoutSyncExtraTimers) clearTimeout(t);
-    jpLayoutSyncExtraTimers = [];
-    jpLayoutTick();
-    queueMicrotask(jpLayoutTick);
-    scheduleJpLayoutSyncRafChain(3);
-    for (const ms of [0, 55, 160, 320]) {
-      jpLayoutSyncExtraTimers.push(setTimeout(jpLayoutTick, ms));
-    }
-  }
-  let jpScrollChildrenRo = null;
-  let jpScrollChildrenDebounce = 0;
-  function bindScrollAreaChildResizeObservers() {
-    const content = document.querySelector(".mantine-ScrollArea-content");
-    if (!content) return;
-    if (!jpScrollChildrenRo) {
-      jpScrollChildrenRo = new ResizeObserver(() => {
-        clearTimeout(jpScrollChildrenDebounce);
-        jpScrollChildrenDebounce = setTimeout(() => {
-          jpLayoutTick();
-        }, 32);
-      });
-    }
-    jpScrollChildrenRo.disconnect();
-    for (const node of content.children) {
-      if (node instanceof Element) jpScrollChildrenRo.observe(node);
-    }
-  }
-  let jpLayoutWidthRo = null;
-  function installJpLayoutWidthTracking() {
-    syncJpLayoutWidthVar();
-    bindScrollAreaChildResizeObservers();
-    const bump = () => queueMicrotask(syncJpLayoutWidthVar);
-    window.visualViewport?.addEventListener?.("resize", bump);
-    window.visualViewport?.addEventListener?.("scroll", bump);
-    window.addEventListener("resize", bump);
-    window.addEventListener("load", bump, { once: true });
-    try {
-      jpLayoutWidthRo = new ResizeObserver(bump);
-      jpLayoutWidthRo.observe(document.documentElement);
-      if (document.body) jpLayoutWidthRo.observe(document.body);
-      const scrollVp = document.querySelector(".mantine-ScrollArea-viewport");
-      if (scrollVp) jpLayoutWidthRo.observe(scrollVp);
-    } catch {
-    }
-    requestAnimationFrame(() => {
-      syncJpLayoutWidthVar();
-      requestAnimationFrame(syncJpLayoutWidthVar);
-    });
-  }
-  const SCROLL_CONTENT_CHILD_LIST_OBSERVER = { childList: true, subtree: false };
-  function installSpaLocationHook() {
-    scheduleJpLayoutSync();
-    window.addEventListener("popstate", scheduleJpLayoutSync);
-    for (const key of ["pushState", "replaceState"]) {
-      const orig = history[key];
-      history[key] = function(...args) {
-        const ret = orig.apply(history, args);
-        scheduleJpLayoutSync();
-        return ret;
-      };
-    }
-    try {
-      const scrollContent = document.querySelector(".mantine-ScrollArea-content");
-      if (scrollContent) {
-        new MutationObserver(() => scheduleJpLayoutSync()).observe(
-          scrollContent,
-          SCROLL_CONTENT_CHILD_LIST_OBSERVER
-        );
-      }
-    } catch {
-    }
-  }
-  function isDarkModeActive() {
-    const root = document.documentElement;
-    const body = document.body;
-    if (root?.getAttribute("data-mantine-color-scheme") === "dark") return true;
-    if (root?.getAttribute("data-theme") === "dark") return true;
-    if (root?.classList?.contains("dark") || body?.classList?.contains("dark")) return true;
-    const bg = getComputedStyle(body || root).backgroundColor || "";
-    const m = bg.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/i);
-    if (!m) return false;
-    const [r, g, b] = [Number(m[1]), Number(m[2]), Number(m[3])];
-    const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
-    return luminance < 0.45;
-  }
-  function applyPopupTheme(card) {
-    card.classList.toggle("jp-dark", isDarkModeActive());
-  }
-  function isProfileHoverLink(el) {
-    if (!(el instanceof HTMLElement)) return false;
-    return el.matches(PROFILE_HOVER_CONTENT_SELECTOR) || !!el.querySelector(PROFILE_HOVER_CONTENT_SELECTOR);
-  }
-  function hasUserCardBounds(el) {
-    const rect = el.getBoundingClientRect();
-    if (rect.width <= 0 || rect.height <= 0) return true;
-    return rect.width >= USER_CARD_MIN_WIDTH && rect.height <= USER_CARD_MAX_HEIGHT;
-  }
-  function isUserCardTrigger(el) {
-    if (!(el instanceof HTMLElement) || !hasUserCardBounds(el)) return false;
-    if (!el.matches(USER_CARD_TRIGGER_SELECTOR)) return false;
-    return Array.from(el.querySelectorAll(PROFILE_LINK_SELECTOR)).some(isProfileHoverLink);
-  }
-  function findUserCardTrigger(el) {
-    let node = el;
-    for (let depth = 0; node && node !== document.body && depth < USER_CARD_MAX_ANCESTOR_DEPTH; depth += 1) {
-      if (isUserCardTrigger(node)) return node;
-      node = node.parentElement;
-    }
-    return null;
-  }
-  function getProfileLink(el) {
-    if (!(el instanceof Element)) return null;
-    if (el.matches(PROFILE_LINK_SELECTOR)) return el;
-    const links = Array.from(el.querySelectorAll(PROFILE_LINK_SELECTOR));
-    return links.find(isProfileHoverLink) || links[0] || null;
-  }
-  function getLink(el) {
-    if (!(el instanceof HTMLElement)) return null;
-    const card = findUserCardTrigger(el);
-    if (card) return card;
-    const link = el.closest(PROFILE_LINK_SELECTOR);
-    if (!link || !isProfileHoverLink(link)) return null;
-    return link;
-  }
-  function syncPostLocationTooltip(el) {
-    if (!(el instanceof Element)) return;
-    const location2 = el.closest(POST_LOCATION_SELECTOR);
-    if (!(location2 instanceof HTMLElement)) return;
-    const label = location2.querySelector(":scope > span");
-    if (!(label instanceof HTMLElement)) return;
-    const isTruncated = label.scrollWidth > label.clientWidth + 1;
-    if (isTruncated) {
-      location2.title = label.textContent?.trim() || "";
-    } else {
-      location2.removeAttribute("title");
-    }
-  }
-  function schedulePostLocationTooltipSync() {
-    if (postLocationTooltipRaf) return;
-    postLocationTooltipRaf = requestAnimationFrame(() => {
-      postLocationTooltipRaf = 0;
-      document.querySelectorAll(POST_LOCATION_SELECTOR).forEach(syncPostLocationTooltip);
-    });
-  }
-  function extractId(link) {
-    const profileLink = getProfileLink(link);
-    if (!profileLink) return null;
-    const m = (profileLink.getAttribute("href") || "").match(/\/u\/([^/?#]+)/i);
-    return m ? decodeURIComponent(m[1]) : null;
-  }
-  function authHeaders(accessToken, extraHeaders = {}) {
-    const headers = {
-      ...extraHeaders,
-      platform: "web"
-    };
-    if (accessToken) headers["x-jike-access-token"] = accessToken;
-    const device = deviceId();
-    if (device) headers["x-jike-device-id"] = device;
-    return headers;
-  }
-  function refreshHeaders(refreshValue) {
-    const headers = {
-      "x-jike-refresh-token": refreshValue,
-      "Content-Type": "application/json",
-      platform: "web"
-    };
-    const device = deviceId();
-    if (device) headers["x-jike-device-id"] = device;
-    return headers;
-  }
-  async function refreshAccessToken() {
-    if (authRefreshTask) return authRefreshTask;
-    const currentRefreshToken = refreshToken();
-    if (!currentRefreshToken) return null;
-    authRefreshTask = (async () => {
-      try {
-        const r = await fetch(`${API_ORIGIN}${AUTH_REFRESH_PATH}`, {
-          method: "POST",
-          headers: refreshHeaders(currentRefreshToken),
-          body: "{}"
-        });
-        if (!r.ok) return null;
-        const j = await r.json();
-        const nextToken = j?.["x-jike-access-token"];
-        const nextRefreshToken = j?.["x-jike-refresh-token"];
-        if (!nextToken) return null;
-        localStorage.setItem("JK_ACCESS_TOKEN", nextToken);
-        if (nextRefreshToken) localStorage.setItem("JK_REFRESH_TOKEN", nextRefreshToken);
-        return nextToken;
-      } catch (e) {
-        log("refresh err", e);
-        return null;
-      } finally {
-        authRefreshTask = null;
-      }
-    })();
-    return authRefreshTask;
-  }
-  async function requestJike(path, options = {}) {
-    const { headers: extraHeaders, ...fetchOptions } = options;
-    const url = path.startsWith("http") ? path : `${API_BASE}/${path.replace(/^\/+/, "")}`;
-    let accessToken = token() || await refreshAccessToken();
-    if (!accessToken) return null;
-    let r = await fetch(url, {
-      ...fetchOptions,
-      headers: authHeaders(accessToken, extraHeaders)
-    });
-    if (r.status !== 401 || fetchOptions.signal?.aborted) return r;
-    accessToken = await refreshAccessToken();
-    if (!accessToken || fetchOptions.signal?.aborted) return r;
-    return fetch(url, {
-      ...fetchOptions,
-      headers: authHeaders(accessToken, extraHeaders)
-    });
-  }
-  function sameIdentifier(a, b) {
-    return String(a || "").toLowerCase() === String(b || "").toLowerCase();
-  }
-  function userMatchesProfileQuery(user, query) {
-    if (!user) return false;
-    if (query.key === "username") return sameIdentifier(user.username, query.value);
-    if (query.key === "id") return sameIdentifier(user.id, query.value);
-    return false;
-  }
-  async function fetchUser(id) {
-    if (CACHE.has(id)) return CACHE.get(id);
-    if (PENDING.has(id)) return PENDING.get(id);
-    const isUuid = /^[0-9a-f]{8}-/i.test(id);
-    const queries = isUuid ? [{ key: "username", value: id }, { key: "id", value: id }] : [{ key: "username", value: id }];
-    const task = (async () => {
-      try {
-        for (const query of queries) {
-          const q = `${query.key}=${encodeURIComponent(query.value)}`;
-          try {
-            const r = await requestJike(`/users/profile?${q}`);
-            if (!r || r.status === 401) return AUTH_EXPIRED;
-            if (!r.ok) continue;
-            const j = await r.json();
-            if (userMatchesProfileQuery(j.user, query)) {
-              CACHE.set(id, j.user);
-              return j.user;
-            }
-          } catch (e) {
-            log("fetch err", q, e);
-          }
-        }
-        return null;
-      } finally {
-        PENDING.delete(id);
-      }
-    })();
-    PENDING.set(id, task);
-    return task;
-  }
-  async function toggleFollow(username, isFollowing) {
-    if (!username || !hasAuthToken()) return null;
-    const endpoint = isFollowing ? "userRelation/unfollow" : "userRelation/follow";
-    try {
-      const r = await requestJike(endpoint, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ username })
-      });
-      return !!r?.ok;
-    } catch (e) {
-      log("follow err", e);
-      return false;
-    }
-  }
-  function removePopup() {
-    const el = document.getElementById(POPUP_ID);
-    if (el) el.remove();
-  }
-  function cancelHide() {
-    clearTimeout(hideTimer);
-  }
-  function cancelHover() {
-    clearTimeout(hoverTimer);
-  }
-  function closePopup() {
-    profileRequestAbort?.abort();
-    cancelHide();
-    cancelHover();
-    removePopup();
-    activeLink = null;
-  }
-  function hide() {
-    cancelHide();
-    hideTimer = setTimeout(() => closePopup(), 160);
-  }
-  function positionCard(card, anchor) {
-    const rect = anchor.getBoundingClientRect();
-    const cr = card.getBoundingClientRect();
-    let left = rect.left;
-    let top = rect.bottom + 8;
-    if (left + cr.width > innerWidth - 10) left = innerWidth - cr.width - 10;
-    if (left < 10) left = 10;
-    if (top + cr.height > innerHeight - 10) top = rect.top - cr.height - 8;
-    if (top < 10) top = 10;
-    card.style.left = `${left}px`;
-    card.style.top = `${top}px`;
-  }
-  function getMainScrollViewport() {
-    return Array.from(document.querySelectorAll(MAIN_SCROLL_VIEWPORT_SELECTOR)).find((el) => el instanceof HTMLElement && el.scrollHeight > el.clientHeight + 4) || null;
-  }
-  function getDocumentScroller() {
-    return document.scrollingElement || document.documentElement;
-  }
-  function ensureWindowScrollBridgeSpacer() {
-    let spacer = document.getElementById(WINDOW_SCROLL_BRIDGE_ID);
-    if (spacer instanceof HTMLElement) return spacer;
-    spacer = document.createElement("div");
-    spacer.id = WINDOW_SCROLL_BRIDGE_ID;
-    spacer.setAttribute("aria-hidden", "true");
-    document.body.appendChild(spacer);
-    return spacer;
-  }
-  function syncWindowScrollBridgeHeight(scroller) {
-    const spacer = ensureWindowScrollBridgeSpacer();
-    const docClientHeight = getDocumentScroller().clientHeight || window.innerHeight || scroller.clientHeight;
-    const scrollHeight = scroller.scrollHeight + docClientHeight - scroller.clientHeight;
-    const height = `${Math.ceil(Math.max(scrollHeight, docClientHeight + 1))}px`;
-    if (spacer.style.height !== height) spacer.style.height = height;
-  }
-  function syncWindowScrollToMainScroller(top) {
-    const docScroller = getDocumentScroller();
-    if (Math.abs(docScroller.scrollTop - top) <= SCROLL_SYNC_EPSILON) return;
-    syncingWindowScroller = true;
-    docScroller.scrollTop = top;
-    requestAnimationFrame(() => {
-      syncingWindowScroller = false;
-    });
-  }
-  function bindWindowScrollBridgeScroller(scroller) {
-    if (bridgedMainScroller === scroller) return;
-    if (bridgedMainScroller) {
-      bridgedMainScroller.removeEventListener("scroll", handleMainScrollerBridgeScroll);
-    }
-    bridgedMainScroller = scroller;
-    bridgedMainScroller.addEventListener("scroll", handleMainScrollerBridgeScroll, { passive: true });
-  }
-  function teardownWindowScrollBridge() {
-    document.documentElement.classList.remove("jp-window-scroll-bridge");
-    document.getElementById(WINDOW_SCROLL_BRIDGE_ID)?.remove();
-    if (bridgedMainScroller) {
-      bridgedMainScroller.removeEventListener("scroll", handleMainScrollerBridgeScroll);
-      bridgedMainScroller = null;
-    }
-    syncingMainScroller = false;
-    syncingWindowScroller = false;
-  }
-  function syncWindowScrollBridge({ syncWindow = true } = {}) {
-    const scroller = getMainScrollViewport();
-    if (!(scroller instanceof HTMLElement)) {
-      teardownWindowScrollBridge();
-      return null;
-    }
-    document.documentElement.classList.add("jp-window-scroll-bridge");
-    syncWindowScrollBridgeHeight(scroller);
-    bindWindowScrollBridgeScroller(scroller);
-    if (syncWindow) syncWindowScrollToMainScroller(scroller.scrollTop);
-    return scroller;
-  }
-  function handleMainScrollerBridgeScroll() {
-    if (syncingMainScroller) return;
-    const scroller = syncWindowScrollBridge({ syncWindow: false });
-    if (!(scroller instanceof HTMLElement)) return;
-    syncWindowScrollToMainScroller(scroller.scrollTop);
-  }
-  function handleWindowBridgeScroll() {
-    if (syncingWindowScroller) return;
-    const scroller = syncWindowScrollBridge({ syncWindow: false });
-    if (!(scroller instanceof HTMLElement)) return;
-    const top = getDocumentScroller().scrollTop;
-    if (Math.abs(scroller.scrollTop - top) <= SCROLL_SYNC_EPSILON) return;
-    syncingMainScroller = true;
-    scroller.scrollTop = top;
-    requestAnimationFrame(() => {
-      syncingMainScroller = false;
-    });
-  }
-  function findScrollableContainer(startNode = document.body) {
-    const start = startNode instanceof HTMLElement ? startNode : document.body;
-    for (let el = start; el; el = el.parentElement) {
-      const style = getComputedStyle(el);
-      const overflowY = style.overflowY;
-      if ((overflowY === "auto" || overflowY === "scroll") && el.scrollHeight > el.clientHeight + 4) {
-        return el;
-      }
-    }
-    const viewport = getMainScrollViewport();
-    if (viewport instanceof HTMLElement) return viewport;
-    return document.scrollingElement || document.documentElement;
-  }
-  function isDocumentRootFocus(el) {
-    return !el || el === document.body || el === document.documentElement;
-  }
-  function isEditableKeyboardTarget(el) {
-    if (!(el instanceof HTMLElement)) return false;
-    if (el.isContentEditable) return true;
-    return !!el.closest("input, textarea, select, [contenteditable=''], [contenteditable='true'], [role='textbox']");
-  }
-  function focusKeyboardScrollTarget(scroller) {
-    try {
-      scroller.focus({ preventScroll: true });
-    } catch {
-      scroller.focus();
-    }
-  }
-  function shouldFocusKeyboardScrollTarget(scroller) {
-    if (!document.hasFocus() || getOpenLightbox()) return false;
-    const active = document.activeElement;
-    return isDocumentRootFocus(active) || active === scroller;
-  }
-  function syncKeyboardScrollTarget({ focus = false } = {}) {
-    const scroller = getMainScrollViewport();
-    if (!(scroller instanceof HTMLElement)) return null;
-    scroller.classList.add("jp-keyboard-scroll-target");
-    if (!scroller.hasAttribute("tabindex")) scroller.setAttribute("tabindex", "-1");
-    if (focus && shouldFocusKeyboardScrollTarget(scroller)) focusKeyboardScrollTarget(scroller);
-    return scroller;
-  }
-  function scheduleScrollBridgeSync(focus = false) {
-    scrollBridgeNeedsFocus = scrollBridgeNeedsFocus || focus;
-    if (scrollBridgeRaf) return;
-    scrollBridgeRaf = requestAnimationFrame(() => {
-      scrollBridgeRaf = 0;
-      const shouldFocus = scrollBridgeNeedsFocus;
-      scrollBridgeNeedsFocus = false;
-      syncKeyboardScrollTarget({ focus: shouldFocus });
-      syncWindowScrollBridge();
-    });
-  }
-  function shouldHandleKeyboardScroll(event, scroller) {
-    if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.altKey || getOpenLightbox()) return false;
-    if (!(scroller instanceof HTMLElement)) return false;
-    const active = document.activeElement;
-    if (active instanceof HTMLElement && isEditableKeyboardTarget(active)) return false;
-    return isDocumentRootFocus(active) || active === scroller;
-  }
-  function scrollMainViewportFromKey(scroller, event) {
-    const pageStep = Math.max(1, Math.floor(scroller.clientHeight * KEYBOARD_SCROLL_PAGE_RATIO));
-    if (event.key === "ArrowDown") {
-      scroller.scrollBy({ top: KEYBOARD_SCROLL_LINE_PX, behavior: "auto" });
-      return true;
-    }
-    if (event.key === "ArrowUp") {
-      scroller.scrollBy({ top: -KEYBOARD_SCROLL_LINE_PX, behavior: "auto" });
-      return true;
-    }
-    if (event.key === "PageDown") {
-      scroller.scrollBy({ top: pageStep, behavior: "auto" });
-      return true;
-    }
-    if (event.key === "PageUp") {
-      scroller.scrollBy({ top: -pageStep, behavior: "auto" });
-      return true;
-    }
-    if (event.key === " " || event.key === "Spacebar") {
-      scroller.scrollBy({ top: event.shiftKey ? -pageStep : pageStep, behavior: "auto" });
-      return true;
-    }
-    if (event.key === "Home") {
-      scroller.scrollTo({ top: 0, behavior: "auto" });
-      return true;
-    }
-    if (event.key === "End") {
-      scroller.scrollTo({ top: scroller.scrollHeight, behavior: "auto" });
-      return true;
-    }
-    return false;
-  }
-  function handleKeyboardScroll(event) {
-    if (!KEYBOARD_SCROLL_KEYS.has(event.key)) return;
-    const scroller = syncKeyboardScrollTarget();
-    if (!shouldHandleKeyboardScroll(event, scroller)) return;
-    if (!scrollMainViewportFromKey(scroller, event)) return;
-    event.preventDefault();
-    if (document.activeElement !== scroller) focusKeyboardScrollTarget(scroller);
-  }
-  function installScrollBridge() {
-    syncKeyboardScrollTarget({ focus: true });
-    syncWindowScrollBridge();
-    scheduleScrollBridgeSync(true);
-    schedulePostLocationTooltipSync();
-    window.addEventListener("scroll", handleWindowBridgeScroll, { passive: true });
-    document.addEventListener("keydown", handleKeyboardScroll, { capture: true });
-    if (!document.body || scrollBridgeObserver) return;
-    scrollBridgeObserver = new MutationObserver(() => {
-      scheduleScrollBridgeSync();
-      schedulePostLocationTooltipSync();
-    });
-    scrollBridgeObserver.observe(document.body, { childList: true, subtree: true });
-  }
-  function forwardNativeHoverCardWheel(event) {
-    const target = event.target;
-    if (!(target instanceof HTMLElement)) return;
-    const nativeCard = target.closest(".mantine-HoverCard-dropdown, [class*='mantine-HoverCard-dropdown']");
-    if (!nativeCard) return;
-    const scroller = findScrollableContainer(nativeCard);
-    if (!scroller) return;
-    event.preventDefault();
-    scroller.scrollBy({
-      top: event.deltaY,
-      left: event.deltaX,
-      behavior: "auto"
-    });
-  }
-  function forwardCustomPopupWheel(event) {
-    const card = event.currentTarget;
-    if (!(card instanceof HTMLElement)) return;
-    const inner = card.querySelector(".jp-scroll");
-    const scrollEl = inner instanceof HTMLElement ? inner : card;
-    const overflowY = scrollEl.scrollHeight - scrollEl.clientHeight;
-    if (overflowY > 1) {
-      const dy = event.deltaY;
-      const atTop = scrollEl.scrollTop <= 0;
-      const atBottom = scrollEl.scrollTop + scrollEl.clientHeight >= scrollEl.scrollHeight - 1;
-      if (dy < 0 && !atTop || dy > 0 && !atBottom) {
-        event.preventDefault();
-        scrollEl.scrollTop += dy;
-        return;
-      }
-    }
-    const scroller = findScrollableContainer(activeLink instanceof HTMLElement ? activeLink : document.body);
-    if (!scroller) return;
-    event.preventDefault();
-    scroller.scrollBy({
-      top: event.deltaY,
-      left: event.deltaX,
-      behavior: "auto"
-    });
-  }
-  function bindCardControls(card) {
-    card.addEventListener("mouseenter", cancelHide);
-    card.addEventListener("mouseleave", hide);
-    card.addEventListener("wheel", forwardCustomPopupWheel, { passive: false });
-  }
   function getOpenLightbox() {
     return document.querySelector(".yarl__portal.yarl__portal_open");
   }
@@ -689,17 +49,17 @@
     };
   }
   function updateLightboxZoomButtons() {
-    const zoomOutBtn = document.getElementById(LIGHTBOX_ZOOM_OUT_BUTTON_ID);
-    const zoomInBtn = document.getElementById(LIGHTBOX_ZOOM_IN_BUTTON_ID);
-    if (zoomOutBtn instanceof HTMLButtonElement) {
-      zoomOutBtn.disabled = lightboxZoom.scale <= LIGHTBOX_MIN_SCALE;
-      zoomOutBtn.setAttribute("title", "\u7F29\u5C0F\u56FE\u7247");
-      zoomOutBtn.setAttribute("aria-label", "\u7F29\u5C0F\u56FE\u7247");
+    const zoomOutButton = document.getElementById(LIGHTBOX_ZOOM_OUT_BUTTON_ID);
+    const zoomInButton = document.getElementById(LIGHTBOX_ZOOM_IN_BUTTON_ID);
+    if (zoomOutButton instanceof HTMLButtonElement) {
+      zoomOutButton.disabled = lightboxZoom.scale <= LIGHTBOX_MIN_SCALE;
+      zoomOutButton.setAttribute("title", "\u7F29\u5C0F\u56FE\u7247");
+      zoomOutButton.setAttribute("aria-label", "\u7F29\u5C0F\u56FE\u7247");
     }
-    if (zoomInBtn instanceof HTMLButtonElement) {
-      zoomInBtn.disabled = lightboxZoom.scale >= LIGHTBOX_MAX_SCALE;
-      zoomInBtn.setAttribute("title", "\u653E\u5927\u56FE\u7247");
-      zoomInBtn.setAttribute("aria-label", "\u653E\u5927\u56FE\u7247");
+    if (zoomInButton instanceof HTMLButtonElement) {
+      zoomInButton.disabled = lightboxZoom.scale >= LIGHTBOX_MAX_SCALE;
+      zoomInButton.setAttribute("title", "\u653E\u5927\u56FE\u7247");
+      zoomInButton.setAttribute("aria-label", "\u653E\u5927\u56FE\u7247");
     }
   }
   function applyLightboxTransform() {
@@ -714,15 +74,11 @@
     image.style.transformOrigin = "center center";
     image.style.transition = lightboxZoom.dragging ? "none" : "transform 140ms ease";
     image.style.transform = `translate3d(${x}px, ${y}px, 0) scale(${lightboxZoom.scale})`;
-    let cursor = "zoom-in";
-    if (lightboxZoom.scale > 1) {
-      cursor = lightboxZoom.dragging ? "grabbing" : "grab";
-    }
-    image.style.cursor = cursor;
+    image.style.cursor = lightboxZoom.scale > 1 ? lightboxZoom.dragging ? "grabbing" : "grab" : "zoom-in";
     image.classList.toggle("jp-lightbox-zoomed", lightboxZoom.scale > 1);
     updateLightboxZoomButtons();
   }
-  function resetLightboxZoom({ keepImage = false } = {}) {
+  function resetLightboxZoom() {
     if (lightboxZoom.image instanceof HTMLElement) {
       lightboxZoom.image.style.transform = "";
       lightboxZoom.image.style.transformOrigin = "";
@@ -735,7 +91,7 @@
     lightboxZoom.y = 0;
     lightboxZoom.dragging = false;
     lightboxZoom.pointerId = null;
-    if (!keepImage) lightboxZoom.image = null;
+    lightboxZoom.image = null;
     updateLightboxZoomButtons();
   }
   function syncActiveLightboxImage() {
@@ -771,7 +127,6 @@
     const image = syncActiveLightboxImage();
     if (!image || event.currentTarget !== image || lightboxZoom.scale <= 1 || event.button !== 0) return;
     lightboxZoom.dragging = true;
-    lightboxZoom.moved = false;
     lightboxZoom.pointerId = event.pointerId;
     lightboxZoom.startX = event.clientX;
     lightboxZoom.startY = event.clientY;
@@ -792,7 +147,6 @@
       lightboxZoom.originX + deltaX,
       lightboxZoom.originY + deltaY
     );
-    lightboxZoom.moved = lightboxZoom.moved || Math.abs(deltaX) > 3 || Math.abs(deltaY) > 3;
     lightboxZoom.x = nextOffset.x;
     lightboxZoom.y = nextOffset.y;
     applyLightboxTransform();
@@ -805,7 +159,7 @@
     lightboxZoom.dragging = false;
     lightboxZoom.pointerId = null;
     image.classList.remove("jp-lightbox-dragging");
-    image.releasePointerCapture?.(event.pointerId);
+    if (image.hasPointerCapture?.(event.pointerId)) image.releasePointerCapture(event.pointerId);
     applyLightboxTransform();
     event.preventDefault();
     event.stopPropagation();
@@ -847,7 +201,26 @@
     image.addEventListener("click", onLightboxImageClick, true);
     image.addEventListener("dragstart", (event) => event.preventDefault());
   }
-  function ensureLightboxZoomButton() {
+  function createZoomButton(id, label, pathData) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.id = id;
+    button.className = "yarl__button jp-lightbox-zoom-button";
+    button.title = label;
+    button.setAttribute("aria-label", label);
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("viewBox", "0 0 24 24");
+    svg.setAttribute("aria-hidden", "true");
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    path.setAttribute("d", pathData);
+    path.setAttribute("stroke", "currentColor");
+    path.setAttribute("stroke-width", "1.8");
+    path.setAttribute("stroke-linecap", "round");
+    svg.appendChild(path);
+    button.appendChild(svg);
+    return button;
+  }
+  function ensureLightboxZoomButtons() {
     const lightbox = getOpenLightbox();
     if (!lightbox) {
       resetLightboxZoom();
@@ -855,41 +228,33 @@
     }
     const toolbar = lightbox.querySelector(".yarl__toolbar");
     if (!(toolbar instanceof HTMLElement)) return;
-    let zoomOutBtn = toolbar.querySelector(`#${LIGHTBOX_ZOOM_OUT_BUTTON_ID}`);
-    let zoomInBtn = toolbar.querySelector(`#${LIGHTBOX_ZOOM_IN_BUTTON_ID}`);
-    if (!(zoomOutBtn instanceof HTMLButtonElement)) {
-      zoomOutBtn = document.createElement("button");
-      zoomOutBtn.type = "button";
-      zoomOutBtn.id = LIGHTBOX_ZOOM_OUT_BUTTON_ID;
-      zoomOutBtn.className = "yarl__button jp-lightbox-zoom-button";
-      zoomOutBtn.innerHTML = `
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M7 12h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-        </svg>
-      `;
-      zoomOutBtn.addEventListener("click", (event) => {
+    let zoomOutButton = toolbar.querySelector(`#${LIGHTBOX_ZOOM_OUT_BUTTON_ID}`);
+    let zoomInButton = toolbar.querySelector(`#${LIGHTBOX_ZOOM_IN_BUTTON_ID}`);
+    if (!(zoomOutButton instanceof HTMLButtonElement)) {
+      zoomOutButton = createZoomButton(
+        LIGHTBOX_ZOOM_OUT_BUTTON_ID,
+        "\u7F29\u5C0F\u56FE\u7247",
+        "M7 12h10"
+      );
+      zoomOutButton.addEventListener("click", (event) => {
         event.preventDefault();
         event.stopPropagation();
         setLightboxScale(lightboxZoom.scale - LIGHTBOX_SCALE_STEP);
       });
-      toolbar.insertBefore(zoomOutBtn, toolbar.firstChild);
+      toolbar.insertBefore(zoomOutButton, toolbar.firstChild);
     }
-    if (!(zoomInBtn instanceof HTMLButtonElement)) {
-      zoomInBtn = document.createElement("button");
-      zoomInBtn.type = "button";
-      zoomInBtn.id = LIGHTBOX_ZOOM_IN_BUTTON_ID;
-      zoomInBtn.className = "yarl__button jp-lightbox-zoom-button";
-      zoomInBtn.innerHTML = `
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M12 7v10M7 12h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-        </svg>
-      `;
-      zoomInBtn.addEventListener("click", (event) => {
+    if (!(zoomInButton instanceof HTMLButtonElement)) {
+      zoomInButton = createZoomButton(
+        LIGHTBOX_ZOOM_IN_BUTTON_ID,
+        "\u653E\u5927\u56FE\u7247",
+        "M12 7v10M7 12h10"
+      );
+      zoomInButton.addEventListener("click", (event) => {
         event.preventDefault();
         event.stopPropagation();
         setLightboxScale(lightboxZoom.scale > LIGHTBOX_MIN_SCALE ? lightboxZoom.scale + LIGHTBOX_SCALE_STEP : 2);
       });
-      toolbar.insertBefore(zoomInBtn, zoomOutBtn.nextSibling);
+      toolbar.insertBefore(zoomInButton, zoomOutButton.nextSibling);
     }
     syncActiveLightboxImage();
     updateLightboxZoomButtons();
@@ -898,277 +263,1037 @@
     if (lightboxRaf) return;
     lightboxRaf = requestAnimationFrame(() => {
       lightboxRaf = 0;
-      ensureLightboxZoomButton();
+      ensureLightboxZoomButtons();
     });
   }
   function mutationTouchesLightbox(node) {
     if (node instanceof Element) {
       return !!(node.matches?.(".yarl__portal") || node.closest?.(".yarl__portal"));
     }
-    if (node instanceof DocumentFragment && node.querySelector?.(".yarl__portal")) return true;
-    return false;
+    return node instanceof DocumentFragment && !!node.querySelector?.(".yarl__portal");
   }
   function isLightboxMutationRelevant(mutations) {
-    for (const m of mutations) {
-      if (m.type === "childList") {
-        for (const n of m.addedNodes) {
-          if (mutationTouchesLightbox(n)) return true;
+    for (const mutation of mutations) {
+      if (mutation.type === "childList") {
+        for (const node of mutation.addedNodes) {
+          if (mutationTouchesLightbox(node)) return true;
         }
-        for (const n of m.removedNodes) {
-          if (mutationTouchesLightbox(n)) return true;
+        for (const node of mutation.removedNodes) {
+          if (mutationTouchesLightbox(node)) return true;
         }
         continue;
       }
-      if (m.type === "attributes" && m.attributeName && ["class", "aria-hidden", "src"].includes(m.attributeName)) {
-        const t = m.target;
-        if (t instanceof Element && t.closest(".yarl__portal")) return true;
-      }
+      if (mutation.type === "attributes" && ["class", "aria-hidden", "src"].includes(mutation.attributeName) && mutation.target instanceof Element && mutation.target.closest(".yarl__portal")) return true;
     }
     return false;
   }
-  function onLightboxDomMutations(mutations) {
-    if (isLightboxMutationRelevant(mutations)) scheduleLightboxSync();
+  function handleLightboxClick(event) {
+    scheduleLightboxSync();
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) return;
+    if (target.closest(".yarl__navigation_prev, .yarl__navigation_next")) {
+      requestAnimationFrame(() => {
+        resetLightboxZoom();
+        scheduleLightboxSync();
+      });
+    }
+    const lightbox = getOpenLightbox();
+    if (!(lightbox instanceof HTMLElement) || !lightbox.contains(target)) return;
+    if (lightboxZoom.scale <= LIGHTBOX_MIN_SCALE) return;
+    if (target.closest(".yarl__toolbar, .yarl__navigation_prev, .yarl__navigation_next")) return;
+    event.preventDefault();
+    event.stopPropagation();
   }
-  function bootLightboxZoom() {
-    lightboxObserver = new MutationObserver(onLightboxDomMutations);
-    lightboxObserver.observe(document.body, {
+  function handleLightboxKeydown(event) {
+    if (!getOpenLightbox()) return;
+    if (event.key === "Escape") {
+      resetLightboxZoom();
+      return;
+    }
+    if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+      requestAnimationFrame(() => {
+        resetLightboxZoom();
+        scheduleLightboxSync();
+      });
+      return;
+    }
+    if (event.key === "ArrowUp" || event.key === "ArrowDown") {
+      event.preventDefault();
+      panLightboxBy(0, event.key === "ArrowUp" ? 80 : -80);
+      return;
+    }
+    if (event.key === " ") {
+      event.preventDefault();
+      panLightboxByViewport(event.shiftKey ? 1 : -1);
+      return;
+    }
+    if ((event.key === "+" || event.key === "=") && !event.metaKey && !event.ctrlKey) {
+      event.preventDefault();
+      setLightboxScale(lightboxZoom.scale > LIGHTBOX_MIN_SCALE ? lightboxZoom.scale + LIGHTBOX_SCALE_STEP : 2);
+      return;
+    }
+    if (event.key === "-" && !event.metaKey && !event.ctrlKey) {
+      event.preventDefault();
+      setLightboxScale(lightboxZoom.scale > LIGHTBOX_MIN_SCALE ? lightboxZoom.scale - LIGHTBOX_SCALE_STEP : LIGHTBOX_MIN_SCALE);
+      return;
+    }
+    if (event.key === "0" && !event.metaKey && !event.ctrlKey) {
+      event.preventDefault();
+      setLightboxScale(LIGHTBOX_MIN_SCALE);
+    }
+  }
+  function handleLightboxWheel(event) {
+    const lightbox = getOpenLightbox();
+    const target = event.target;
+    if (!(lightbox instanceof HTMLElement) || !(target instanceof HTMLElement) || !lightbox.contains(target)) return;
+    if (lightboxZoom.scale > LIGHTBOX_MIN_SCALE && !event.ctrlKey && !event.metaKey) {
+      event.preventDefault();
+      panLightboxBy(-event.deltaX, -event.deltaY);
+      return;
+    }
+    if (!event.ctrlKey && !event.metaKey) return;
+    event.preventDefault();
+    const nextScale = lightboxZoom.scale + (event.deltaY < 0 ? 0.25 : -0.25);
+    setLightboxScale(nextScale);
+  }
+  function installLightboxZoom() {
+    const observer = new MutationObserver((mutations) => {
+      if (isLightboxMutationRelevant(mutations)) scheduleLightboxSync();
+    });
+    observer.observe(document.body, {
       childList: true,
       subtree: true,
       attributes: true,
       attributeFilter: ["class", "aria-hidden", "src"]
     });
-    document.addEventListener("click", (event) => {
-      scheduleLightboxSync();
-      const target = event.target;
-      if (!(target instanceof HTMLElement) || !target.closest(".yarl__navigation_prev, .yarl__navigation_next")) return;
-      requestAnimationFrame(() => {
-        resetLightboxZoom();
-        scheduleLightboxSync();
-      });
-    }, true);
-    document.addEventListener("keydown", (event) => {
-      if (!getOpenLightbox()) return;
-      if (event.key === "Escape") {
-        resetLightboxZoom();
-        return;
-      }
-      if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
-        requestAnimationFrame(() => {
-          resetLightboxZoom();
-          scheduleLightboxSync();
-        });
-      }
-      if (event.key === "ArrowUp") {
-        event.preventDefault();
-        panLightboxBy(0, 80);
-        return;
-      }
-      if (event.key === "ArrowDown") {
-        event.preventDefault();
-        panLightboxBy(0, -80);
-        return;
-      }
-      if (event.key === " " && !event.shiftKey) {
-        event.preventDefault();
-        panLightboxByViewport(-1);
-        return;
-      }
-      if (event.key === " " && event.shiftKey) {
-        event.preventDefault();
-        panLightboxByViewport(1);
-        return;
-      }
-      if ((event.key === "+" || event.key === "=") && !event.metaKey && !event.ctrlKey) {
-        event.preventDefault();
-        setLightboxScale(lightboxZoom.scale > LIGHTBOX_MIN_SCALE ? lightboxZoom.scale + LIGHTBOX_SCALE_STEP : 2);
-      }
-      if (event.key === "-" && !event.metaKey && !event.ctrlKey) {
-        event.preventDefault();
-        setLightboxScale(lightboxZoom.scale > LIGHTBOX_MIN_SCALE ? lightboxZoom.scale - LIGHTBOX_SCALE_STEP : LIGHTBOX_MIN_SCALE);
-      }
-      if (event.key === "0" && !event.metaKey && !event.ctrlKey) {
-        event.preventDefault();
-        setLightboxScale(LIGHTBOX_MIN_SCALE);
-      }
-    }, true);
-    document.addEventListener("wheel", (event) => {
-      const lightbox = getOpenLightbox();
-      const target = event.target;
-      if (!(lightbox instanceof HTMLElement) || !(target instanceof HTMLElement) || !lightbox.contains(target)) return;
-      if (lightboxZoom.scale > LIGHTBOX_MIN_SCALE && !event.ctrlKey && !event.metaKey) {
-        event.preventDefault();
-        panLightboxBy(-event.deltaX, -event.deltaY);
-        return;
-      }
-      if (!event.ctrlKey && !event.metaKey) return;
-      event.preventDefault();
-      const next = lightboxZoom.scale + (event.deltaY < 0 ? 0.25 : -0.25);
-      setLightboxScale(next);
-    }, { passive: false, capture: true });
-    document.addEventListener("click", (event) => {
-      const lightbox = getOpenLightbox();
-      const target = event.target;
-      if (!(lightbox instanceof HTMLElement) || !(target instanceof HTMLElement) || !lightbox.contains(target)) return;
-      if (lightboxZoom.scale <= LIGHTBOX_MIN_SCALE) return;
-      if (target.closest(".yarl__toolbar, .yarl__navigation_prev, .yarl__navigation_next")) return;
-      event.preventDefault();
-      event.stopPropagation();
-    }, true);
+    document.addEventListener("click", handleLightboxClick, true);
+    document.addEventListener("keydown", handleLightboxKeydown, true);
+    document.addEventListener("wheel", handleLightboxWheel, { passive: false, capture: true });
     scheduleLightboxSync();
+  }
+
+  // src/content/scroll.js
+  var POST_LOCATION_SELECTOR = "._locationContainer_1mslw_69";
+  var KEYBOARD_SCROLL_KEYS = /* @__PURE__ */ new Set([
+    "ArrowDown",
+    "ArrowUp",
+    "PageDown",
+    "PageUp",
+    " ",
+    "Spacebar",
+    "Home",
+    "End"
+  ]);
+  var KEYBOARD_SCROLL_LINE_PX = 48;
+  var KEYBOARD_SCROLL_PAGE_RATIO = 0.9;
+  var SCROLL_SYNC_EPSILON = 1;
+  var scrollBridgeObserver = null;
+  var scrollBridgeRaf = 0;
+  var postLocationTooltipRaf = 0;
+  var scrollBridgeNeedsFocus = false;
+  var bridgedMainScroller = null;
+  var keyboardScrollTarget = null;
+  var syncingMainScroller = false;
+  var syncingWindowScroller = false;
+  function getMainScrollViewport() {
+    return Array.from(document.querySelectorAll(MAIN_SCROLL_VIEWPORT_SELECTOR)).find((element) => element instanceof HTMLElement && element.scrollHeight > element.clientHeight + 4) || null;
+  }
+  function getDocumentScroller() {
+    return document.scrollingElement || document.documentElement;
+  }
+  function ensureWindowScrollBridgeSpacer() {
+    let spacer = document.getElementById(WINDOW_SCROLL_BRIDGE_ID);
+    if (spacer instanceof HTMLElement) return spacer;
+    spacer = document.createElement("div");
+    spacer.id = WINDOW_SCROLL_BRIDGE_ID;
+    spacer.setAttribute("aria-hidden", "true");
+    document.body.appendChild(spacer);
+    return spacer;
+  }
+  function syncWindowScrollBridgeHeight(scroller) {
+    const spacer = ensureWindowScrollBridgeSpacer();
+    const documentClientHeight = getDocumentScroller().clientHeight || window.innerHeight || scroller.clientHeight;
+    const scrollHeight = scroller.scrollHeight + documentClientHeight - scroller.clientHeight;
+    const height = `${Math.ceil(Math.max(scrollHeight, documentClientHeight + 1))}px`;
+    if (spacer.style.height !== height) spacer.style.height = height;
+  }
+  function syncWindowScrollToMainScroller(top) {
+    const documentScroller = getDocumentScroller();
+    if (Math.abs(documentScroller.scrollTop - top) <= SCROLL_SYNC_EPSILON) return;
+    syncingWindowScroller = true;
+    documentScroller.scrollTop = top;
+    requestAnimationFrame(() => {
+      syncingWindowScroller = false;
+    });
+  }
+  function handleMainScrollerBridgeScroll() {
+    if (syncingMainScroller) return;
+    const scroller = syncWindowScrollBridge({ syncWindow: false });
+    if (scroller) syncWindowScrollToMainScroller(scroller.scrollTop);
+  }
+  function bindWindowScrollBridgeScroller(scroller) {
+    if (bridgedMainScroller === scroller) return;
+    bridgedMainScroller?.removeEventListener("scroll", handleMainScrollerBridgeScroll);
+    bridgedMainScroller = scroller;
+    bridgedMainScroller.addEventListener("scroll", handleMainScrollerBridgeScroll, { passive: true });
+  }
+  function teardownWindowScrollBridge() {
+    document.documentElement.classList.remove("jp-window-scroll-bridge");
+    document.getElementById(WINDOW_SCROLL_BRIDGE_ID)?.remove();
+    bridgedMainScroller?.removeEventListener("scroll", handleMainScrollerBridgeScroll);
+    bridgedMainScroller = null;
+    syncingMainScroller = false;
+    syncingWindowScroller = false;
+  }
+  function syncWindowScrollBridge({ syncWindow = true } = {}) {
+    const scroller = getMainScrollViewport();
+    if (!scroller) {
+      teardownWindowScrollBridge();
+      return null;
+    }
+    document.documentElement.classList.add("jp-window-scroll-bridge");
+    syncWindowScrollBridgeHeight(scroller);
+    bindWindowScrollBridgeScroller(scroller);
+    if (syncWindow) syncWindowScrollToMainScroller(scroller.scrollTop);
+    return scroller;
+  }
+  function handleWindowBridgeScroll() {
+    if (syncingWindowScroller) return;
+    const scroller = syncWindowScrollBridge({ syncWindow: false });
+    if (!scroller) return;
+    const top = getDocumentScroller().scrollTop;
+    if (Math.abs(scroller.scrollTop - top) <= SCROLL_SYNC_EPSILON) return;
+    syncingMainScroller = true;
+    scroller.scrollTop = top;
+    requestAnimationFrame(() => {
+      syncingMainScroller = false;
+    });
+  }
+  function findScrollableContainer(startNode = document.body) {
+    const start = startNode instanceof Element ? startNode : document.body;
+    for (let element = start; element; element = element.parentElement) {
+      const { overflowY } = getComputedStyle(element);
+      if ((overflowY === "auto" || overflowY === "scroll") && element.scrollHeight > element.clientHeight + 4) return element;
+    }
+    return getMainScrollViewport() || getDocumentScroller();
+  }
+  function isDocumentRootFocus(element) {
+    return !element || element === document.body || element === document.documentElement;
+  }
+  function isEditableKeyboardTarget(element) {
+    if (!(element instanceof HTMLElement)) return false;
+    if (element.isContentEditable) return true;
+    return !!element.closest(
+      "input, textarea, select, [contenteditable=''], [contenteditable='true'], [role='textbox']"
+    );
+  }
+  function focusKeyboardScrollTarget(scroller) {
+    try {
+      scroller.focus({ preventScroll: true });
+    } catch {
+      scroller.focus();
+    }
+  }
+  function shouldFocusKeyboardScrollTarget(scroller) {
+    if (!document.hasFocus() || getOpenLightbox()) return false;
+    const active = document.activeElement;
+    return isDocumentRootFocus(active) || active === scroller;
+  }
+  function syncKeyboardScrollTarget({ focus = false } = {}) {
+    const scroller = getMainScrollViewport();
+    if (keyboardScrollTarget !== scroller) {
+      keyboardScrollTarget?.classList.remove("jp-keyboard-scroll-target");
+      keyboardScrollTarget = scroller;
+    }
+    if (!scroller) return null;
+    scroller.classList.add("jp-keyboard-scroll-target");
+    if (!scroller.hasAttribute("tabindex")) scroller.setAttribute("tabindex", "-1");
+    if (focus && shouldFocusKeyboardScrollTarget(scroller)) focusKeyboardScrollTarget(scroller);
+    return scroller;
+  }
+  function scheduleScrollBridgeSync(focus = false) {
+    scrollBridgeNeedsFocus ||= focus;
+    if (scrollBridgeRaf) return;
+    scrollBridgeRaf = requestAnimationFrame(() => {
+      scrollBridgeRaf = 0;
+      const shouldFocus = scrollBridgeNeedsFocus;
+      scrollBridgeNeedsFocus = false;
+      syncKeyboardScrollTarget({ focus: shouldFocus });
+      syncWindowScrollBridge();
+    });
+  }
+  function shouldHandleKeyboardScroll(event, scroller) {
+    if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.altKey || getOpenLightbox() || !scroller) return false;
+    const active = document.activeElement;
+    if (isEditableKeyboardTarget(active)) return false;
+    return isDocumentRootFocus(active) || active === scroller;
+  }
+  function scrollMainViewportFromKey(scroller, event) {
+    const pageStep = Math.max(1, Math.floor(scroller.clientHeight * KEYBOARD_SCROLL_PAGE_RATIO));
+    const scrollOptions = { behavior: "auto" };
+    switch (event.key) {
+      case "ArrowDown":
+        scroller.scrollBy({ ...scrollOptions, top: KEYBOARD_SCROLL_LINE_PX });
+        return true;
+      case "ArrowUp":
+        scroller.scrollBy({ ...scrollOptions, top: -KEYBOARD_SCROLL_LINE_PX });
+        return true;
+      case "PageDown":
+        scroller.scrollBy({ ...scrollOptions, top: pageStep });
+        return true;
+      case "PageUp":
+        scroller.scrollBy({ ...scrollOptions, top: -pageStep });
+        return true;
+      case " ":
+      case "Spacebar":
+        scroller.scrollBy({ ...scrollOptions, top: event.shiftKey ? -pageStep : pageStep });
+        return true;
+      case "Home":
+        scroller.scrollTo({ ...scrollOptions, top: 0 });
+        return true;
+      case "End":
+        scroller.scrollTo({ ...scrollOptions, top: scroller.scrollHeight });
+        return true;
+      default:
+        return false;
+    }
+  }
+  function handleKeyboardScroll(event) {
+    if (!KEYBOARD_SCROLL_KEYS.has(event.key)) return;
+    const scroller = syncKeyboardScrollTarget();
+    if (!shouldHandleKeyboardScroll(event, scroller)) return;
+    if (!scrollMainViewportFromKey(scroller, event)) return;
+    event.preventDefault();
+    if (document.activeElement !== scroller) focusKeyboardScrollTarget(scroller);
+  }
+  function syncPostLocationTooltip(element) {
+    if (!(element instanceof Element)) return;
+    const location2 = element.closest(POST_LOCATION_SELECTOR);
+    if (!(location2 instanceof HTMLElement)) return;
+    const label = location2.querySelector(":scope > span");
+    if (!(label instanceof HTMLElement)) return;
+    if (label.scrollWidth > label.clientWidth + 1) {
+      location2.title = label.textContent?.trim() || "";
+    } else {
+      location2.removeAttribute("title");
+    }
+  }
+  function schedulePostLocationTooltipSync() {
+    if (postLocationTooltipRaf) return;
+    postLocationTooltipRaf = requestAnimationFrame(() => {
+      postLocationTooltipRaf = 0;
+      document.querySelectorAll(POST_LOCATION_SELECTOR).forEach(syncPostLocationTooltip);
+    });
+  }
+  function forwardNativeHoverCardWheel(event) {
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    const nativeCard = target.closest(
+      ".mantine-HoverCard-dropdown, [class*='mantine-HoverCard-dropdown']"
+    );
+    if (!nativeCard) return;
+    const scroller = findScrollableContainer(nativeCard);
+    if (!scroller) return;
+    event.preventDefault();
+    scroller.scrollBy({
+      top: event.deltaY,
+      left: event.deltaX,
+      behavior: "auto"
+    });
+  }
+  function installScrollEnhancements() {
+    syncKeyboardScrollTarget({ focus: true });
+    syncWindowScrollBridge();
+    scheduleScrollBridgeSync(true);
+    schedulePostLocationTooltipSync();
+    window.addEventListener("scroll", handleWindowBridgeScroll, { passive: true });
+    document.addEventListener("keydown", handleKeyboardScroll, { capture: true });
+    document.addEventListener("wheel", forwardNativeHoverCardWheel, { passive: false, capture: true });
+    document.body.addEventListener("mouseover", (event) => syncPostLocationTooltip(event.target));
+    if (scrollBridgeObserver) return;
+    scrollBridgeObserver = new MutationObserver(() => {
+      scheduleScrollBridgeSync();
+      schedulePostLocationTooltipSync();
+    });
+    scrollBridgeObserver.observe(document.body, { childList: true, subtree: true });
+  }
+
+  // src/content/layout.js
+  var POST_DETAIL_PATH = /\/u\/[^/]+\/(?:post|repost)\//i;
+  var NAV_DESKTOP_STACK_SELECTOR = '.mantine-ScrollArea-content > [class*="_desktopStack_"]';
+  var SCROLL_CONTENT_SELECTOR = ".mantine-ScrollArea-content";
+  var SCROLL_CONTENT_CHILD_LIST_OBSERVER = { childList: true, subtree: false };
+  var LAYOUT_SYNC_DELAYS = [0, 55, 160, 320];
+  var layoutSyncTimers = [];
+  var childResizeObserver = null;
+  var childResizeDebounce = 0;
+  var observedScrollChildren = /* @__PURE__ */ new Set();
+  var layoutWidthResizeObserver = null;
+  var observedLayoutViewport = null;
+  var scrollContentObserver = null;
+  var observedScrollContent = null;
+  function syncPostDetailLayoutClass() {
+    document.documentElement.classList.toggle("jp-detail-post", POST_DETAIL_PATH.test(location.pathname));
+  }
+  function readLayoutWidthPx() {
+    const widths = [];
+    const scrollViewport = document.querySelector(MAIN_SCROLL_VIEWPORT_SELECTOR);
+    if (scrollViewport?.clientWidth > 0) widths.push(scrollViewport.clientWidth);
+    const root = document.documentElement;
+    const visualViewport = window.visualViewport;
+    if (visualViewport?.width > 0) widths.push(visualViewport.width);
+    if (root.clientWidth > 0) widths.push(root.clientWidth);
+    if (window.innerWidth > 0) widths.push(window.innerWidth);
+    return widths.length ? Math.floor(Math.min(...widths)) : 0;
+  }
+  function syncNavInlineLeft() {
+    const nav = document.querySelector(NAV_DESKTOP_STACK_SELECTOR);
+    if (!(nav instanceof HTMLElement)) return;
+    if (!window.matchMedia?.("(min-width: 960px)").matches) {
+      nav.style.removeProperty("left");
+      return;
+    }
+    const left = getComputedStyle(document.documentElement).getPropertyValue("--jp-nav-left").trim();
+    if (left) nav.style.setProperty("left", left, "important");
+  }
+  function syncLayoutWidth() {
+    const width = readLayoutWidthPx();
+    if (width > 0) document.documentElement.style.setProperty("--jp-layout-width", `${width}px`);
+    syncNavInlineLeft();
+  }
+  function replaceObservedElements(observer, previous, next) {
+    for (const element of previous) {
+      if (!next.has(element)) observer.unobserve(element);
+    }
+    for (const element of next) {
+      if (!previous.has(element)) observer.observe(element);
+    }
+    return next;
+  }
+  function syncScrollAreaChildResizeObservers() {
+    if (!globalThis.ResizeObserver) return;
+    if (!childResizeObserver) {
+      childResizeObserver = new ResizeObserver(() => {
+        clearTimeout(childResizeDebounce);
+        childResizeDebounce = setTimeout(layoutTick, 32);
+      });
+    }
+    const content = document.querySelector(SCROLL_CONTENT_SELECTOR);
+    const children = new Set(
+      content ? Array.from(content.children).filter((node) => node instanceof Element) : []
+    );
+    observedScrollChildren = replaceObservedElements(
+      childResizeObserver,
+      observedScrollChildren,
+      children
+    );
+  }
+  function syncLayoutWidthResizeTarget() {
+    if (!layoutWidthResizeObserver) return;
+    const viewport = document.querySelector(MAIN_SCROLL_VIEWPORT_SELECTOR);
+    if (observedLayoutViewport === viewport) return;
+    if (observedLayoutViewport) layoutWidthResizeObserver.unobserve(observedLayoutViewport);
+    if (viewport) layoutWidthResizeObserver.observe(viewport);
+    observedLayoutViewport = viewport;
+  }
+  function bindScrollContentObserver() {
+    if (!globalThis.MutationObserver) return;
+    const content = document.querySelector(SCROLL_CONTENT_SELECTOR);
+    if (observedScrollContent === content) return;
+    scrollContentObserver?.disconnect();
+    observedScrollContent = content;
+    if (!content) return;
+    scrollContentObserver ||= new MutationObserver(scheduleLayoutSync);
+    scrollContentObserver.observe(content, SCROLL_CONTENT_CHILD_LIST_OBSERVER);
+  }
+  function layoutTick() {
+    syncPostDetailLayoutClass();
+    syncLayoutWidth();
+    syncKeyboardScrollTarget();
+    syncWindowScrollBridge();
+    syncScrollAreaChildResizeObservers();
+    syncLayoutWidthResizeTarget();
+    bindScrollContentObserver();
+  }
+  function scheduleLayoutAnimationFrames(remaining) {
+    if (remaining <= 0) return;
+    requestAnimationFrame(() => {
+      layoutTick();
+      scheduleLayoutAnimationFrames(remaining - 1);
+    });
+  }
+  function scheduleLayoutSync() {
+    for (const timer of layoutSyncTimers) clearTimeout(timer);
+    layoutSyncTimers = [];
+    layoutTick();
+    queueMicrotask(layoutTick);
+    scheduleLayoutAnimationFrames(3);
+    for (const delay of LAYOUT_SYNC_DELAYS) {
+      layoutSyncTimers.push(setTimeout(layoutTick, delay));
+    }
+  }
+  function installLayoutWidthTracking() {
+    syncLayoutWidth();
+    syncScrollAreaChildResizeObservers();
+    const queueWidthSync = () => queueMicrotask(syncLayoutWidth);
+    window.visualViewport?.addEventListener("resize", queueWidthSync);
+    window.visualViewport?.addEventListener("scroll", queueWidthSync);
+    window.addEventListener("resize", queueWidthSync);
+    window.addEventListener("load", queueWidthSync, { once: true });
+    if (globalThis.ResizeObserver) {
+      layoutWidthResizeObserver = new ResizeObserver(queueWidthSync);
+      layoutWidthResizeObserver.observe(document.documentElement);
+      if (document.body) layoutWidthResizeObserver.observe(document.body);
+      syncLayoutWidthResizeTarget();
+    }
+    requestAnimationFrame(() => {
+      syncLayoutWidth();
+      requestAnimationFrame(syncLayoutWidth);
+    });
+  }
+  function installSpaLocationHook() {
+    scheduleLayoutSync();
+    window.addEventListener("popstate", scheduleLayoutSync);
+    for (const key of ["pushState", "replaceState"]) {
+      const original = history[key];
+      history[key] = function(...args) {
+        const result = original.apply(history, args);
+        scheduleLayoutSync();
+        return result;
+      };
+    }
+    bindScrollContentObserver();
+  }
+  function installLayoutEnhancements() {
+    installSpaLocationHook();
+    installLayoutWidthTracking();
+  }
+
+  // src/shared/values.js
+  function stringValue(value) {
+    return typeof value === "string" ? value.trim() : "";
+  }
+  function safeHttpUrl(value, baseUrl = globalThis.location?.href) {
+    const raw = stringValue(value);
+    if (!raw) return "";
+    try {
+      const url = baseUrl ? new URL(raw, baseUrl) : new URL(raw);
+      return url.protocol === "http:" || url.protocol === "https:" ? url.href : "";
+    } catch {
+      return "";
+    }
+  }
+
+  // src/shared/jike-api.js
+  var JIKE_API_ORIGIN = "https://api.ruguoapp.com";
+  var API_BASE = `${JIKE_API_ORIGIN}/1.0`;
+  var AUTH_REFRESH_PATH = "/app_auth_tokens.refresh";
+  var authRefreshTask = null;
+  function accessToken() {
+    return localStorage.getItem("JK_ACCESS_TOKEN");
+  }
+  function refreshToken() {
+    return localStorage.getItem("JK_REFRESH_TOKEN");
+  }
+  function deviceId() {
+    return localStorage.getItem("JK_DEVICE_ID");
+  }
+  function hasJikeAuthToken() {
+    return !!(accessToken() || refreshToken());
+  }
+  function jikeApiHeaders(token, extraHeaders = {}) {
+    const headers = { ...extraHeaders, platform: "web" };
+    if (token) headers["x-jike-access-token"] = token;
+    const device = deviceId();
+    if (device) headers["x-jike-device-id"] = device;
+    return headers;
+  }
+  async function refreshAccessToken() {
+    if (authRefreshTask) return authRefreshTask;
+    const currentRefreshToken = refreshToken();
+    if (!currentRefreshToken) return null;
+    authRefreshTask = (async () => {
+      try {
+        const response = await fetch(`${JIKE_API_ORIGIN}${AUTH_REFRESH_PATH}`, {
+          method: "POST",
+          headers: jikeApiHeaders(null, {
+            "x-jike-refresh-token": currentRefreshToken,
+            "Content-Type": "application/json"
+          }),
+          body: "{}"
+        });
+        if (!response.ok) return null;
+        const payload = await response.json();
+        const nextAccessToken = stringValue(payload?.["x-jike-access-token"]);
+        const nextRefreshToken = stringValue(payload?.["x-jike-refresh-token"]);
+        if (!nextAccessToken) return null;
+        localStorage.setItem("JK_ACCESS_TOKEN", nextAccessToken);
+        if (nextRefreshToken) localStorage.setItem("JK_REFRESH_TOKEN", nextRefreshToken);
+        return nextAccessToken;
+      } catch (error) {
+        log("refresh err", error);
+        return null;
+      } finally {
+        authRefreshTask = null;
+      }
+    })();
+    return authRefreshTask;
+  }
+  async function requestJike(path, options = {}) {
+    const { allowAnonymous = false, headers: extraHeaders, ...fetchOptions } = options;
+    const url = path.startsWith("http") ? path : `${API_BASE}/${path.replace(/^\/+/, "")}`;
+    let token = accessToken();
+    if (!token && !allowAnonymous) token = await refreshAccessToken();
+    if (!token && !allowAnonymous) return null;
+    let response = await fetch(url, {
+      ...fetchOptions,
+      headers: jikeApiHeaders(token, extraHeaders)
+    });
+    if (response.status !== 401 || fetchOptions.signal?.aborted) return response;
+    token = allowAnonymous ? null : await refreshAccessToken();
+    if (fetchOptions.signal?.aborted) return response;
+    if (!token && !allowAnonymous) return response;
+    response = await fetch(url, {
+      ...fetchOptions,
+      headers: jikeApiHeaders(token, extraHeaders)
+    });
+    return response;
+  }
+
+  // src/content/profile-card.js
+  var PROFILE_LINK_SELECTOR = 'a[href*="/u/"]';
+  var PROFILE_HOVER_CONTENT_SELECTOR = '[class*="_mentionUser_"], [class*="_name_1rdwv_"], [class*="_avatar_1rdwv_"], [class*="_root_1y0hs_"]';
+  var USER_CARD_TRIGGER_SELECTOR = '[class*="_userCard_"]';
+  var USER_CARD_MAX_ANCESTOR_DEPTH = 8;
+  var USER_CARD_MAX_HEIGHT = 220;
+  var USER_CARD_MIN_WIDTH = 120;
+  var SHOW_DELAY = 140;
+  var AUTH_EXPIRED = Symbol("auth-expired");
+  var profileCache = /* @__PURE__ */ new Map();
+  var pendingProfiles = /* @__PURE__ */ new Map();
+  var activeLink = null;
+  var hideTimer = null;
+  var hoverTimer = null;
+  var requestSequence = 0;
+  function isDarkModeActive() {
+    const root = document.documentElement;
+    const body = document.body;
+    if (root.getAttribute("data-mantine-color-scheme") === "dark") return true;
+    if (root.getAttribute("data-theme") === "dark") return true;
+    if (root.classList.contains("dark") || body?.classList.contains("dark")) return true;
+    const background = getComputedStyle(body || root).backgroundColor || "";
+    const match = background.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/i);
+    if (!match) return false;
+    const [red, green, blue] = [Number(match[1]), Number(match[2]), Number(match[3])];
+    const luminance = (0.2126 * red + 0.7152 * green + 0.0722 * blue) / 255;
+    return luminance < 0.45;
+  }
+  function applyPopupTheme(card) {
+    card.classList.toggle("jp-dark", isDarkModeActive());
+  }
+  function isProfileHoverLink(element) {
+    if (!(element instanceof Element)) return false;
+    return element.matches(PROFILE_HOVER_CONTENT_SELECTOR) || !!element.querySelector(PROFILE_HOVER_CONTENT_SELECTOR);
+  }
+  function hasUserCardBounds(element) {
+    const rect = element.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) return true;
+    return rect.width >= USER_CARD_MIN_WIDTH && rect.height <= USER_CARD_MAX_HEIGHT;
+  }
+  function isUserCardTrigger(element) {
+    if (!(element instanceof HTMLElement) || !hasUserCardBounds(element)) return false;
+    if (!element.matches(USER_CARD_TRIGGER_SELECTOR)) return false;
+    return Array.from(element.querySelectorAll(PROFILE_LINK_SELECTOR)).some(isProfileHoverLink);
+  }
+  function findUserCardTrigger(element) {
+    let node = element;
+    for (let depth = 0; node && node !== document.body && depth < USER_CARD_MAX_ANCESTOR_DEPTH; depth += 1) {
+      if (isUserCardTrigger(node)) return node;
+      node = node.parentElement;
+    }
+    return null;
+  }
+  function getProfileLink(element) {
+    if (!(element instanceof Element)) return null;
+    if (element.matches(PROFILE_LINK_SELECTOR)) return element;
+    const links = Array.from(element.querySelectorAll(PROFILE_LINK_SELECTOR));
+    return links.find(isProfileHoverLink) || links[0] || null;
+  }
+  function getLink(element) {
+    if (!(element instanceof Element)) return null;
+    const card = findUserCardTrigger(element);
+    if (card) return card;
+    const link = element.closest(PROFILE_LINK_SELECTOR);
+    return link && isProfileHoverLink(link) ? link : null;
+  }
+  function extractId(link) {
+    const profileLink = getProfileLink(link);
+    if (!profileLink) return null;
+    const match = (profileLink.getAttribute("href") || "").match(/\/u\/([^/?#]+)/i);
+    return match ? decodeURIComponent(match[1]) : null;
+  }
+  function sameIdentifier(left, right) {
+    return String(left || "").toLowerCase() === String(right || "").toLowerCase();
+  }
+  function userMatchesProfileQuery(user, query) {
+    if (!user) return false;
+    if (query.key === "username") return sameIdentifier(user.username, query.value);
+    if (query.key === "id") return sameIdentifier(user.id, query.value);
+    return false;
+  }
+  async function fetchUser(id) {
+    if (profileCache.has(id)) return profileCache.get(id);
+    if (pendingProfiles.has(id)) return pendingProfiles.get(id);
+    const isUuid = /^[0-9a-f]{8}-/i.test(id);
+    const queries = isUuid ? [{ key: "username", value: id }, { key: "id", value: id }] : [{ key: "username", value: id }];
+    const task = (async () => {
+      try {
+        for (const query of queries) {
+          const parameter = `${query.key}=${encodeURIComponent(query.value)}`;
+          try {
+            const response = await requestJike(`/users/profile?${parameter}`);
+            if (!response || response.status === 401) return AUTH_EXPIRED;
+            if (!response.ok) continue;
+            const payload = await response.json();
+            if (userMatchesProfileQuery(payload.user, query)) {
+              profileCache.set(id, payload.user);
+              return payload.user;
+            }
+          } catch (error) {
+            log("fetch err", parameter, error);
+          }
+        }
+        return null;
+      } finally {
+        pendingProfiles.delete(id);
+      }
+    })();
+    pendingProfiles.set(id, task);
+    return task;
+  }
+  async function toggleFollow(username, isFollowing) {
+    if (!username || !hasJikeAuthToken()) return null;
+    const endpoint = isFollowing ? "userRelation/unfollow" : "userRelation/follow";
+    try {
+      const response = await requestJike(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username })
+      });
+      return !!response?.ok;
+    } catch (error) {
+      log("follow err", error);
+      return false;
+    }
+  }
+  function removePopup() {
+    document.getElementById(POPUP_ID)?.remove();
+  }
+  function cancelHide() {
+    clearTimeout(hideTimer);
+  }
+  function cancelHover() {
+    clearTimeout(hoverTimer);
+  }
+  function closePopup() {
+    requestSequence += 1;
+    cancelHide();
+    cancelHover();
+    removePopup();
+    activeLink = null;
+  }
+  function hidePopupSoon() {
+    cancelHide();
+    hideTimer = setTimeout(closePopup, 160);
+  }
+  function positionCard(card, anchor) {
+    const anchorRect = anchor.getBoundingClientRect();
+    const cardRect = card.getBoundingClientRect();
+    let left = anchorRect.left;
+    let top = anchorRect.bottom + 8;
+    if (left + cardRect.width > innerWidth - 10) left = innerWidth - cardRect.width - 10;
+    if (left < 10) left = 10;
+    if (top + cardRect.height > innerHeight - 10) top = anchorRect.top - cardRect.height - 8;
+    if (top < 10) top = 10;
+    card.style.left = `${left}px`;
+    card.style.top = `${top}px`;
+  }
+  function forwardCustomPopupWheel(event) {
+    const card = event.currentTarget;
+    if (!(card instanceof HTMLElement)) return;
+    const inner = card.querySelector(".jp-scroll");
+    const scrollElement = inner instanceof HTMLElement ? inner : card;
+    const overflowY = scrollElement.scrollHeight - scrollElement.clientHeight;
+    if (overflowY > 1) {
+      const atTop = scrollElement.scrollTop <= 0;
+      const atBottom = scrollElement.scrollTop + scrollElement.clientHeight >= scrollElement.scrollHeight - 1;
+      if (event.deltaY < 0 && !atTop || event.deltaY > 0 && !atBottom) {
+        event.preventDefault();
+        scrollElement.scrollTop += event.deltaY;
+        return;
+      }
+    }
+    const scroller = findScrollableContainer(
+      activeLink instanceof Element ? activeLink : document.body
+    );
+    if (!scroller) return;
+    event.preventDefault();
+    scroller.scrollBy({
+      top: event.deltaY,
+      left: event.deltaX,
+      behavior: "auto"
+    });
+  }
+  function bindCardControls(card) {
+    card.addEventListener("mouseenter", cancelHide);
+    card.addEventListener("mouseleave", hidePopupSoon);
+    card.addEventListener("wheel", forwardCustomPopupWheel, { passive: false });
+  }
+  function mountCard(card, anchor) {
+    applyPopupTheme(card);
+    document.body.appendChild(card);
+    bindCardControls(card);
+    positionCard(card, anchor);
   }
   function renderLoadingCard(anchor) {
     removePopup();
     const card = document.createElement("div");
     card.id = POPUP_ID;
     card.innerHTML = `
-      <div class="jp-scroll">
-        <div class="jp-head">
-          <div class="jp-skeleton jp-skeleton-avatar"></div>
-          <div class="jp-info jp-skeleton-group">
-            <div class="jp-skeleton jp-skeleton-line jp-skeleton-name"></div>
-            <div class="jp-skeleton jp-skeleton-line jp-skeleton-meta"></div>
-          </div>
+    <div class="jp-scroll">
+      <div class="jp-head">
+        <div class="jp-skeleton jp-skeleton-avatar"></div>
+        <div class="jp-info jp-skeleton-group">
+          <div class="jp-skeleton jp-skeleton-line jp-skeleton-name"></div>
+          <div class="jp-skeleton jp-skeleton-line jp-skeleton-meta"></div>
         </div>
-        <div class="jp-tags">
-          <span class="jp-skeleton jp-skeleton-chip"></span>
-          <span class="jp-skeleton jp-skeleton-chip jp-skeleton-chip-wide"></span>
-        </div>
-        <div class="jp-skeleton jp-skeleton-line"></div>
-        <div class="jp-skeleton jp-skeleton-line jp-skeleton-line-short"></div>
-        <div class="jp-skeleton jp-skeleton-button"></div>
       </div>
-    `;
-    applyPopupTheme(card);
-    document.body.appendChild(card);
-    bindCardControls(card);
-    positionCard(card, anchor);
+      <div class="jp-tags">
+        <span class="jp-skeleton jp-skeleton-chip"></span>
+        <span class="jp-skeleton jp-skeleton-chip jp-skeleton-chip-wide"></span>
+      </div>
+      <div class="jp-skeleton jp-skeleton-line"></div>
+      <div class="jp-skeleton jp-skeleton-line jp-skeleton-line-short"></div>
+      <div class="jp-skeleton jp-skeleton-button"></div>
+    </div>
+  `;
+    mountCard(card, anchor);
   }
   function renderErrorCard(anchor, message) {
     removePopup();
     const card = document.createElement("div");
     card.id = POPUP_ID;
     card.innerHTML = `
-      <div class="jp-scroll">
-        <div class="jp-status">
-          <div class="jp-status-title">\u8D44\u6599\u6682\u65F6\u4E0D\u53EF\u7528</div>
-          <div class="jp-status-text">${esc(message)}</div>
-        </div>
+    <div class="jp-scroll">
+      <div class="jp-status">
+        <div class="jp-status-title">\u8D44\u6599\u6682\u65F6\u4E0D\u53EF\u7528</div>
+        <div class="jp-status-text"></div>
       </div>
-    `;
-    applyPopupTheme(card);
-    document.body.appendChild(card);
-    bindCardControls(card);
-    positionCard(card, anchor);
+    </div>
+  `;
+    card.querySelector(".jp-status-text").textContent = message;
+    mountCard(card, anchor);
+  }
+  function appendTag(container, text, className = "") {
+    if (!text) return;
+    const tag = document.createElement("span");
+    tag.className = `jp-tag${className ? ` ${className}` : ""}`;
+    tag.textContent = text;
+    container.appendChild(tag);
+  }
+  function profileUrl(username) {
+    return new URL(`/u/${encodeURIComponent(stringValue(username))}`, "https://web.okjike.com").href;
   }
   function renderCard(user, anchor) {
     removePopup();
     const card = document.createElement("div");
     card.id = POPUP_ID;
-    const avatar = user.avatarImage?.thumbnailUrl || user.avatarImage?.picUrl || "";
-    const name = esc(user.screenName || "");
-    const bio = esc(user.bio || user.briefIntro || "");
-    const following = user.statsCount?.followingCount ?? 0;
-    const followers = user.statsCount?.followedCount ?? user.statsCount?.followerCount ?? 0;
-    const verified = user.isVerified || user.isBetaUser;
-    const profileUrl = `https://web.okjike.com/u/${user.username || ""}`;
-    const isFollowing = !!user.following;
-    const isSelf = user.isSelf;
-    let genderIcon = "";
-    if (user.gender === "MALE") {
-      genderIcon = '<span class="jp-tag jp-gender-m">\u2642</span>';
-    } else if (user.gender === "FEMALE") {
-      genderIcon = '<span class="jp-tag jp-gender-f">\u2640</span>';
-    }
-    const province = user.province ? `<span class="jp-tag">${esc(user.province)}</span>` : "";
-    const industry = user.industry ? `<span class="jp-tag">${esc(user.industry)}</span>` : "";
-    const tags = [genderIcon, province, industry].filter(Boolean);
     card.innerHTML = `
-      <div class="jp-scroll">
-        <div class="jp-head">
-          <a href="${profileUrl}" class="jp-av-link"><img class="jp-av" src="${avatar}"></a>
-          <div class="jp-info">
-            <a href="${profileUrl}" class="jp-name">${name}${verified ? '<span class="jp-badge">\u2713</span>' : ""}</a>
-            <div class="jp-stats">
-              <span><b>${following}</b> \u5173\u6CE8</span>
-              <span><b>${followers}</b> \u88AB\u5173\u6CE8</span>
-            </div>
+    <div class="jp-scroll">
+      <div class="jp-head">
+        <a class="jp-av-link"><img class="jp-av" alt=""></a>
+        <div class="jp-info">
+          <a class="jp-name"><span class="jp-screen-name"></span><span class="jp-badge">\u2713</span></a>
+          <div class="jp-stats">
+            <span><b class="jp-following-count"></b> \u5173\u6CE8</span>
+            <span><b class="jp-follower-count"></b> \u88AB\u5173\u6CE8</span>
           </div>
         </div>
-        ${tags.length ? `<div class="jp-tags">${tags.join("")}</div>` : ""}
-        ${bio ? `<div class="jp-bio">${bio}</div>` : ""}
-        ${!isSelf ? `<button class="jp-follow ${isFollowing ? "jp-following" : ""}">${isFollowing ? "\u5DF2\u5173\u6CE8" : "\u5173\u6CE8"}</button>` : ""}
       </div>
-    `;
-    applyPopupTheme(card);
-    const btn = card.querySelector(".jp-follow");
-    if (btn) {
-      let state = isFollowing;
-      btn.addEventListener("click", async (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        btn.disabled = true;
-        const ok = await toggleFollow(user.username, state);
-        if (ok) {
-          state = !state;
-          btn.textContent = state ? "\u5DF2\u5173\u6CE8" : "\u5173\u6CE8";
-          btn.classList.toggle("jp-following", state);
+      <div class="jp-tags"></div>
+      <div class="jp-bio"></div>
+      <button class="jp-follow" type="button"></button>
+    </div>
+  `;
+    const url = profileUrl(user.username);
+    card.querySelectorAll(".jp-av-link, .jp-name").forEach((link) => {
+      link.href = url;
+    });
+    const avatarUrl = safeHttpUrl(
+      user.avatarImage?.thumbnailUrl || user.avatarImage?.picUrl
+    );
+    const avatar = card.querySelector(".jp-av");
+    if (avatarUrl) avatar.src = avatarUrl;
+    else avatar.remove();
+    card.querySelector(".jp-screen-name").textContent = stringValue(user.screenName);
+    card.querySelector(".jp-following-count").textContent = String(user.statsCount?.followingCount ?? 0);
+    card.querySelector(".jp-follower-count").textContent = String(
+      user.statsCount?.followedCount ?? user.statsCount?.followerCount ?? 0
+    );
+    if (!(user.isVerified || user.isBetaUser)) card.querySelector(".jp-badge").remove();
+    const tags = card.querySelector(".jp-tags");
+    if (user.gender === "MALE") appendTag(tags, "\u2642", "jp-gender-m");
+    else if (user.gender === "FEMALE") appendTag(tags, "\u2640", "jp-gender-f");
+    appendTag(tags, stringValue(user.province));
+    appendTag(tags, stringValue(user.industry));
+    if (!tags.children.length) tags.remove();
+    const bio = card.querySelector(".jp-bio");
+    bio.textContent = stringValue(user.bio || user.briefIntro);
+    if (!bio.textContent) bio.remove();
+    const followButton = card.querySelector(".jp-follow");
+    if (user.isSelf) {
+      followButton.remove();
+    } else {
+      let isFollowing = !!user.following;
+      const renderFollowState = () => {
+        followButton.textContent = isFollowing ? "\u5DF2\u5173\u6CE8" : "\u5173\u6CE8";
+        followButton.classList.toggle("jp-following", isFollowing);
+      };
+      renderFollowState();
+      followButton.addEventListener("click", async (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        followButton.disabled = true;
+        const updated = await toggleFollow(user.username, isFollowing);
+        if (updated) {
+          isFollowing = !isFollowing;
+          renderFollowState();
           const activeId = extractId(anchor);
-          if (activeId) CACHE.delete(activeId);
+          if (activeId) profileCache.delete(activeId);
         }
-        btn.disabled = false;
+        followButton.disabled = false;
       });
     }
-    document.body.appendChild(card);
-    bindCardControls(card);
-    positionCard(card, anchor);
+    mountCard(card, anchor);
   }
   function scheduleShow(link, { immediate = false } = {}) {
     cancelHover();
     activeLink = link;
-    const run = () => void showCard(link);
-    if (immediate) {
-      run();
-      return;
-    }
-    hoverTimer = setTimeout(run, SHOW_DELAY);
+    const show = () => void showCard(link);
+    if (immediate) show();
+    else hoverTimer = setTimeout(show, SHOW_DELAY);
   }
   async function showCard(link) {
     if (activeLink !== link) return;
     cancelHide();
-    profileRequestAbort?.abort();
-    const ac = new AbortController();
-    profileRequestAbort = ac;
-    try {
-      const id = extractId(link);
-      if (!id) return;
-      const seq = ++requestSeq;
-      log("hover", id);
-      renderLoadingCard(link);
-      if (!hasAuthToken()) {
-        renderErrorCard(link, "\u672A\u68C0\u6D4B\u5230\u767B\u5F55\u72B6\u6001\uFF0C\u65E0\u6CD5\u52A0\u8F7D\u7528\u6237\u8D44\u6599\u3002");
-        return;
-      }
-      const user = await fetchUser(id);
-      if (seq !== requestSeq || activeLink !== link) return;
-      if (ac.signal.aborted) return;
-      if (user === AUTH_EXPIRED) {
-        renderErrorCard(link, "\u767B\u5F55\u72B6\u6001\u5DF2\u8FC7\u671F\uFF0C\u8BF7\u5237\u65B0\u9875\u9762\u6216\u91CD\u65B0\u767B\u5F55\u540E\u518D\u8BD5\u3002");
-        return;
-      }
-      if (!user) {
-        renderErrorCard(link, "\u63A5\u53E3\u6CA1\u6709\u8FD4\u56DE\u8D44\u6599\uFF0C\u53EF\u80FD\u662F\u7F51\u7EDC\u6CE2\u52A8\u6216\u9875\u9762\u7ED3\u6784\u5DF2\u53D8\u66F4\u3002");
-        return;
-      }
+    const id = extractId(link);
+    if (!id) return;
+    const sequence = ++requestSequence;
+    log("hover", id);
+    renderLoadingCard(link);
+    if (!hasJikeAuthToken()) {
+      renderErrorCard(link, "\u672A\u68C0\u6D4B\u5230\u767B\u5F55\u72B6\u6001\uFF0C\u65E0\u6CD5\u52A0\u8F7D\u7528\u6237\u8D44\u6599\u3002");
+      return;
+    }
+    const user = await fetchUser(id);
+    if (sequence !== requestSequence || activeLink !== link) return;
+    if (user === AUTH_EXPIRED) {
+      renderErrorCard(link, "\u767B\u5F55\u72B6\u6001\u5DF2\u8FC7\u671F\uFF0C\u8BF7\u5237\u65B0\u9875\u9762\u6216\u91CD\u65B0\u767B\u5F55\u540E\u518D\u8BD5\u3002");
+    } else if (!user) {
+      renderErrorCard(link, "\u63A5\u53E3\u6CA1\u6709\u8FD4\u56DE\u8D44\u6599\uFF0C\u53EF\u80FD\u662F\u7F51\u7EDC\u6CE2\u52A8\u6216\u9875\u9762\u7ED3\u6784\u5DF2\u53D8\u66F4\u3002");
+    } else {
       renderCard(user, link);
-    } finally {
-      if (profileRequestAbort === ac) profileRequestAbort = null;
     }
   }
-  function injectStyles() {
-    if (document.getElementById("jike-polish-css")) return;
-    const s = document.createElement("style");
-    s.id = "jike-polish-css";
-    s.textContent = `
+  function syncOpenPopupTheme() {
+    const card = document.getElementById(POPUP_ID);
+    if (card) applyPopupTheme(card);
+  }
+  function installProfileCards() {
+    const themeObserver = new MutationObserver(syncOpenPopupTheme);
+    themeObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class", "data-mantine-color-scheme", "data-theme"]
+    });
+    themeObserver.observe(document.body, { attributes: true, attributeFilter: ["class"] });
+    document.body.addEventListener("mouseover", (event) => {
+      const link = getLink(event.target);
+      if (link) {
+        if (activeLink === link && document.getElementById(POPUP_ID)) return;
+        scheduleShow(link);
+      } else if (activeLink && !event.target.closest?.(`#${POPUP_ID}`)) {
+        hidePopupSoon();
+      }
+    });
+    document.body.addEventListener("focusin", (event) => {
+      const link = getLink(event.target);
+      if (link) scheduleShow(link, { immediate: true });
+    });
+    document.body.addEventListener("focusout", (event) => {
+      if (!event.relatedTarget?.closest?.(`#${POPUP_ID}`)) hidePopupSoon();
+    });
+    document.body.addEventListener("mouseleave", hidePopupSoon);
+    document.addEventListener("mousedown", (event) => {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+      if (!target.closest(`#${POPUP_ID}`) && !target.closest(PROFILE_LINK_SELECTOR) && !getLink(target)) closePopup();
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && document.getElementById(POPUP_ID)) closePopup();
+    });
+    window.addEventListener("resize", () => {
+      const card = document.getElementById(POPUP_ID);
+      if (card && activeLink) positionCard(card, activeLink);
+    });
+  }
+
+  // src/content/runtime.js
+  var PAGE_BRIDGE_SCRIPT = "jike-polish-page-bridge.js";
+  function extensionRuntime() {
+    return globalThis.browser?.runtime ?? globalThis.chrome?.runtime;
+  }
+  function injectPageBridge({ force = false } = {}) {
+    const existing = document.getElementById("jike-polish-page-bridge");
+    if (existing && !force) return;
+    existing?.remove();
+    try {
+      const runtime = extensionRuntime();
+      if (!runtime?.getURL) {
+        log("page bridge err: extension runtime unavailable");
+        return;
+      }
+      const script = document.createElement("script");
+      script.id = "jike-polish-page-bridge";
+      script.src = `${runtime.getURL(PAGE_BRIDGE_SCRIPT)}?v=${Date.now()}`;
+      script.async = false;
+      (document.head || document.documentElement).appendChild(script);
+    } catch (error) {
+      log("page bridge err", error);
+    }
+  }
+  async function injectUserStyle() {
+    if (document.getElementById("jike-polish-userstyle")) return;
+    try {
+      const runtime = extensionRuntime();
+      if (!runtime?.getURL) {
+        log("style err: extension runtime unavailable");
+        return;
+      }
+      const url = `${runtime.getURL("jike-twitter-font.user.css")}?v=${Date.now()}`;
+      const response = await fetch(url, { cache: "no-store" });
+      const raw = await response.text();
+      const inner = raw.replace(/\/\*[\s\S]*?==\/UserStyle== \*\//, "").match(/@-moz-document\s+domain\("web\.okjike\.com"\)\s*\{([\s\S]*)\}\s*$/)?.[1] || raw;
+      const style = document.createElement("style");
+      style.id = "jike-polish-userstyle";
+      style.textContent = inner;
+      document.head.appendChild(style);
+    } catch (error) {
+      log("style err", error);
+    }
+  }
+
+  // src/content/styles.js
+  var CONTENT_STYLES = `
 #${POPUP_ID}{position:fixed;z-index:99999;width:calc(17.5rem * var(--mantine-scale,1));max-width:calc(100vw - 24px);padding:12px;border-radius:calc(0.75rem * var(--mantine-scale,1));background:var(--bg-body-1,var(--mantine-color-body,#fff)) !important;border:1px solid var(--border-primary,rgba(15,23,42,.08)) !important;box-shadow:0 6px 24px rgba(15,23,42,.16);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif;color:var(--mantine-color-text,var(--color-text-primary,#1d2129)) !important;animation:jpIn .12s ease}
 @keyframes jpIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
 #${POPUP_ID} .jp-scroll{max-height:min(60vh,420px);overflow-y:auto;overscroll-behavior:contain}
@@ -1229,101 +1354,24 @@
 .yarl__slide_image.jp-lightbox-zoomed{max-width:none;will-change:transform;touch-action:none;user-select:none}
 .yarl__slide_image.jp-lightbox-dragging{cursor:grabbing}
 `;
-    document.head.appendChild(s);
+  function installContentStyles() {
+    if (document.getElementById("jike-polish-css")) return;
+    const style = document.createElement("style");
+    style.id = "jike-polish-css";
+    style.textContent = CONTENT_STYLES;
+    document.head.appendChild(style);
   }
-  function injectPageBridge({ force = false } = {}) {
-    const existing = document.getElementById("jike-polish-page-bridge");
-    if (existing && !force) return;
-    existing?.remove();
-    try {
-      const runtime = extensionRuntime();
-      if (!runtime?.getURL) {
-        log("page bridge err: extension runtime unavailable");
-        return;
-      }
-      const script = document.createElement("script");
-      script.id = "jike-polish-page-bridge";
-      script.src = `${runtime.getURL(PAGE_BRIDGE_SCRIPT)}?v=${Date.now()}`;
-      script.async = false;
-      (document.head || document.documentElement).appendChild(script);
-    } catch (e) {
-      log("page bridge err", e);
-    }
-  }
-  async function injectUserStyle() {
-    if (document.getElementById("jike-polish-userstyle")) return;
-    try {
-      const runtime = extensionRuntime();
-      if (!runtime?.getURL) {
-        log("style err: extension runtime unavailable");
-        return;
-      }
-      const url = `${runtime.getURL("jike-twitter-font.user.css")}?v=${Date.now()}`;
-      const res = await fetch(url, { cache: "no-store" });
-      const raw = await res.text();
-      const inner = raw.replace(/\/\*[\s\S]*?==\/UserStyle== \*\//, "").match(/@-moz-document\s+domain\("web\.okjike\.com"\)\s*\{([\s\S]*)\}\s*$/)?.[1] || raw;
-      const s = document.createElement("style");
-      s.id = "jike-polish-userstyle";
-      s.textContent = inner;
-      document.head.appendChild(s);
-    } catch (e) {
-      log("style err", e);
-    }
-  }
-  function syncOpenPopupTheme() {
-    const card = document.getElementById(POPUP_ID);
-    if (card) applyPopupTheme(card);
-  }
+
+  // src/content.js
   function boot() {
-    injectStyles();
+    installContentStyles();
     injectPageBridge();
     setTimeout(() => injectPageBridge({ force: true }), 1800);
-    installSpaLocationHook();
-    installJpLayoutWidthTracking();
-    injectUserStyle().then(() => {
-      scheduleJpLayoutSync();
-    });
-    bootLightboxZoom();
-    installScrollBridge();
-    themeObserver = new MutationObserver(() => syncOpenPopupTheme());
-    themeObserver.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ["class", "data-mantine-color-scheme", "data-theme"]
-    });
-    if (document.body) {
-      themeObserver.observe(document.body, { attributes: true, attributeFilter: ["class"] });
-    }
-    document.body.addEventListener("mouseover", (e) => {
-      syncPostLocationTooltip(e.target);
-      const link = getLink(e.target);
-      if (link) {
-        if (activeLink === link && document.getElementById(POPUP_ID)) return;
-        scheduleShow(link);
-        return;
-      }
-      if (activeLink && !e.target.closest(`#${POPUP_ID}`)) hide();
-    });
-    document.body.addEventListener("focusin", (e) => {
-      const link = getLink(e.target);
-      if (link) scheduleShow(link, { immediate: true });
-    });
-    document.body.addEventListener("focusout", (e) => {
-      if (!e.relatedTarget?.closest?.(`#${POPUP_ID}`)) hide();
-    });
-    document.body.addEventListener("mouseleave", hide);
-    document.addEventListener("wheel", forwardNativeHoverCardWheel, { passive: false, capture: true });
-    document.addEventListener("mousedown", (e) => {
-      const target = e.target;
-      if (!(target instanceof HTMLElement)) return;
-      if (!target.closest(`#${POPUP_ID}`) && !target.closest(PROFILE_LINK_SELECTOR) && !getLink(target)) closePopup();
-    });
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape" && document.getElementById(POPUP_ID)) closePopup();
-    });
-    window.addEventListener("resize", () => {
-      const card = document.getElementById(POPUP_ID);
-      if (card && activeLink) positionCard(card, activeLink);
-    });
+    installLayoutEnhancements();
+    void injectUserStyle().then(scheduleLayoutSync);
+    installLightboxZoom();
+    installScrollEnhancements();
+    installProfileCards();
     log("ready");
   }
   boot();

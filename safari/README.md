@@ -25,7 +25,7 @@
 npm run safari:icons
 ```
 
-该命令会生成根目录的 128×128 扩展图标、容器 App 图片，以及 AppIcon 所需的全部 macOS 尺寸。
+该命令会生成根目录的 128×128 扩展图标、Firefox 所需的 16×16/48×48 图标、容器 App 图片，以及 AppIcon 所需的全部 macOS 尺寸。
 
 ## 编译检查
 

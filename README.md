@@ -1,15 +1,15 @@
 # 阅赏
 
-适用于即刻 Web 的开源美化插件，提升阅读与交互体验。支持 Chrome 和 Microsoft Edge（MV3）、Firefox，并提供 macOS Safari 版本。
+适用于即刻 Web 的源码公开美化插件，提升阅读与交互体验。支持 Chrome 和 Microsoft Edge（MV3）、Firefox，并提供 macOS Safari 版本。
 
 ## 安装
 
 - [Mac App Store：安装 macOS Safari 版](https://apps.apple.com/cn/app/%E9%98%85%E8%B5%8F/id6794301352?mt=12)
 - [Chrome Web Store：安装 Chrome 版](https://chromewebstore.google.com/detail/hnbakdoibeogigpihopfjfjbacfmcfck)
 
-Microsoft Edge Add-ons 首次提审材料见 [`edge/README.md`](./edge/README.md)。Firefox 可按照下方本地开发步骤临时载入。
+Microsoft Edge Add-ons 首次提审材料见 [`edge/README.md`](./edge/README.md)；Firefox/AMO 打包、审核材料与待办见 [`firefox/README.md`](./firefox/README.md)，公开商店版本尚待账号所有者提交。
 
-[隐私政策](./PRIVACY.md) · [Safari 版本说明](./safari/README.md)
+[隐私政策](./PRIVACY.md) · [Firefox 发布说明](./firefox/README.md) · [Safari 版本说明](./safari/README.md)
 
 ## 布局与字体对比
 
@@ -67,14 +67,14 @@ Microsoft Edge Add-ons 首次提审材料见 [`edge/README.md`](./edge/README.md
 内容脚本源码在 `src/content.js`，根目录的 `content.js` 由构建生成（与 `manifest.json` 引用一致）。
 
 1. 安装依赖并构建：`npm install` → `npm run build`
-2. 代码检查：`npm run lint`（或 `npm run check`：lint + build）
+2. 代码检查：`npm run lint`（或 `npm run check`：lint + test + Firefox/Mozilla 构建校验 + Safari 项目校验）
 3. Chrome 打开 `chrome://extensions/`；Microsoft Edge 打开 `edge://extensions/`
 4. 开启「开发者模式」
 5. 点击「加载已解压的扩展程序」
 6. 选择本项目目录
-7. Firefox 调试：打开 `about:debugging#/runtime/this-firefox`，点击「临时载入附加组件」，选择项目里的 `manifest.json`
+7. Firefox 调试：先运行 `npm run firefox:package`，打开 `about:debugging#/runtime/this-firefox`，点击「临时载入附加组件」，选择 `build/firefox/manifest.json`
 
-修改 `src/content.js` 后请重新执行 `npm run build` 再刷新扩展；修改 `jike-polish-page-bridge.js` 或样式文件后刷新扩展即可。Chrome 商店 zip 可使用 `./pack.sh`（脚本内会先执行构建）；带离线审核演示的 Edge 包使用 `npm run edge:package`。
+修改 `src/` 下的脚本后请重新执行 `npm run build` 再刷新扩展；修改样式文件后直接刷新扩展即可。Chrome 商店包使用 `npm run release:extension`，带离线审核演示的 Edge 包使用 `npm run edge:package`，Firefox 上传包和 AMO 源码包使用 `npm run firefox:package`。
 
 ### Safari（macOS）
 

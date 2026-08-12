@@ -1,8 +1,8 @@
 # 隐私政策 / Privacy Policy
 
-最后更新：2026 年 8 月 9 日
+最后更新：2026 年 8 月 12 日
 
-“阅赏”是一款开源、非官方的浏览器扩展。本政策主要说明 Microsoft Edge 版；相同的数据处理方式也适用于 Chrome、Firefox 和 Safari 版本。扩展的网页功能仅在 `https://web.okjike.com/` 上运行。
+“阅赏”是一款源码公开、非官方的浏览器扩展。本政策适用于 Chrome、Microsoft Edge、Firefox 和 Safari 版本。扩展的网页功能仅在 `https://web.okjike.com/` 上运行。
 
 ## 扩展处理的数据
 
@@ -12,6 +12,8 @@
 - 目标网站返回的用户资料，例如头像、昵称、简介、性别、地区、行业标签和关注数据；
 - 目标网站已保存在其自身站点存储中的登录令牌和设备标识；
 - 用户明确发起的关注或取消关注操作。
+
+Firefox 版会在安装时通过浏览器内置提示披露相应的数据类别，包括身份验证信息、个人标识信息、地区、公开动态内容、网站活动和网站内容。这里的“传输”包括扩展为了实现功能而与目标服务直接通信；这些类别不表示开发者会收到数据。
 
 扩展不会将这些数据发送给开发者或开发者控制的服务器，也不会出售这些数据，或将其用于广告、分析、遥测、信用评估及与扩展功能无关的用途。
 
@@ -29,7 +31,7 @@
 
 ## 用户控制与数据权利
 
-用户可以随时通过浏览器的扩展管理页面撤销扩展对 `web.okjike.com` 的访问权限、停用或卸载扩展。退出目标网站账号或清除该网站的站点数据，可以删除浏览器中保存的登录令牌。关注或取消关注仅在用户主动操作时发生，并可通过目标网站再次更改。
+用户可以随时通过浏览器的扩展管理页面撤销扩展对 `web.okjike.com` 的访问权限、停用或卸载扩展。Firefox 用户还可在附加组件的“权限和数据”页面查看必需的数据传输类别。退出目标网站账号或清除该网站的站点数据，可以删除浏览器中保存的登录令牌。关注或取消关注仅在用户主动操作时发生，并可通过目标网站再次更改。
 
 由于开发者不接收或保存用户数据，开发者没有可供访问、更正或删除的服务器端用户副本。目标网站账号及其保存的数据应通过目标网站提供的账号和隐私控制进行管理。
 
@@ -46,9 +48,9 @@ https://github.com/BoWuGit/jike-polish/issues
 
 # Privacy Policy
 
-Last updated: August 9, 2026
+Last updated: August 12, 2026
 
-“阅赏” (Yueshang) is an open-source, unofficial browser extension. This policy primarily describes the Microsoft Edge extension; the same data practices also apply to the Chrome, Firefox, and Safari versions. Its webpage features run only on `https://web.okjike.com/`.
+“阅赏” (Yueshang) is a source-available, unofficial browser extension. This policy applies to the Chrome, Microsoft Edge, Firefox, and Safari versions. Its webpage features run only on `https://web.okjike.com/`.
 
 ## Data processed by the extension
 
@@ -58,6 +60,8 @@ To provide typography and layout improvements, repost/quote cards, profile hover
 - Profile information returned by the target service, such as avatars, display names, biographies, gender, region, industry tags, and follow statistics;
 - Authentication tokens and a device identifier already stored in the target website's own site storage; and
 - Follow or unfollow actions explicitly initiated by the user.
+
+At installation, the Firefox version uses the browser's built-in prompt to disclose the corresponding categories: authentication information, personally identifying information, location, public social posts, website activity, and website content. In this context, “transmission” includes direct communication with the target service needed to provide a feature; these categories do not mean that the developer receives the data.
 
 The extension does not send this data to the developer or any developer-controlled server. It does not sell this data or use it for advertising, analytics, telemetry, credit assessment, or any purpose unrelated to the extension's user-facing features.
 
@@ -75,7 +79,7 @@ No user data is stored on developer servers, and the extension creates no separa
 
 ## User controls and data rights
 
-Users can revoke the extension's access to `web.okjike.com`, disable it, or uninstall it at any time from Microsoft Edge's extension management page. Signing out of the target website or clearing its site data removes authentication tokens saved by that website. Follow and unfollow changes occur only after an explicit user action and can be changed again through the target website.
+Users can revoke the extension's access to `web.okjike.com`, disable it, or uninstall it at any time from their browser's extension management page. Firefox users can also review the required data-transmission categories on the add-on's “Permissions and Data” page. Signing out of the target website or clearing its site data removes authentication tokens saved by that website. Follow and unfollow changes occur only after an explicit user action and can be changed again through the target website.
 
 Because the developer neither receives nor retains user data, the developer has no server-side user-data copy to access, correct, or delete. Account data held by the target service should be managed through that service's account and privacy controls.
 

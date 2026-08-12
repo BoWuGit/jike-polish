@@ -25,6 +25,8 @@ const APP_ICON_DIRECTORY = "safari/JikePolish/JikePolish/Assets.xcassets/AppIcon
 const appIcon = (filename) => `${APP_ICON_DIRECTORY}/${filename}`;
 const ICON_OUTPUTS = new Map([
   ["icon.png", 128],
+  ["firefox/icons/icon-16.png", 16],
+  ["firefox/icons/icon-48.png", 48],
   ["safari/JikePolish/JikePolish/Resources/Icon.png", 1024],
   [appIcon("mac-icon-16@1x.png"), 16],
   [appIcon("mac-icon-16@2x.png"), 32],

@@ -1,0 +1,29 @@
+{
+  "default_locale": "zh-CN",
+  "name": {
+    "zh-CN": "阅赏",
+    "en-US": "Yueshang"
+  },
+  "summary": {
+    "zh-CN": "优化 web.okjike.com 的字体与布局，增强转发卡片、用户资料预览和图片灯箱缩放。",
+    "en-US": "Improves typography, repost previews, profile cards, and image zooming on web.okjike.com."
+  },
+  "description": {
+    "zh-CN": "阅赏是一款源码公开、非官方的网页阅读增强扩展，仅在 https://web.okjike.com/ 上运行。\n\n主要功能：\n\n- 优化字体、字重、行高与桌面端布局；\n- 展开转发/引用卡片，并补充图片、视频和链接预览；\n- 为正文中的用户链接提供资料悬浮卡片及关注操作；\n- 为网站图片灯箱增加 1×–6× 缩放、拖拽、滚轮和键盘控制；\n- 工具栏内提供完全离线、无需账号的虚构内容功能演示。\n\n扩展不包含广告、分析、遥测或远程可执行代码。部分增强功能会直接与目标网站的 HTTPS API 通信；数据仅在用户设备与目标服务之间传输，不会发送给扩展开发者。详细说明请查看隐私政策：https://github.com/BoWuGit/jike-polish/blob/main/PRIVACY.md",
+    "en-US": "Yueshang is a source-available, unofficial reading enhancement that runs only on https://web.okjike.com/.\n\nFeatures:\n\n- Refines typography, spacing, and the desktop layout.\n- Expands repost/quote cards and restores image, video, and link previews.\n- Adds profile hover cards and user-initiated follow controls.\n- Adds 1x–6x zoom, pan, wheel, and keyboard controls to the site's image lightbox.\n- Includes a fully offline feature demo with fictional content, accessible from the toolbar without an account.\n\nThe extension contains no ads, analytics, telemetry, or remotely executable code. Some enhancements communicate directly with the target service's HTTPS API. Data travels only between the user's device and that service and is never sent to the extension developer. Privacy policy: https://github.com/BoWuGit/jike-polish/blob/main/PRIVACY.md"
+  },
+  "homepage": {
+    "zh-CN": "https://github.com/BoWuGit/jike-polish",
+    "en-US": "https://github.com/BoWuGit/jike-polish"
+  },
+  "categories": [
+    "appearance",
+    "social-communication"
+  ],
+  "is_experimental": false,
+  "requires_payment": false,
+  "version": {
+    "license": "all-rights-reserved",
+    "approval_notes": "The extension runs only on https://web.okjike.com/. The third-party site normally requires QR-code login, so no reusable reviewer account can be provided. To test without an account or network access, click the extension toolbar icon and open the packaged offline demo. It exercises typography switching, repost media/link previews, a fictional profile card, and the 1x–6x lightbox controls.\n\nOnline data flow: packaged scripts make HTTPS requests only to https://api.ruguoapp.com/ (the target site's own API) and to media/content URLs returned by that service. Requests may include the target site's existing access/refresh token, device identifier, post/profile identifiers, and an explicit follow/unfollow action. Nothing is sent to the extension developer. The manifest declares the corresponding required Firefox data-collection categories, and the privacy policy is at https://github.com/BoWuGit/jike-polish/blob/main/PRIVACY.md.\n\nAll executable JavaScript and CSS is packaged locally. There is no remote code, eval, WebAssembly, analytics, advertising, or telemetry. The page bridge is packaged as jike-polish-page-bridge.js and is exposed only to https://web.okjike.com/* so it can augment the site's own React-rendered quote cards and lightbox.\n\nThe submitted source archive is required because esbuild bundles the modules. Build with: npm ci && npm run firefox:package. Full reproducible instructions are in firefox/BUILD.md. web-ext lint reports no errors, notices, or warnings. The minimum desktop version is Firefox 142 so the package remains warning-free under Mozilla's current compatibility-data checks; gecko_android is intentionally omitted because this listing targets desktop Firefox only."
+  }
+}
