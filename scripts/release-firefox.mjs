@@ -7,7 +7,6 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const FIREFOX_ID = "jike-polish@bowugit.github.io";
-const AMO_ADDON_API = `https://addons.mozilla.org/api/v5/addons/addon/${encodeURIComponent(FIREFOX_ID)}/`;
 const AMO_DASHBOARD_URL = "https://addons.mozilla.org/developers/addons";
 const AMO_METADATA = path.join(ROOT, "firefox/amo-metadata.json");
 const MODES = new Set(["package", "submit"]);
@@ -86,13 +85,6 @@ function assertCredential(name) {
   }
 }
 
-async function listingExists() {
-  const response = await fetch(AMO_ADDON_API, { headers: { Accept: "application/json" } });
-  if (response.status === 404) return false;
-  if (!response.ok) throw new Error(`Could not check AMO listing (${response.status}).`);
-  return true;
-}
-
 async function buildPackages() {
   const [manifest, metadata] = await Promise.all([
     readJson("manifest.json"),
@@ -136,12 +128,6 @@ async function release(options) {
 
   assertCredential("WEB_EXT_API_KEY");
   assertCredential("WEB_EXT_API_SECRET");
-  if (!await listingExists()) {
-    throw new Error(
-      "No AMO listing exists yet. Complete the first submission in AMO Developer Hub "
-      + "so its privacy policy, license, support links, and screenshots are reviewed together.",
-    );
-  }
 
   const signedArtifacts = path.join(ROOT, "build/firefox-signed");
   await rm(signedArtifacts, { recursive: true, force: true });
