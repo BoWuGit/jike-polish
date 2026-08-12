@@ -115,6 +115,15 @@
     button.appendChild(svg);
     return button;
   }
+  function createNavigationButton(className, label, pathData, delta) {
+    const button = createLightboxButton(className, label, pathData);
+    button.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      stepLightbox(delta);
+    });
+    return button;
+  }
   function closeLightbox() {
     if (!lightboxState) return;
     const { opener, portal } = lightboxState;
@@ -150,6 +159,23 @@
     lightboxState.index = (lightboxState.index + delta + pictures.length) % pictures.length;
     renderLightboxSlide();
   }
+  function trapLightboxFocus(event) {
+    const { portal } = lightboxState;
+    const controls = Array.from(
+      portal.querySelectorAll("button:not([hidden]):not([disabled])")
+    );
+    if (!controls.length) return;
+    const first = controls[0];
+    const last = controls[controls.length - 1];
+    const focusOutside = !portal.contains(document.activeElement);
+    if (event.shiftKey && (focusOutside || document.activeElement === first)) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && (focusOutside || document.activeElement === last)) {
+      event.preventDefault();
+      first.focus();
+    }
+  }
   function handleLightboxKeydown(event) {
     if (!lightboxState) return;
     if (event.key === "Escape") {
@@ -158,19 +184,7 @@
       return;
     }
     if (event.key === "Tab") {
-      const controls = Array.from(
-        lightboxState.portal.querySelectorAll("button:not([hidden]):not([disabled])")
-      );
-      if (!controls.length) return;
-      const first = controls[0];
-      const last = controls[controls.length - 1];
-      if (event.shiftKey && (!lightboxState.portal.contains(document.activeElement) || document.activeElement === first)) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && (!lightboxState.portal.contains(document.activeElement) || document.activeElement === last)) {
-        event.preventDefault();
-        first.focus();
-      }
+      trapLightboxFocus(event);
       return;
     }
     if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
@@ -198,26 +212,18 @@
     );
     closeButton.addEventListener("click", closeLightbox);
     toolbar.appendChild(closeButton);
-    const prevButton = createLightboxButton(
+    const prevButton = createNavigationButton(
       "yarl__navigation_prev jp-repost-lightbox-prev",
       "\u4E0A\u4E00\u5F20\u56FE\u7247",
-      "M15 18l-6-6 6-6"
+      "M15 18l-6-6 6-6",
+      -1
     );
-    prevButton.addEventListener("click", (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      stepLightbox(-1);
-    });
-    const nextButton = createLightboxButton(
+    const nextButton = createNavigationButton(
       "yarl__navigation_next jp-repost-lightbox-next",
       "\u4E0B\u4E00\u5F20\u56FE\u7247",
-      "M9 6l6 6-6 6"
+      "M9 6l6 6-6 6",
+      1
     );
-    nextButton.addEventListener("click", (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      stepLightbox(1);
-    });
     const slide = document.createElement("div");
     slide.className = "yarl__slide yarl__slide_current jp-repost-lightbox-slide";
     const image = document.createElement("img");
@@ -315,21 +321,19 @@
   async function requestJike(path, options = {}) {
     const { allowAnonymous = false, headers: extraHeaders, ...fetchOptions } = options;
     const url = path.startsWith("http") ? path : `${API_BASE}/${path.replace(/^\/+/, "")}`;
+    const sendRequest = (requestToken) => fetch(url, {
+      ...fetchOptions,
+      headers: jikeApiHeaders(requestToken, extraHeaders)
+    });
     let token = accessToken();
     if (!token && !allowAnonymous) token = await refreshAccessToken();
     if (!token && !allowAnonymous) return null;
-    let response = await fetch(url, {
-      ...fetchOptions,
-      headers: jikeApiHeaders(token, extraHeaders)
-    });
+    let response = await sendRequest(token);
     if (response.status !== 401 || fetchOptions.signal?.aborted) return response;
     token = allowAnonymous ? null : await refreshAccessToken();
     if (fetchOptions.signal?.aborted) return response;
     if (!token && !allowAnonymous) return response;
-    response = await fetch(url, {
-      ...fetchOptions,
-      headers: jikeApiHeaders(token, extraHeaders)
-    });
+    response = await sendRequest(token);
     return response;
   }
 
@@ -543,6 +547,42 @@
     card.dataset.jpRepostLinkKey = linkKey;
     syncAttachmentGapOffset(card);
   }
+  function createMediaItem(picture, index, pictures, thumbnailCount) {
+    const item = document.createElement("div");
+    item.className = MEDIA_ITEM_CLASS;
+    item.tabIndex = 0;
+    item.setAttribute("role", "button");
+    item.setAttribute("aria-label", `\u6253\u5F00\u8F6C\u53D1\u539F\u5E16\u56FE\u7247 ${index + 1}`);
+    item.addEventListener(
+      "click",
+      (event) => openLightboxFromMedia(event, pictures, index),
+      true
+    );
+    item.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        openLightboxFromMedia(event, pictures, index);
+      }
+    });
+    const image = document.createElement("img");
+    image.className = MEDIA_IMAGE_CLASS;
+    image.loading = "lazy";
+    image.decoding = "async";
+    image.referrerPolicy = "no-referrer";
+    image.alt = `\u8F6C\u53D1\u539F\u5E16\u56FE\u7247 ${index + 1}`;
+    const thumbnailUrl = safeHttpUrl(pictureUrl(picture, thumbnailCount));
+    if (thumbnailUrl) image.src = thumbnailUrl;
+    image.dataset.fullSrc = safeHttpUrl(fullPictureUrl(picture));
+    if (picture.width) image.dataset.width = String(picture.width);
+    if (picture.height) image.dataset.height = String(picture.height);
+    item.appendChild(image);
+    if (index === 3 && pictures.length > thumbnailCount) {
+      const more = document.createElement("span");
+      more.className = MEDIA_MORE_CLASS;
+      more.textContent = `+${pictures.length - thumbnailCount}`;
+      item.appendChild(more);
+    }
+    return item;
+  }
   function renderMedia(card, source, pictures) {
     const mediaKey = `${source.type || "UNKNOWN"}:${source.id}:${pictures.map((picture) => picture.key || fullPictureUrl(picture)).join(",")}`;
     const existingMedia = getDirectChildByClass(card, MEDIA_CLASS);
@@ -556,40 +596,7 @@
     media.dataset.total = String(pictures.length);
     if (shownPictures.length === 1) syncSingleImageWidth(media, shownPictures[0]);
     shownPictures.forEach((picture, index) => {
-      const item = document.createElement("div");
-      item.className = MEDIA_ITEM_CLASS;
-      item.tabIndex = 0;
-      item.setAttribute("role", "button");
-      item.setAttribute("aria-label", `\u6253\u5F00\u8F6C\u53D1\u539F\u5E16\u56FE\u7247 ${index + 1}`);
-      item.addEventListener(
-        "click",
-        (event) => openLightboxFromMedia(event, pictures, index),
-        true
-      );
-      item.addEventListener("keydown", (event) => {
-        if (event.key === "Enter" || event.key === " ") {
-          openLightboxFromMedia(event, pictures, index);
-        }
-      });
-      const image = document.createElement("img");
-      image.className = MEDIA_IMAGE_CLASS;
-      image.loading = "lazy";
-      image.decoding = "async";
-      image.referrerPolicy = "no-referrer";
-      image.alt = `\u8F6C\u53D1\u539F\u5E16\u56FE\u7247 ${index + 1}`;
-      const thumbnailUrl = safeHttpUrl(pictureUrl(picture, shownPictures.length));
-      if (thumbnailUrl) image.src = thumbnailUrl;
-      image.dataset.fullSrc = safeHttpUrl(fullPictureUrl(picture));
-      if (picture.width) image.dataset.width = String(picture.width);
-      if (picture.height) image.dataset.height = String(picture.height);
-      item.appendChild(image);
-      if (index === 3 && pictures.length > shownPictures.length) {
-        const more = document.createElement("span");
-        more.className = MEDIA_MORE_CLASS;
-        more.textContent = `+${pictures.length - shownPictures.length}`;
-        item.appendChild(more);
-      }
-      media.appendChild(item);
+      media.appendChild(createMediaItem(picture, index, pictures, shownPictures.length));
     });
     insertAttachment(card, media);
     card.dataset.jpRepostMediaKey = mediaKey;
@@ -616,6 +623,9 @@
     card.dataset.jpRepostVideoKey = videoKey;
     syncAttachmentGapOffset(card);
   }
+  function isCurrentQuoteCard(card, data) {
+    return document.contains(card) && samePost(getQuoteData(card), data);
+  }
   async function syncQuoteCard(card) {
     if (!(card instanceof HTMLElement)) return;
     const data = getQuoteData(card);
@@ -625,14 +635,14 @@
     let linkSource = getLinkSource(data);
     if ((!mediaSource || !videoSource || !linkSource) && shouldFetchDetail(data)) {
       const detail = await fetchPostDetail(data);
-      if (!document.contains(card) || !samePost(getQuoteData(card), data)) return;
+      if (!isCurrentQuoteCard(card, data)) return;
       mediaSource ||= getMediaSource(detail);
       videoSource ||= getVideoSource(detail);
       linkSource ||= getLinkSource(detail);
     }
     if (shouldFetchLinkImage(linkSource)) {
       const detail = await fetchPostDetail(linkSource);
-      if (!document.contains(card) || !samePost(getQuoteData(card), data)) return;
+      if (!isCurrentQuoteCard(card, data)) return;
       const detailedLinkSource = getLinkSource(detail);
       if (linkImageUrl(getLinkInfo(detailedLinkSource))) linkSource = detailedLinkSource;
     }
@@ -651,7 +661,7 @@
       return;
     }
     const videoUrl = await fetchVideoUrl(videoSource);
-    if (!document.contains(card) || !samePost(getQuoteData(card), data)) return;
+    if (!isCurrentQuoteCard(card, data)) return;
     if (videoUrl) renderVideo(card, videoSource, videoUrl);
     else removeVideo(card, `${videoSource.type}:${videoSource.id}:video:none`);
   }

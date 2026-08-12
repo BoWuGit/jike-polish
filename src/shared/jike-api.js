@@ -69,22 +69,21 @@ async function refreshAccessToken() {
 export async function requestJike(path, options = {}) {
   const { allowAnonymous = false, headers: extraHeaders, ...fetchOptions } = options;
   const url = path.startsWith("http") ? path : `${API_BASE}/${path.replace(/^\/+/, "")}`;
+  const sendRequest = (requestToken) => fetch(url, {
+    ...fetchOptions,
+    headers: jikeApiHeaders(requestToken, extraHeaders),
+  });
+
   let token = accessToken();
   if (!token && !allowAnonymous) token = await refreshAccessToken();
   if (!token && !allowAnonymous) return null;
 
-  let response = await fetch(url, {
-    ...fetchOptions,
-    headers: jikeApiHeaders(token, extraHeaders),
-  });
+  let response = await sendRequest(token);
   if (response.status !== 401 || fetchOptions.signal?.aborted) return response;
 
   token = allowAnonymous ? null : await refreshAccessToken();
   if (fetchOptions.signal?.aborted) return response;
   if (!token && !allowAnonymous) return response;
-  response = await fetch(url, {
-    ...fetchOptions,
-    headers: jikeApiHeaders(token, extraHeaders),
-  });
+  response = await sendRequest(token);
   return response;
 }

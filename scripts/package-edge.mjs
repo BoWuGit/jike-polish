@@ -2,21 +2,22 @@
 
 import { spawnSync } from "node:child_process";
 import {
-  chmod,
-  copyFile,
   mkdir,
   mkdtemp,
-  readFile,
   rm,
-  stat,
-  utimes,
   writeFile,
 } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+import {
+  ROOT,
+  copyProjectFile,
+  assertNonEmptyFile,
+  normalizeArchiveFiles,
+  readJson,
+} from "./script-utils.mjs";
+
 const EXTENSION_FILES = [
   "content.js",
   "icon.png",
@@ -40,21 +41,10 @@ const PACKAGE_FILES = [
   EDGE_LOCALE_FILE,
   ...DEMO_FILES.values(),
 ];
-const ARCHIVE_MTIME = new Date("1980-01-01T00:00:00.000Z");
 
 function run(command, args, cwd = ROOT, env = process.env) {
   const result = spawnSync(command, args, { cwd, env, stdio: "inherit" });
   if (result.status !== 0) throw new Error(`${command} ${args.join(" ")} failed.`);
-}
-
-async function readJson(file) {
-  return JSON.parse(await readFile(path.join(ROOT, file), "utf8"));
-}
-
-async function copyIntoStage(stage, source, destination = source) {
-  const output = path.join(stage, destination);
-  await mkdir(path.dirname(output), { recursive: true });
-  await copyFile(path.join(ROOT, source), output);
 }
 
 async function packageEdge() {
@@ -99,14 +89,12 @@ async function packageEdge() {
         path.join(stage, EDGE_LOCALE_FILE),
         `${JSON.stringify(localeMessages, null, 2)}\n`,
       ),
-      ...EXTENSION_FILES.map((file) => copyIntoStage(stage, file)),
-      ...[...DEMO_FILES].map(([source, destination]) => copyIntoStage(stage, source, destination)),
+      ...EXTENSION_FILES.map((file) => copyProjectFile(stage, file)),
+      ...[...DEMO_FILES].map(([source, destination]) => (
+        copyProjectFile(stage, source, destination)
+      )),
     ]);
-    await Promise.all(PACKAGE_FILES.map(async (file) => {
-      const stagedFile = path.join(stage, file);
-      await chmod(stagedFile, 0o644);
-      await utimes(stagedFile, ARCHIVE_MTIME, ARCHIVE_MTIME);
-    }));
+    await normalizeArchiveFiles(stage, PACKAGE_FILES);
 
     await rm(output, { force: true });
     run(
@@ -121,11 +109,8 @@ async function packageEdge() {
       { ...process.env, TZ: "UTC" },
     );
 
-    const outputStat = await stat(output);
-    if (!outputStat.isFile() || outputStat.size === 0) {
-      throw new Error(`Edge package is empty: ${output}`);
-    }
-    console.log(`Edge release package: ${path.basename(output)} (${outputStat.size} bytes)`);
+    const outputSize = await assertNonEmptyFile(output, "Edge package");
+    console.log(`Edge release package: ${path.basename(output)} (${outputSize} bytes)`);
   } finally {
     await rm(stage, { recursive: true, force: true });
   }

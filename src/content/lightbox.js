@@ -72,9 +72,11 @@ function applyLightboxTransform() {
   image.style.transformOrigin = "center center";
   image.style.transition = lightboxZoom.dragging ? "none" : "transform 140ms ease";
   image.style.transform = `translate3d(${x}px, ${y}px, 0) scale(${lightboxZoom.scale})`;
-  image.style.cursor = lightboxZoom.scale > 1
-    ? (lightboxZoom.dragging ? "grabbing" : "grab")
-    : "zoom-in";
+  let cursor = "zoom-in";
+  if (lightboxZoom.scale > LIGHTBOX_MIN_SCALE) {
+    cursor = lightboxZoom.dragging ? "grabbing" : "grab";
+  }
+  image.style.cursor = cursor;
   image.classList.toggle("jp-lightbox-zoomed", lightboxZoom.scale > 1);
   updateLightboxZoomButtons();
 }
@@ -126,6 +128,20 @@ function setLightboxScale(nextScale) {
     lightboxZoom.y = nextOffset.y;
   }
   applyLightboxTransform();
+}
+
+function zoomLightboxIn() {
+  const nextScale = lightboxZoom.scale > LIGHTBOX_MIN_SCALE
+    ? lightboxZoom.scale + LIGHTBOX_SCALE_STEP
+    : 2;
+  setLightboxScale(nextScale);
+}
+
+function zoomLightboxOut() {
+  const nextScale = lightboxZoom.scale > LIGHTBOX_MIN_SCALE
+    ? lightboxZoom.scale - LIGHTBOX_SCALE_STEP
+    : LIGHTBOX_MIN_SCALE;
+  setLightboxScale(nextScale);
 }
 
 function onLightboxPointerDown(event) {
@@ -268,7 +284,7 @@ function ensureLightboxZoomButtons() {
     zoomOutButton.addEventListener("click", (event) => {
       event.preventDefault();
       event.stopPropagation();
-      setLightboxScale(lightboxZoom.scale - LIGHTBOX_SCALE_STEP);
+      zoomLightboxOut();
     });
     toolbar.insertBefore(zoomOutButton, toolbar.firstChild);
   }
@@ -281,9 +297,7 @@ function ensureLightboxZoomButtons() {
     zoomInButton.addEventListener("click", (event) => {
       event.preventDefault();
       event.stopPropagation();
-      setLightboxScale(lightboxZoom.scale > LIGHTBOX_MIN_SCALE
-        ? lightboxZoom.scale + LIGHTBOX_SCALE_STEP
-        : 2);
+      zoomLightboxIn();
     });
     toolbar.insertBefore(zoomInButton, zoomOutButton.nextSibling);
   }
@@ -373,16 +387,12 @@ function handleLightboxKeydown(event) {
   }
   if ((event.key === "+" || event.key === "=") && !event.metaKey && !event.ctrlKey) {
     event.preventDefault();
-    setLightboxScale(lightboxZoom.scale > LIGHTBOX_MIN_SCALE
-      ? lightboxZoom.scale + LIGHTBOX_SCALE_STEP
-      : 2);
+    zoomLightboxIn();
     return;
   }
   if (event.key === "-" && !event.metaKey && !event.ctrlKey) {
     event.preventDefault();
-    setLightboxScale(lightboxZoom.scale > LIGHTBOX_MIN_SCALE
-      ? lightboxZoom.scale - LIGHTBOX_SCALE_STEP
-      : LIGHTBOX_MIN_SCALE);
+    zoomLightboxOut();
     return;
   }
   if (event.key === "0" && !event.metaKey && !event.ctrlKey) {

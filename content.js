@@ -74,7 +74,11 @@
     image.style.transformOrigin = "center center";
     image.style.transition = lightboxZoom.dragging ? "none" : "transform 140ms ease";
     image.style.transform = `translate3d(${x}px, ${y}px, 0) scale(${lightboxZoom.scale})`;
-    image.style.cursor = lightboxZoom.scale > 1 ? lightboxZoom.dragging ? "grabbing" : "grab" : "zoom-in";
+    let cursor = "zoom-in";
+    if (lightboxZoom.scale > LIGHTBOX_MIN_SCALE) {
+      cursor = lightboxZoom.dragging ? "grabbing" : "grab";
+    }
+    image.style.cursor = cursor;
     image.classList.toggle("jp-lightbox-zoomed", lightboxZoom.scale > 1);
     updateLightboxZoomButtons();
   }
@@ -122,6 +126,14 @@
       lightboxZoom.y = nextOffset.y;
     }
     applyLightboxTransform();
+  }
+  function zoomLightboxIn() {
+    const nextScale = lightboxZoom.scale > LIGHTBOX_MIN_SCALE ? lightboxZoom.scale + LIGHTBOX_SCALE_STEP : 2;
+    setLightboxScale(nextScale);
+  }
+  function zoomLightboxOut() {
+    const nextScale = lightboxZoom.scale > LIGHTBOX_MIN_SCALE ? lightboxZoom.scale - LIGHTBOX_SCALE_STEP : LIGHTBOX_MIN_SCALE;
+    setLightboxScale(nextScale);
   }
   function onLightboxPointerDown(event) {
     const image = syncActiveLightboxImage();
@@ -239,7 +251,7 @@
       zoomOutButton.addEventListener("click", (event) => {
         event.preventDefault();
         event.stopPropagation();
-        setLightboxScale(lightboxZoom.scale - LIGHTBOX_SCALE_STEP);
+        zoomLightboxOut();
       });
       toolbar.insertBefore(zoomOutButton, toolbar.firstChild);
     }
@@ -252,7 +264,7 @@
       zoomInButton.addEventListener("click", (event) => {
         event.preventDefault();
         event.stopPropagation();
-        setLightboxScale(lightboxZoom.scale > LIGHTBOX_MIN_SCALE ? lightboxZoom.scale + LIGHTBOX_SCALE_STEP : 2);
+        zoomLightboxIn();
       });
       toolbar.insertBefore(zoomInButton, zoomOutButton.nextSibling);
     }
@@ -329,12 +341,12 @@
     }
     if ((event.key === "+" || event.key === "=") && !event.metaKey && !event.ctrlKey) {
       event.preventDefault();
-      setLightboxScale(lightboxZoom.scale > LIGHTBOX_MIN_SCALE ? lightboxZoom.scale + LIGHTBOX_SCALE_STEP : 2);
+      zoomLightboxIn();
       return;
     }
     if (event.key === "-" && !event.metaKey && !event.ctrlKey) {
       event.preventDefault();
-      setLightboxScale(lightboxZoom.scale > LIGHTBOX_MIN_SCALE ? lightboxZoom.scale - LIGHTBOX_SCALE_STEP : LIGHTBOX_MIN_SCALE);
+      zoomLightboxOut();
       return;
     }
     if (event.key === "0" && !event.metaKey && !event.ctrlKey) {
@@ -842,21 +854,19 @@
   async function requestJike(path, options = {}) {
     const { allowAnonymous = false, headers: extraHeaders, ...fetchOptions } = options;
     const url = path.startsWith("http") ? path : `${API_BASE}/${path.replace(/^\/+/, "")}`;
+    const sendRequest = (requestToken) => fetch(url, {
+      ...fetchOptions,
+      headers: jikeApiHeaders(requestToken, extraHeaders)
+    });
     let token = accessToken();
     if (!token && !allowAnonymous) token = await refreshAccessToken();
     if (!token && !allowAnonymous) return null;
-    let response = await fetch(url, {
-      ...fetchOptions,
-      headers: jikeApiHeaders(token, extraHeaders)
-    });
+    let response = await sendRequest(token);
     if (response.status !== 401 || fetchOptions.signal?.aborted) return response;
     token = allowAnonymous ? null : await refreshAccessToken();
     if (fetchOptions.signal?.aborted) return response;
     if (!token && !allowAnonymous) return response;
-    response = await fetch(url, {
-      ...fetchOptions,
-      headers: jikeApiHeaders(token, extraHeaders)
-    });
+    response = await sendRequest(token);
     return response;
   }
 
@@ -989,6 +999,12 @@
   function removePopup() {
     document.getElementById(POPUP_ID)?.remove();
   }
+  function createPopupCard() {
+    removePopup();
+    const card = document.createElement("div");
+    card.id = POPUP_ID;
+    return card;
+  }
   function cancelHide() {
     clearTimeout(hideTimer);
   }
@@ -1056,9 +1072,7 @@
     positionCard(card, anchor);
   }
   function renderLoadingCard(anchor) {
-    removePopup();
-    const card = document.createElement("div");
-    card.id = POPUP_ID;
+    const card = createPopupCard();
     card.innerHTML = `
     <div class="jp-scroll">
       <div class="jp-head">
@@ -1080,9 +1094,7 @@
     mountCard(card, anchor);
   }
   function renderErrorCard(anchor, message) {
-    removePopup();
-    const card = document.createElement("div");
-    card.id = POPUP_ID;
+    const card = createPopupCard();
     card.innerHTML = `
     <div class="jp-scroll">
       <div class="jp-status">
@@ -1104,10 +1116,33 @@
   function profileUrl(username) {
     return new URL(`/u/${encodeURIComponent(stringValue(username))}`, "https://web.okjike.com").href;
   }
+  function bindFollowButton(button, user, anchor) {
+    if (user.isSelf) {
+      button.remove();
+      return;
+    }
+    let isFollowing = !!user.following;
+    const renderFollowState = () => {
+      button.textContent = isFollowing ? "\u5DF2\u5173\u6CE8" : "\u5173\u6CE8";
+      button.classList.toggle("jp-following", isFollowing);
+    };
+    renderFollowState();
+    button.addEventListener("click", async (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      button.disabled = true;
+      const updated = await toggleFollow(user.username, isFollowing);
+      if (updated) {
+        isFollowing = !isFollowing;
+        renderFollowState();
+        const activeId = extractId(anchor);
+        if (activeId) profileCache.delete(activeId);
+      }
+      button.disabled = false;
+    });
+  }
   function renderCard(user, anchor) {
-    removePopup();
-    const card = document.createElement("div");
-    card.id = POPUP_ID;
+    const card = createPopupCard();
     card.innerHTML = `
     <div class="jp-scroll">
       <div class="jp-head">
@@ -1150,30 +1185,7 @@
     const bio = card.querySelector(".jp-bio");
     bio.textContent = stringValue(user.bio || user.briefIntro);
     if (!bio.textContent) bio.remove();
-    const followButton = card.querySelector(".jp-follow");
-    if (user.isSelf) {
-      followButton.remove();
-    } else {
-      let isFollowing = !!user.following;
-      const renderFollowState = () => {
-        followButton.textContent = isFollowing ? "\u5DF2\u5173\u6CE8" : "\u5173\u6CE8";
-        followButton.classList.toggle("jp-following", isFollowing);
-      };
-      renderFollowState();
-      followButton.addEventListener("click", async (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        followButton.disabled = true;
-        const updated = await toggleFollow(user.username, isFollowing);
-        if (updated) {
-          isFollowing = !isFollowing;
-          renderFollowState();
-          const activeId = extractId(anchor);
-          if (activeId) profileCache.delete(activeId);
-        }
-        followButton.disabled = false;
-      });
-    }
+    bindFollowButton(card.querySelector(".jp-follow"), user, anchor);
     mountCard(card, anchor);
   }
   function scheduleShow(link, { immediate = false } = {}) {

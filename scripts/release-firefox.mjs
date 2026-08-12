@@ -1,15 +1,21 @@
 #!/usr/bin/env node
 
-import { spawnSync } from "node:child_process";
-import { readFile, rm, stat } from "node:fs/promises";
+import { rm } from "node:fs/promises";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+import {
+  ROOT,
+  assertCleanGit,
+  assertNonEmptyFile,
+  readJson,
+  run,
+} from "./script-utils.mjs";
+
 const FIREFOX_ID = "jike-polish@bowugit.github.io";
 const AMO_DASHBOARD_URL = "https://addons.mozilla.org/developers/addons";
 const AMO_METADATA = path.join(ROOT, "firefox/amo-metadata.json");
 const MODES = new Set(["package", "submit"]);
+const CLEAN_GIT_ERROR = "AMO submission requires a clean Git working tree.";
 
 function usage() {
   return `Usage: npm run release:firefox -- [options]
@@ -55,32 +61,6 @@ function parseArgs(args) {
   return options;
 }
 
-function run(command, args, env = process.env) {
-  const result = spawnSync(command, args, { cwd: ROOT, env, stdio: "inherit" });
-  if (result.error) throw result.error;
-  if (result.status !== 0) throw new Error(`${command} ${args.join(" ")} failed.`);
-}
-
-function assertCleanGit() {
-  const result = spawnSync("git", ["status", "--porcelain"], {
-    cwd: ROOT,
-    encoding: "utf8",
-    stdio: ["ignore", "pipe", "inherit"],
-  });
-  if (result.status !== 0) throw new Error("Could not verify Git status.");
-  if (result.stdout.trim()) throw new Error("AMO submission requires a clean Git working tree.");
-}
-
-async function readJson(relativePath) {
-  return JSON.parse(await readFile(path.join(ROOT, relativePath), "utf8"));
-}
-
-async function assertFile(file, label) {
-  const fileStat = await stat(file);
-  if (!fileStat.isFile() || fileStat.size === 0) throw new Error(`${label} is empty: ${file}`);
-  return fileStat.size;
-}
-
 function assertCredential(name) {
   const value = process.env[name]?.trim();
   if (!value || /^(?:<.*>|replace[-_ ]?me|placeholder)$/i.test(value)) {
@@ -108,8 +88,8 @@ async function buildPackages() {
   const extensionZip = path.join(ROOT, `jike-polish-firefox-v${manifest.version}.zip`);
   const sourceZip = path.join(ROOT, `jike-polish-firefox-source-v${manifest.version}.zip`);
   const [extensionSize, sourceSize] = await Promise.all([
-    assertFile(extensionZip, "Firefox release package"),
-    assertFile(sourceZip, "Firefox source package"),
+    assertNonEmptyFile(extensionZip, "Firefox release package"),
+    assertNonEmptyFile(sourceZip, "Firefox source package"),
   ]);
   console.log(`Validated Firefox package: ${path.basename(extensionZip)} (${extensionSize} bytes)`);
   console.log(`Validated source package: ${path.basename(sourceZip)} (${sourceSize} bytes)`);
@@ -118,10 +98,10 @@ async function buildPackages() {
 
 async function release(options) {
   const usesApi = options.mode === "submit" && !options.dryRun;
-  if (usesApi) assertCleanGit();
+  if (usesApi) assertCleanGit(CLEAN_GIT_ERROR);
 
   const artifacts = await buildPackages();
-  if (usesApi) assertCleanGit();
+  if (usesApi) assertCleanGit(CLEAN_GIT_ERROR);
 
   if (options.mode === "package") return;
   if (options.dryRun) {

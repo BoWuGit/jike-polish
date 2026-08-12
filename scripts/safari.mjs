@@ -1,11 +1,10 @@
 #!/usr/bin/env node
 
-import { spawnSync } from "node:child_process";
 import { copyFile, readFile, rm } from "node:fs/promises";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+import { ROOT, readJson, run } from "./script-utils.mjs";
+
 const PROJECT = path.join(ROOT, "safari/JikePolish/JikePolish.xcodeproj");
 const PROJECT_FILE = path.join(PROJECT, "project.pbxproj");
 const DERIVED_DATA = path.join(ROOT, "build/safari");
@@ -39,16 +38,6 @@ const ICON_OUTPUTS = new Map([
   [appIcon("mac-icon-512@1x.png"), 512],
   [appIcon("mac-icon-512@2x.png"), 1024],
 ]);
-
-function run(command, args, { silent = false } = {}) {
-  const result = spawnSync(command, args, { cwd: ROOT, stdio: silent ? "ignore" : "inherit" });
-  if (result.error) throw result.error;
-  if (result.status !== 0) throw new Error(`${command} ${args.join(" ")} failed.`);
-}
-
-async function readJson(relativePath) {
-  return JSON.parse(await readFile(path.join(ROOT, relativePath), "utf8"));
-}
 
 async function readPngSize(relativePath) {
   const data = await readFile(path.join(ROOT, relativePath));

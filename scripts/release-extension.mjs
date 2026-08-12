@@ -1,20 +1,24 @@
 #!/usr/bin/env node
 
 import { spawnSync } from "node:child_process";
-import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 
 import {
   readChromeWebStoreConfig,
   submitChromeWebStoreItem,
   uploadChromeWebStoreZip,
 } from "./chrome-web-store-api.mjs";
+import {
+  ROOT,
+  assertCleanGit,
+  assertNonEmptyFile,
+  readJson,
+} from "./script-utils.mjs";
 
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const EXTENSION_ID = "hnbakdoibeogigpihopfjfjbacfmcfck";
 const DASHBOARD_URL = "https://chrome.google.com/webstore/devconsole";
 const MODES = new Set(["package", "upload", "submit"]);
+const CLEAN_GIT_ERROR = "Upload and submit require a clean Git working tree.";
 
 function usage() {
   return `Usage: npm run release:extension -- [options]
@@ -56,20 +60,6 @@ function run(command, args) {
   if (result.status !== 0) throw new Error(`${command} ${args.join(" ")} failed.`);
 }
 
-function assertCleanGit() {
-  const result = spawnSync("git", ["status", "--porcelain"], {
-    cwd: ROOT,
-    encoding: "utf8",
-    stdio: ["ignore", "pipe", "inherit"],
-  });
-  if (result.status !== 0) throw new Error("Could not verify Git status.");
-  if (result.stdout.trim()) throw new Error("Upload and submit require a clean Git working tree.");
-}
-
-async function readJson(file) {
-  return JSON.parse(await readFile(path.join(ROOT, file), "utf8"));
-}
-
 async function buildPackage() {
   const [manifest, packageJson] = await Promise.all([readJson("manifest.json"), readJson("package.json")]);
   if (manifest.version !== packageJson.version) {
@@ -80,18 +70,17 @@ async function buildPackage() {
   run("bash", ["pack.sh"]);
 
   const zipPath = path.join(ROOT, `jike-polish-v${manifest.version}.zip`);
-  const zipStat = await stat(zipPath);
-  if (!zipStat.isFile() || zipStat.size === 0) throw new Error(`Release package is empty: ${zipPath}`);
-  console.log(`Release package: ${path.basename(zipPath)} (${zipStat.size} bytes)`);
+  const zipSize = await assertNonEmptyFile(zipPath, "Release package");
+  console.log(`Release package: ${path.basename(zipPath)} (${zipSize} bytes)`);
   return { version: manifest.version, zipPath };
 }
 
 async function release(options) {
   const usesApi = options.mode !== "package" && !options.dryRun;
-  if (usesApi) assertCleanGit();
+  if (usesApi) assertCleanGit(CLEAN_GIT_ERROR);
 
   const { version, zipPath } = await buildPackage();
-  if (usesApi) assertCleanGit();
+  if (usesApi) assertCleanGit(CLEAN_GIT_ERROR);
 
   if (options.mode === "package" || options.dryRun) {
     if (options.dryRun && options.mode !== "package") {

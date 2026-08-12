@@ -212,6 +212,46 @@ function renderLink(card, source, linkInfo) {
   syncAttachmentGapOffset(card);
 }
 
+function createMediaItem(picture, index, pictures, thumbnailCount) {
+  const item = document.createElement("div");
+  item.className = MEDIA_ITEM_CLASS;
+  item.tabIndex = 0;
+  item.setAttribute("role", "button");
+  item.setAttribute("aria-label", `打开转发原帖图片 ${index + 1}`);
+  item.addEventListener(
+    "click",
+    (event) => openLightboxFromMedia(event, pictures, index),
+    true,
+  );
+  item.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" || event.key === " ") {
+      openLightboxFromMedia(event, pictures, index);
+    }
+  });
+
+  const image = document.createElement("img");
+  image.className = MEDIA_IMAGE_CLASS;
+  image.loading = "lazy";
+  image.decoding = "async";
+  image.referrerPolicy = "no-referrer";
+  image.alt = `转发原帖图片 ${index + 1}`;
+  const thumbnailUrl = safeHttpUrl(pictureUrl(picture, thumbnailCount));
+  if (thumbnailUrl) image.src = thumbnailUrl;
+  image.dataset.fullSrc = safeHttpUrl(fullPictureUrl(picture));
+  if (picture.width) image.dataset.width = String(picture.width);
+  if (picture.height) image.dataset.height = String(picture.height);
+  item.appendChild(image);
+
+  if (index === 3 && pictures.length > thumbnailCount) {
+    const more = document.createElement("span");
+    more.className = MEDIA_MORE_CLASS;
+    more.textContent = `+${pictures.length - thumbnailCount}`;
+    item.appendChild(more);
+  }
+
+  return item;
+}
+
 function renderMedia(card, source, pictures) {
   const mediaKey = `${source.type || "UNKNOWN"}:${source.id}:${pictures
     .map((picture) => picture.key || fullPictureUrl(picture))
@@ -229,43 +269,7 @@ function renderMedia(card, source, pictures) {
   if (shownPictures.length === 1) syncSingleImageWidth(media, shownPictures[0]);
 
   shownPictures.forEach((picture, index) => {
-    const item = document.createElement("div");
-    item.className = MEDIA_ITEM_CLASS;
-    item.tabIndex = 0;
-    item.setAttribute("role", "button");
-    item.setAttribute("aria-label", `打开转发原帖图片 ${index + 1}`);
-    item.addEventListener(
-      "click",
-      (event) => openLightboxFromMedia(event, pictures, index),
-      true,
-    );
-    item.addEventListener("keydown", (event) => {
-      if (event.key === "Enter" || event.key === " ") {
-        openLightboxFromMedia(event, pictures, index);
-      }
-    });
-
-    const image = document.createElement("img");
-    image.className = MEDIA_IMAGE_CLASS;
-    image.loading = "lazy";
-    image.decoding = "async";
-    image.referrerPolicy = "no-referrer";
-    image.alt = `转发原帖图片 ${index + 1}`;
-    const thumbnailUrl = safeHttpUrl(pictureUrl(picture, shownPictures.length));
-    if (thumbnailUrl) image.src = thumbnailUrl;
-    image.dataset.fullSrc = safeHttpUrl(fullPictureUrl(picture));
-    if (picture.width) image.dataset.width = String(picture.width);
-    if (picture.height) image.dataset.height = String(picture.height);
-    item.appendChild(image);
-
-    if (index === 3 && pictures.length > shownPictures.length) {
-      const more = document.createElement("span");
-      more.className = MEDIA_MORE_CLASS;
-      more.textContent = `+${pictures.length - shownPictures.length}`;
-      item.appendChild(more);
-    }
-
-    media.appendChild(item);
+    media.appendChild(createMediaItem(picture, index, pictures, shownPictures.length));
   });
 
   insertAttachment(card, media);
@@ -297,6 +301,10 @@ function renderVideo(card, source, url) {
   syncAttachmentGapOffset(card);
 }
 
+function isCurrentQuoteCard(card, data) {
+  return document.contains(card) && samePost(getQuoteData(card), data);
+}
+
 export async function syncQuoteCard(card) {
   if (!(card instanceof HTMLElement)) return;
   const data = getQuoteData(card);
@@ -307,7 +315,7 @@ export async function syncQuoteCard(card) {
   let linkSource = getLinkSource(data);
   if ((!mediaSource || !videoSource || !linkSource) && shouldFetchDetail(data)) {
     const detail = await fetchPostDetail(data);
-    if (!document.contains(card) || !samePost(getQuoteData(card), data)) return;
+    if (!isCurrentQuoteCard(card, data)) return;
     mediaSource ||= getMediaSource(detail);
     videoSource ||= getVideoSource(detail);
     linkSource ||= getLinkSource(detail);
@@ -315,7 +323,7 @@ export async function syncQuoteCard(card) {
 
   if (shouldFetchLinkImage(linkSource)) {
     const detail = await fetchPostDetail(linkSource);
-    if (!document.contains(card) || !samePost(getQuoteData(card), data)) return;
+    if (!isCurrentQuoteCard(card, data)) return;
     const detailedLinkSource = getLinkSource(detail);
     if (linkImageUrl(getLinkInfo(detailedLinkSource))) linkSource = detailedLinkSource;
   }
@@ -338,7 +346,7 @@ export async function syncQuoteCard(card) {
   }
 
   const videoUrl = await fetchVideoUrl(videoSource);
-  if (!document.contains(card) || !samePost(getQuoteData(card), data)) return;
+  if (!isCurrentQuoteCard(card, data)) return;
   if (videoUrl) renderVideo(card, videoSource, videoUrl);
   else removeVideo(card, `${videoSource.type}:${videoSource.id}:video:none`);
 }

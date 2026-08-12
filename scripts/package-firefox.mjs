@@ -1,24 +1,25 @@
 #!/usr/bin/env node
 
-import { spawnSync } from "node:child_process";
 import {
-  chmod,
-  copyFile,
   lstat,
   mkdir,
   mkdtemp,
-  readFile,
   readdir,
   rm,
-  stat,
-  utimes,
   writeFile,
 } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+import {
+  ROOT,
+  copyProjectFile,
+  assertNonEmptyFile,
+  normalizeArchiveFiles,
+  readJson,
+  run,
+} from "./script-utils.mjs";
+
 const BUILD_DIR = path.join(ROOT, "build/firefox");
 const FIREFOX_ID = "jike-polish@bowugit.github.io";
 const MIN_FIREFOX_VERSION = 142;
@@ -30,7 +31,6 @@ const REQUIRED_DATA_COLLECTION = [
   "websiteActivity",
   "websiteContent",
 ];
-const ARCHIVE_MTIME = new Date("1980-01-01T00:00:00.000Z");
 const EXTENSION_FILES = new Map([
   ["content.js", "content.js"],
   ["icon.png", "icon.png"],
@@ -61,6 +61,7 @@ const SOURCE_ENTRIES = [
   "package.json",
   "src",
   "scripts/package-firefox.mjs",
+  "scripts/script-utils.mjs",
   "icon.png",
   "jike-twitter-font.user.css",
   "edge/demo",
@@ -68,27 +69,11 @@ const SOURCE_ENTRIES = [
   "safari/JikePolish/JikePolish/Resources/Style.css",
 ];
 
-function run(command, args, cwd = ROOT, env = process.env) {
-  const result = spawnSync(command, args, { cwd, env, stdio: "inherit" });
-  if (result.error) throw result.error;
-  if (result.status !== 0) throw new Error(`${command} ${args.join(" ")} failed.`);
-}
-
-async function readJson(relativePath) {
-  return JSON.parse(await readFile(path.join(ROOT, relativePath), "utf8"));
-}
-
-async function copyInto(directory, source, destination = source) {
-  const output = path.join(directory, destination);
-  await mkdir(path.dirname(output), { recursive: true });
-  await copyFile(path.join(ROOT, source), output);
-}
-
 async function copyEntryInto(directory, relativePath) {
   const source = path.join(ROOT, relativePath);
   const sourceStat = await lstat(source);
   if (sourceStat.isFile()) {
-    await copyInto(directory, relativePath);
+    await copyProjectFile(directory, relativePath);
     return;
   }
   if (!sourceStat.isDirectory()) throw new Error(`Unsupported source entry: ${relativePath}`);
@@ -110,16 +95,11 @@ async function listFiles(directory, relativePath = "") {
   return files.sort();
 }
 
-async function normalizeFiles(directory, files) {
-  await Promise.all(files.map(async (file) => {
-    const stagedFile = path.join(directory, file);
-    await chmod(stagedFile, 0o644);
-    await utimes(stagedFile, ARCHIVE_MTIME, ARCHIVE_MTIME);
-  }));
-}
-
 function zipFiles(directory, output, files) {
-  run("zip", ["-X", "-q", output, ...files], directory, { ...process.env, TZ: "UTC" });
+  run("zip", ["-X", "-q", output, ...files], {
+    cwd: directory,
+    env: { ...process.env, TZ: "UTC" },
+  });
 }
 
 function createFirefoxManifest(manifest) {
@@ -183,13 +163,13 @@ async function prepareExtension(manifest) {
       `${JSON.stringify(firefoxManifest, null, 2)}\n`,
     ),
     ...[...EXTENSION_FILES].map(([source, destination]) => (
-      copyInto(BUILD_DIR, source, destination)
+      copyProjectFile(BUILD_DIR, source, destination)
     )),
     ...[...DEMO_FILES].map(([source, destination]) => (
-      copyInto(BUILD_DIR, source, destination)
+      copyProjectFile(BUILD_DIR, source, destination)
     )),
   ]);
-  await normalizeFiles(BUILD_DIR, PACKAGE_FILES);
+  await normalizeArchiveFiles(BUILD_DIR, PACKAGE_FILES);
 
   const webExt = path.join(
     ROOT,
@@ -211,7 +191,7 @@ async function createSourceArchive(version, output) {
   try {
     await Promise.all(SOURCE_ENTRIES.map((entry) => copyEntryInto(sourceRoot, entry)));
     const sourceFiles = await listFiles(stage);
-    await normalizeFiles(stage, sourceFiles);
+    await normalizeArchiveFiles(stage, sourceFiles);
     await rm(output, { force: true });
     zipFiles(stage, output, sourceFiles);
   } finally {
@@ -220,11 +200,8 @@ async function createSourceArchive(version, output) {
 }
 
 async function assertArchive(output, label) {
-  const outputStat = await stat(output);
-  if (!outputStat.isFile() || outputStat.size === 0) {
-    throw new Error(`${label} is empty: ${output}`);
-  }
-  console.log(`${label}: ${path.basename(output)} (${outputStat.size} bytes)`);
+  const size = await assertNonEmptyFile(output, label);
+  console.log(`${label}: ${path.basename(output)} (${size} bytes)`);
 }
 
 async function prepareFirefox() {

@@ -28,6 +28,16 @@ function createLightboxButton(className, label, pathData) {
   return button;
 }
 
+function createNavigationButton(className, label, pathData, delta) {
+  const button = createLightboxButton(className, label, pathData);
+  button.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    stepLightbox(delta);
+  });
+  return button;
+}
+
 function closeLightbox() {
   if (!lightboxState) return;
   const { opener, portal } = lightboxState;
@@ -67,6 +77,25 @@ function stepLightbox(delta) {
   renderLightboxSlide();
 }
 
+function trapLightboxFocus(event) {
+  const { portal } = lightboxState;
+  const controls = Array.from(
+    portal.querySelectorAll("button:not([hidden]):not([disabled])"),
+  );
+  if (!controls.length) return;
+
+  const first = controls[0];
+  const last = controls[controls.length - 1];
+  const focusOutside = !portal.contains(document.activeElement);
+  if (event.shiftKey && (focusOutside || document.activeElement === first)) {
+    event.preventDefault();
+    last.focus();
+  } else if (!event.shiftKey && (focusOutside || document.activeElement === last)) {
+    event.preventDefault();
+    first.focus();
+  }
+}
+
 function handleLightboxKeydown(event) {
   if (!lightboxState) return;
   if (event.key === "Escape") {
@@ -75,25 +104,7 @@ function handleLightboxKeydown(event) {
     return;
   }
   if (event.key === "Tab") {
-    const controls = Array.from(
-      lightboxState.portal.querySelectorAll("button:not([hidden]):not([disabled])"),
-    );
-    if (!controls.length) return;
-    const first = controls[0];
-    const last = controls[controls.length - 1];
-    if (
-      event.shiftKey
-      && (!lightboxState.portal.contains(document.activeElement) || document.activeElement === first)
-    ) {
-      event.preventDefault();
-      last.focus();
-    } else if (
-      !event.shiftKey
-      && (!lightboxState.portal.contains(document.activeElement) || document.activeElement === last)
-    ) {
-      event.preventDefault();
-      first.focus();
-    }
+    trapLightboxFocus(event);
     return;
   }
   if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
@@ -126,27 +137,18 @@ export function openLightbox(pictures, index) {
   closeButton.addEventListener("click", closeLightbox);
   toolbar.appendChild(closeButton);
 
-  const prevButton = createLightboxButton(
+  const prevButton = createNavigationButton(
     "yarl__navigation_prev jp-repost-lightbox-prev",
     "上一张图片",
     "M15 18l-6-6 6-6",
+    -1,
   );
-  prevButton.addEventListener("click", (event) => {
-    event.preventDefault();
-    event.stopPropagation();
-    stepLightbox(-1);
-  });
-
-  const nextButton = createLightboxButton(
+  const nextButton = createNavigationButton(
     "yarl__navigation_next jp-repost-lightbox-next",
     "下一张图片",
     "M9 6l6 6-6 6",
+    1,
   );
-  nextButton.addEventListener("click", (event) => {
-    event.preventDefault();
-    event.stopPropagation();
-    stepLightbox(1);
-  });
 
   const slide = document.createElement("div");
   slide.className = "yarl__slide yarl__slide_current jp-repost-lightbox-slide";

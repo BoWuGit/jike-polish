@@ -3,6 +3,7 @@ import { log } from "../shared/debug.js";
 import { safeHttpUrl, stringValue } from "../shared/values.js";
 import { POPUP_ID } from "./constants.js";
 import { findScrollableContainer } from "./scroll.js";
+
 const PROFILE_LINK_SELECTOR = 'a[href*="/u/"]';
 const PROFILE_HOVER_CONTENT_SELECTOR =
   '[class*="_mentionUser_"], [class*="_name_1rdwv_"], [class*="_avatar_1rdwv_"], [class*="_root_1y0hs_"]';
@@ -160,6 +161,13 @@ function removePopup() {
   document.getElementById(POPUP_ID)?.remove();
 }
 
+function createPopupCard() {
+  removePopup();
+  const card = document.createElement("div");
+  card.id = POPUP_ID;
+  return card;
+}
+
 function cancelHide() {
   clearTimeout(hideTimer);
 }
@@ -238,9 +246,7 @@ function mountCard(card, anchor) {
 }
 
 function renderLoadingCard(anchor) {
-  removePopup();
-  const card = document.createElement("div");
-  card.id = POPUP_ID;
+  const card = createPopupCard();
   card.innerHTML = `
     <div class="jp-scroll">
       <div class="jp-head">
@@ -263,9 +269,7 @@ function renderLoadingCard(anchor) {
 }
 
 function renderErrorCard(anchor, message) {
-  removePopup();
-  const card = document.createElement("div");
-  card.id = POPUP_ID;
+  const card = createPopupCard();
   card.innerHTML = `
     <div class="jp-scroll">
       <div class="jp-status">
@@ -290,10 +294,35 @@ function profileUrl(username) {
   return new URL(`/u/${encodeURIComponent(stringValue(username))}`, "https://web.okjike.com").href;
 }
 
+function bindFollowButton(button, user, anchor) {
+  if (user.isSelf) {
+    button.remove();
+    return;
+  }
+
+  let isFollowing = !!user.following;
+  const renderFollowState = () => {
+    button.textContent = isFollowing ? "已关注" : "关注";
+    button.classList.toggle("jp-following", isFollowing);
+  };
+  renderFollowState();
+  button.addEventListener("click", async (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    button.disabled = true;
+    const updated = await toggleFollow(user.username, isFollowing);
+    if (updated) {
+      isFollowing = !isFollowing;
+      renderFollowState();
+      const activeId = extractId(anchor);
+      if (activeId) profileCache.delete(activeId);
+    }
+    button.disabled = false;
+  });
+}
+
 function renderCard(user, anchor) {
-  removePopup();
-  const card = document.createElement("div");
-  card.id = POPUP_ID;
+  const card = createPopupCard();
   card.innerHTML = `
     <div class="jp-scroll">
       <div class="jp-head">
@@ -341,31 +370,7 @@ function renderCard(user, anchor) {
   bio.textContent = stringValue(user.bio || user.briefIntro);
   if (!bio.textContent) bio.remove();
 
-  const followButton = card.querySelector(".jp-follow");
-  if (user.isSelf) {
-    followButton.remove();
-  } else {
-    let isFollowing = !!user.following;
-    const renderFollowState = () => {
-      followButton.textContent = isFollowing ? "已关注" : "关注";
-      followButton.classList.toggle("jp-following", isFollowing);
-    };
-    renderFollowState();
-    followButton.addEventListener("click", async (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      followButton.disabled = true;
-      const updated = await toggleFollow(user.username, isFollowing);
-      if (updated) {
-        isFollowing = !isFollowing;
-        renderFollowState();
-        const activeId = extractId(anchor);
-        if (activeId) profileCache.delete(activeId);
-      }
-      followButton.disabled = false;
-    });
-  }
-
+  bindFollowButton(card.querySelector(".jp-follow"), user, anchor);
   mountCard(card, anchor);
 }
 
