@@ -18,13 +18,17 @@
     "firefox:check": "node scripts/package-firefox.mjs check",
     "firefox:package": "node scripts/package-firefox.mjs package",
     "firefox:run": "npm run firefox:package && web-ext run --source-dir build/firefox --start-url https://web.okjike.com/ --no-config-discovery",
-    "release:firefox": "node scripts/release-firefox.mjs"
+    "release:firefox": "node scripts/release-firefox.mjs",
+    "site:dev": "wrangler dev",
+    "site:deploy": "wrangler deploy",
+    "site:check": "wrangler deploy --dry-run"
   },
   "devDependencies": {
     "@eslint/js": "^9.21.0",
     "esbuild": "^0.25.0",
     "eslint": "^9.21.0",
     "globals": "^15.15.0",
-    "web-ext": "^10.6.0"
+    "web-ext": "^10.6.0",
+    "wrangler": "^4.121.0"
   }
 }

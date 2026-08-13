@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#172b78" />
+    <meta
+      name="description"
+      content="阅赏是一款适用于即刻 Web 的浏览器扩展，优化排版、转发卡片、用户资料预览与图片灯箱。"
+    />
+    <meta property="og:title" content="阅赏 — 让即刻 Web 更好读" />
+    <meta
+      property="og:description"
+      content="优化排版、补全内容、改善交互。支持 Chrome、Edge、Firefox 与 Safari。"
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="/assets/icon.png" />
+    <!-- TODO(domain): 域名确认后补充 canonical、og:url 与 sitemap.xml。 -->
+    <title>阅赏 — 让即刻 Web 更好读</title>
+    <link rel="icon" href="/assets/icon.png" />
+    <link rel="apple-touch-icon" href="/assets/icon.png" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">跳到正文</a>
+
+    <header class="site-header">
+      <a class="brand" href="#top" aria-label="阅赏首页">
+        <img src="/assets/icon-160.webp" alt="" width="42" height="42" />
+        <span>阅赏</span>
+      </a>
+      <nav aria-label="主导航">
+        <a href="#features">功能</a>
+        <a href="#download">下载</a>
+        <a href="/privacy/">隐私</a>
+        <a class="nav-github" href="https://github.com/BoWuGit/jike-polish" target="_blank" rel="noreferrer">GitHub</a>
+      </nav>
+    </header>
+
+    <main id="main">
+      <section class="hero" id="top">
+        <div class="hero-copy">
+          <p class="eyebrow"><span></span> 专为即刻 Web 打造</p>
+          <h1>让每一次浏览，<br /><em>都值得阅赏。</em></h1>
+          <p class="hero-lead">
+            一款轻量、克制的浏览器扩展。优化排版，补全内容，改善交互，
+            让即刻 Web 回归舒适的阅读体验。
+          </p>
+          <div class="hero-actions">
+            <a class="button button-primary" href="#download">
+              获取阅赏
+              <svg aria-hidden="true" viewBox="0 0 20 20"><path d="m7 4 6 6-6 6" /></svg>
+            </a>
+            <a class="button button-secondary" href="https://github.com/BoWuGit/jike-polish" target="_blank" rel="noreferrer">
+              查看源码
+            </a>
+          </div>
+          <p class="hero-meta">免费使用 · 无广告 · 无遥测</p>
+        </div>
+
+        <div class="hero-art" aria-hidden="true">
+          <div class="orb orb-one"></div>
+          <div class="orb orb-two"></div>
+          <div class="spark spark-one">✦</div>
+          <div class="spark spark-two">✦</div>
+          <div class="icon-stage">
+            <img src="/assets/icon-160.webp" alt="" width="160" height="160" />
+          </div>
+          <div class="floating-card floating-card-top">
+            <span class="card-icon">Aa</span>
+            <span><strong>舒适排版</strong><small>清晰、克制、恰到好处</small></span>
+          </div>
+          <div class="floating-card floating-card-bottom">
+            <span class="card-icon">⌕</span>
+            <span><strong>内容不再折叠</strong><small>引用动态一眼读完</small></span>
+          </div>
+        </div>
+      </section>
+
+      <section class="section intro" id="features">
+        <div class="section-heading">
+          <p class="eyebrow"><span></span> 阅读体验，重新打磨</p>
+          <h2>看似细微，<br />处处顺手。</h2>
+          <p>不改变你熟悉的即刻，只把那些影响阅读的小问题逐一修好。</p>
+        </div>
+
+        <div class="feature-grid">
+          <article class="feature-card feature-wide">
+            <span class="feature-number">01</span>
+            <div class="feature-icon">字</div>
+            <h3>界面与字体优化</h3>
+            <p>更舒适的字体、字重和行高，配合桌面端居中布局，让长文阅读更轻松。</p>
+            <div class="type-sample" aria-hidden="true">
+              <span>阅</span><span>览</span><span>思</span><span>考</span><span>分</span><span>享</span>
+            </div>
+          </article>
+
+          <article class="feature-card">
+            <span class="feature-number">02</span>
+            <div class="feature-icon">↗</div>
+            <h3>转发卡片增强</h3>
+            <p>悬停即可展开正文，并补全原帖图片与链接，不必反复跳转。</p>
+            <div class="quote-sample" aria-hidden="true">
+              <span class="sample-avatar"></span>
+              <div><b>原帖内容</b><i></i><i></i><i class="short"></i></div>
+            </div>
+          </article>
+
+          <article class="feature-card">
+            <span class="feature-number">03</span>
+            <div class="feature-icon">人</div>
+            <h3>用户信息悬浮卡片</h3>
+            <p>停留在 @用户名上，即可查看完整资料与关注数据，并快速关注。</p>
+            <div class="profile-sample" aria-hidden="true">
+              <span class="sample-avatar gradient-avatar"></span>
+              <div><b>即友资料</b><small>@username</small><i></i></div>
+              <button tabindex="-1">关注</button>
+            </div>
+          </article>
+
+          <article class="feature-card feature-wide feature-zoom">
+            <span class="feature-number">04</span>
+            <div class="feature-icon">＋</div>
+            <h3>图片灯箱缩放</h3>
+            <p>滚轮、双击、拖拽与键盘快捷键均可使用，细节查看从未如此自然。</p>
+            <div class="zoom-sample" aria-hidden="true">
+              <div class="zoom-picture"><span></span><i></i></div>
+              <div class="zoom-controls"><b>−</b><strong>2.5×</strong><b>＋</b></div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="section showcase">
+        <div class="showcase-window">
+          <div class="window-bar" aria-hidden="true">
+            <div><span></span><span></span><span></span></div>
+            <p>离线功能演示</p>
+          </div>
+          <picture>
+            <source srcset="/assets/feature-demo.webp" type="image/webp" />
+            <img
+              src="/assets/feature-demo.png"
+              alt="阅赏的转发详情和用户悬浮卡片离线演示"
+              width="1280"
+              height="800"
+              loading="lazy"
+            />
+          </picture>
+        </div>
+        <p class="showcase-note">离线演示使用虚构内容，不需要登录，也不会发起网络请求。</p>
+      </section>
+
+      <section class="section download" id="download">
+        <div class="download-copy">
+          <p class="eyebrow"><span></span> 选择你的浏览器</p>
+          <h2>现在，开始阅赏。</h2>
+          <p>阅赏支持主流桌面浏览器。选择你正在使用的平台，即刻拥有更舒适的浏览体验。</p>
+        </div>
+
+        <div class="browser-grid">
+          <a class="browser-card browser-card-primary" href="https://chromewebstore.google.com/detail/hnbakdoibeogigpihopfjfjbacfmcfck" target="_blank" rel="noreferrer">
+            <span class="browser-logo chrome-logo" aria-hidden="true"><i></i></span>
+            <span><strong>Chrome</strong><small>Chrome Web Store</small></span>
+            <b aria-hidden="true">↗</b>
+          </a>
+
+          <a class="browser-card" href="https://apps.apple.com/cn/app/%E9%98%85%E8%B5%8F/id6794301352?mt=12" target="_blank" rel="noreferrer">
+            <span class="browser-logo safari-logo" aria-hidden="true">⌁</span>
+            <span><strong>Safari</strong><small>Mac App Store</small></span>
+            <b aria-hidden="true">↗</b>
+          </a>
+
+          <div class="browser-card browser-card-pending" aria-label="Edge 商店链接即将上线">
+            <span class="browser-logo edge-logo" aria-hidden="true">e</span>
+            <span><strong>Edge</strong><small>商店链接即将上线</small></span>
+            <b>待上线</b>
+          </div>
+
+          <div class="browser-card browser-card-pending" aria-label="Firefox 商店链接即将上线">
+            <span class="browser-logo firefox-logo" aria-hidden="true">f</span>
+            <span><strong>Firefox</strong><small>商店链接即将上线</small></span>
+            <b>待上线</b>
+          </div>
+        </div>
+
+        <p class="download-help">
+          商店暂时无法访问？
+          <a href="https://github.com/BoWuGit/jike-polish/releases" target="_blank" rel="noreferrer">前往 GitHub Releases</a>
+          查看其他安装方式。
+        </p>
+      </section>
+    </main>
+
+    <footer>
+      <div class="footer-brand">
+        <img src="/assets/icon-160.webp" alt="" width="40" height="40" />
+        <div><strong>阅赏</strong><small>让即刻 Web 更好读。</small></div>
+      </div>
+      <div class="footer-links">
+        <a href="/privacy/">隐私政策</a>
+        <a href="https://github.com/BoWuGit/jike-polish/issues" target="_blank" rel="noreferrer">问题反馈</a>
+        <a href="https://github.com/BoWuGit/jike-polish" target="_blank" rel="noreferrer">源代码</a>
+      </div>
+      <p>非官方项目，与即刻无隶属或合作关系。</p>
+    </footer>
+  </body>
+</html>

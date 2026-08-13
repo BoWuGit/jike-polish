@@ -36,6 +36,7 @@ dist/
 build/
 coverage/
 node_modules/
+.wrangler/
 web-ext-artifacts/
 
 # Packaged extensions

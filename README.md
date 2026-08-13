@@ -11,6 +11,10 @@ Microsoft Edge Add-ons 首次提审材料见 [`edge/README.md`](./edge/README.md
 
 [隐私政策](./PRIVACY.md) · [Firefox 发布说明](./firefox/README.md) · [Safari 版本说明](./safari/README.md)
 
+## 官方网站
+
+项目 Landing Page 位于 [`site/`](./site/)，可部署至 Cloudflare Workers Static Assets，并在域名确认后绑定自定义域名。开发与部署说明见 [`site/README.md`](./site/README.md)。
+
 ## 布局与字体对比
 
 ![开启插件后的即刻 Web](./screenshot.png)
