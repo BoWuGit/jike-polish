@@ -1,6 +1,6 @@
 # Microsoft Edge Certification Notes
 
-## English — paste into “Notes for certification”
+## English — detailed reference
 
 “阅赏” (Yueshang) is an open-source, unofficial extension with an original name and icon. It has no extension-owned account, subscription, payment, advertising, analytics, telemetry, or tracking. Its live website integration runs only on `https://web.okjike.com/*`.
 
@@ -36,6 +36,33 @@ Source code and documentation: https://github.com/BoWuGit/jike-polish
 Support: https://github.com/BoWuGit/jike-polish/issues
 
 The extension is not affiliated with, authorized by, endorsed by, or sponsored by the operator of the supported website.
+
+## Exact text submitted — under 2,000 characters
+
+```text
+Yueshang (阅赏) is an open-source, unofficial extension. It has no extension-owned account, payment, advertising, analytics, telemetry, or tracking. Live integration runs only on https://web.okjike.com/*.
+
+OFFLINE REVIEW — NO ACCOUNT OR NETWORK REQUIRED
+1. Click the 阅赏 toolbar icon.
+2. Click 打开离线功能演示 (Open offline feature demo).
+3. In 排版优化, switch between 原始布局 and 优化后.
+4. Open 转发与用户卡片; inspect the repost image/link and hover or click @清禾 to show the profile card.
+5. Open 图片灯箱, click the sample image, and test −/+, wheel, double-click, drag, arrow keys, and 0. Zoom range is 1×–6×.
+
+The demo uses only fictional, packaged local content, has CSP default-src 'self', and makes no network requests. It covers every primary interaction.
+
+OPTIONAL LIVE TEST
+The third-party website requires QR sign-in through its mobile app. We cannot provide or redistribute a third-party account/token. After signing in, test:
+Repost/profile card: https://web.okjike.com/u/34953782-20EA-4675-9108-FD005F127C53/repost/6a3c111c3d621d7862d5f30c
+Link preview: https://web.okjike.com/u/1656C862-60ED-4CC7-895B-6EE776B46C9A/post/6a4b6d1fae0108c0411560ea
+
+All executable JS/CSS is packaged; no remote code is downloaded or executed. During live use, HTTPS requests to https://api.ruguoapp.com retrieve target-site JSON/profile/post/media metadata, refresh the target-site session, or perform a user-requested follow/unfollow. Authentication data goes only to the service that issued it, never to the developer.
+
+Privacy: https://bowugit.github.io/jike-polish/privacy/
+Source/support: https://github.com/BoWuGit/jike-polish
+
+Not affiliated with or endorsed by the supported website operator.
+```
 
 ## 中文备份
 

@@ -14,8 +14,8 @@
 | 商店文案 | 已准备 | 见 [`store-listing.zh-CN.md`](./store-listing.zh-CN.md)。 |
 | 审核说明 | 已准备 | 见 [`review-notes.md`](./review-notes.md)。 |
 | 隐私政策 | 已发布 | 公开 URL 已显示新版跨浏览器政策。 |
-| Partner Center 草稿 | 已完成 | 已创建“阅赏”1.2.7 草稿；程序包、可用性、属性、隐私和简体中文 Store 一览均为 Complete。 |
-| 开发者验证与发布 | 待账号所有者 | Partner Center 当前返回 `NotAuthorizedDeveloper`；需要账号所有者在“帐户设置”完成开发者身份验证，最终检查后再点击 Publish。 |
+| Partner Center 提交 | 已提交 | “阅赏”1.2.8 已作为 Public 扩展提交；程序包、可用性、属性、隐私和简体中文 Store 一览均为 Complete。 |
+| Microsoft 认证审核 | 审核中 | 1.2.8 已替换此前审核中的 1.2.7，Partner Center 状态为“正在审阅”；页面提示预计 7 个工作日内反馈。 |
 
 ## Edge 包与通用包的区别
 
@@ -90,8 +90,8 @@ unzip -q "$EDGE_ZIP" -d /tmp/jike-polish-edge
 6. **Properties**：按 [`store-listing.zh-CN.md`](./store-listing.zh-CN.md) 填写。
 7. **Privacy**：按下一节填写，并使用公开隐私政策 URL。
 8. **Store listings**：完成程序包识别出的简体中文，将文案、Logo 和离线演示截图上传。
-9. **Notes for certification**：粘贴 [`review-notes.md`](./review-notes.md) 的英文部分。
-10. 检查所有页面为 Complete 后点击 **Publish**。官方说明认证最长可能需要 7 个工作日。
+9. **Notes for certification**：粘贴 [`review-notes.md`](./review-notes.md) 中标记为“exact text submitted”的英文代码块。
+10. 检查所有页面为 Complete 后点击 **Publish**。提交成功后状态应变为“正在审阅”；官方说明认证最长可能需要 7 个工作日。
 
 官方首次发布步骤及字段要求见：[Publish a Microsoft Edge extension](https://learn.microsoft.com/en-us/microsoft-edge/extensions/publish/publish-extension)。账号要求见：[Register as a Microsoft Edge extension developer](https://learn.microsoft.com/en-us/microsoft-edge/extensions/publish/create-dev-account)。
 
