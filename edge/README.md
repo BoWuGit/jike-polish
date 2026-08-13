@@ -14,8 +14,8 @@
 | 商店文案 | 已准备 | 见 [`store-listing.zh-CN.md`](./store-listing.zh-CN.md)。 |
 | 审核说明 | 已准备 | 见 [`review-notes.md`](./review-notes.md)。 |
 | 隐私政策 | 已发布 | 公开 URL 已显示新版跨浏览器政策。 |
-| Partner Center 提交 | 已提交 | “阅赏”1.2.8 已作为 Public 扩展提交；程序包、可用性、属性、隐私和简体中文 Store 一览均为 Complete。 |
-| Microsoft 认证审核 | 审核中 | 1.2.8 已替换此前审核中的 1.2.7，Partner Center 状态为“正在审阅”；页面提示预计 7 个工作日内反馈。 |
+| Microsoft Edge Add-ons | 已发布 | “阅赏”1.2.8 已公开发布：[商店页面](https://microsoftedge.microsoft.com/addons/detail/%E9%98%85%E8%B5%8F/hlnncldckloekgkkbimpbhlgopjcmbdi)。 |
+| 商店截图更新 | 审核中 | 已提交 3 张图：离线演示，以及 Chrome 商店同款的实际用户卡片和灯箱截图；当前公开版保持可用。 |
 
 ## Edge 包与通用包的区别
 
@@ -148,9 +148,9 @@ Microsoft 要求，只要扩展访问、收集或传输个人信息就应选择 
 - Logo：[`store-assets/logo-300.png`](./store-assets/logo-300.png)，300×300；官方最低 128×128，推荐 300×300。
 - 描述：[`store-listing.zh-CN.md`](./store-listing.zh-CN.md) 中的正文，满足 250–10,000 字符要求。
 
-建议上传 [`store-assets/screenshots/edge-offline-demo.png`](./store-assets/screenshots/edge-offline-demo.png)：1280×800，来自 Edge 151 离线演示，画面中的姓名、账号、数据、图片和链接均为本地虚构示例。
+上传 [`store-assets/screenshots/`](./store-assets/screenshots/) 中的三张 1280×800 PNG：一张虚构离线演示，以及与 Chrome Web Store 一致的实际用户卡片和灯箱运行截图。具体文件和标题见 [`store-listing.zh-CN.md`](./store-listing.zh-CN.md)。
 
-不要把 `chrome/store-assets/` 中包含目标网站真实用户资料或动态内容的截图复制到 Edge 商店元数据。[Edge 政策 1.5.4](https://learn.microsoft.com/en-us/legal/microsoft-edge/extensions/developer-policies#154-sharing-information-of-non-users) 对发布非用户个人信息有额外同意要求；使用虚构离线素材可以避免不必要的隐私与授权风险。截图本身是可选字段，1 张即可完成本次准备。小型推广图（440×280）、大型推广图（1400×560）和 YouTube 视频也均为可选，本次不阻塞提审。
+实际运行截图可能包含目标网站公开展示的用户资料或动态内容；每次提交前都要重新检查画面中没有 Token、私密信息或无关扩展 UI，并确认公开使用这些素材符合 [Edge 政策 1.5.4](https://learn.microsoft.com/en-us/legal/microsoft-edge/extensions/developer-policies#154-sharing-information-of-non-users)。小型推广图（440×280）、大型推广图（1400×560）和 YouTube 视频均为可选。
 
 ## 首次发布后的自动化
 

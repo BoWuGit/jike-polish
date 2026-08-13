@@ -47,9 +47,10 @@
 ## Assets
 
 - **Extension logo**：`edge/store-assets/logo-300.png`（300×300 PNG）
-- **Screenshot 1**：`edge/store-assets/screenshots/edge-offline-demo.png`（1280×800 PNG，Edge 151 实际运行；内容均为本地虚构示例）
-- **Screenshot 1 标题**：`转发与用户卡片离线演示`
-- **其他 Screenshots**：首次提交留空，避免把目标网站真实用户的资料或内容放入商店元数据
+- **Screenshot 1**：`edge/store-assets/screenshots/edge-offline-demo.png`；标题：`转发与用户卡片离线演示`
+- **Screenshot 2**：`edge/store-assets/screenshots/edge-user-hover-card.png`；标题：`即刻 Web 转发详情与用户悬浮卡片`
+- **Screenshot 3**：`edge/store-assets/screenshots/edge-lightbox-multi-zoom.png`；标题：`即刻 Web 图片灯箱多级缩放`
+- 三张图片均为 1280×800 PNG。Screenshot 1 使用虚构离线内容；Screenshot 2–3 来自项目已用于 Chrome Web Store 的实际插件运行截图，提交前应再次确认画面不含凭据或敏感信息
 - **Small promotional tile**：留空（可选）
 - **Large promotional tile**：留空（可选）
 - **YouTube video URL**：留空（可选）

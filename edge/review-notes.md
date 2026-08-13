@@ -40,7 +40,7 @@ The extension is not affiliated with, authorized by, endorsed by, or sponsored b
 ## Exact text submitted — under 2,000 characters
 
 ```text
-Yueshang (阅赏) is an open-source, unofficial extension. It has no extension-owned account, payment, advertising, analytics, telemetry, or tracking. Live integration runs only on https://web.okjike.com/*.
+Yueshang (阅赏) is an open-source, unofficial extension. This update changes only the public Store listing by adding two real extension screenshots already used for the Chrome listing; the extension package and functionality remain version 1.2.8. It has no extension-owned account, payment, advertising, analytics, telemetry, or tracking. Live integration runs only on https://web.okjike.com/*.
 
 OFFLINE REVIEW — NO ACCOUNT OR NETWORK REQUIRED
 1. Click the 阅赏 toolbar icon.

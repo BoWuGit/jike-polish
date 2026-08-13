@@ -39,9 +39,9 @@ Worker 名称为 `jike-polish-site`。当前临时访问地址：
 
 首页下载区在 `site/index.html`：
 
-- Chrome、Safari 已使用公开商店地址；
-- Edge、Firefox 当前显示“待上线”；
-- 商店发布后，把对应的两个 `browser-card-pending` 容器改成带 `href` 的 `<a class="browser-card">` 即可。
+- Chrome、Edge、Safari 已使用公开商店地址；
+- Firefox 当前显示“待上线”；
+- Firefox 发布后，把对应的 `browser-card-pending` 容器改成带 `href` 的 `<a class="browser-card">`。
 
 ## 隐私政策
 
