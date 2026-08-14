@@ -68,25 +68,25 @@
 
         <div class="browser-grid">
           <a class="browser-card browser-card-primary" href="https://chromewebstore.google.com/detail/hnbakdoibeogigpihopfjfjbacfmcfck" target="_blank" rel="noreferrer">
-            <span class="browser-logo chrome-logo" aria-hidden="true"><i></i></span>
+            <img class="browser-logo" src="/assets/browsers/chrome.svg" alt="" width="48" height="48" />
             <span><strong>Chrome</strong><small>Chrome Web Store</small></span>
             <b aria-hidden="true">↗</b>
           </a>
 
           <a class="browser-card" href="https://apps.apple.com/cn/app/%E9%98%85%E8%B5%8F/id6794301352?mt=12" target="_blank" rel="noreferrer">
-            <span class="browser-logo safari-logo" aria-hidden="true">⌁</span>
+            <img class="browser-logo" src="/assets/browsers/safari.svg" alt="" width="48" height="48" />
             <span><strong>Safari</strong><small>Mac App Store</small></span>
             <b aria-hidden="true">↗</b>
           </a>
 
           <a class="browser-card" href="https://microsoftedge.microsoft.com/addons/detail/%E9%98%85%E8%B5%8F/hlnncldckloekgkkbimpbhlgopjcmbdi" target="_blank" rel="noreferrer">
-            <span class="browser-logo edge-logo" aria-hidden="true">e</span>
+            <img class="browser-logo" src="/assets/browsers/edge.svg" alt="" width="48" height="48" />
             <span><strong>Edge</strong><small>Microsoft Edge Add-ons</small></span>
             <b aria-hidden="true">↗</b>
           </a>
 
           <div class="browser-card browser-card-pending" aria-label="Firefox 商店链接即将上线">
-            <span class="browser-logo firefox-logo" aria-hidden="true">f</span>
+            <img class="browser-logo" src="/assets/browsers/firefox.svg" alt="" width="48" height="48" />
             <span><strong>Firefox</strong><small>商店链接即将上线</small></span>
             <b>待上线</b>
           </div>
@@ -100,15 +100,18 @@
       </section>
 
       <section class="section actual-features" id="features">
-        <div class="section-heading">
-          <p class="eyebrow"><span></span> 真实运行效果</p>
-          <h2>不是示意图，<br />就是实际体验。</h2>
-          <p>以下均为项目 README 中公开的实际截图，直接展示阅赏在即刻 Web 中带来的变化。</p>
-        </div>
+        <header class="features-heading">
+          <p class="eyebrow"><span></span> 真实运行效果 <span></span></p>
+          <h2>熟悉的即刻，<br /><em>更舒服的样子。</em></h2>
+        </header>
 
-        <div class="comparison-grid">
-          <figure class="screenshot-card screenshot-card-highlight">
-            <div class="screenshot-frame">
+        <article class="feature-story">
+          <header class="feature-story-heading">
+            <p class="feature-story-kicker"><span>01</span> 排版与布局</p>
+            <h3>版面舒展，<br /><em>文字更耐读。</em></h3>
+          </header>
+          <div class="comparison-grid">
+            <figure class="screenshot-card screenshot-card-highlight">
               <img
                 src="/assets/plugin-effect.png"
                 alt="开启阅赏后的即刻 Web，内容区域居中且排版更紧凑"
@@ -116,12 +119,9 @@
                 height="800"
                 loading="lazy"
               />
-            </div>
-            <figcaption><strong>开启阅赏</strong><span>更舒适的字体、字重、行高与居中布局</span></figcaption>
-          </figure>
+            </figure>
 
-          <figure class="screenshot-card">
-            <div class="screenshot-frame">
+            <figure class="screenshot-card">
               <img
                 src="/assets/native-effect.png"
                 alt="未开启阅赏时的即刻 Web 原生布局"
@@ -129,19 +129,21 @@
                 height="800"
                 loading="lazy"
               />
-            </div>
-            <figcaption><strong>即刻原生</strong><span>用于对照的原始页面效果</span></figcaption>
-          </figure>
-        </div>
-
-        <article class="feature-proof">
-          <div class="feature-proof-copy">
-            <span class="feature-index">01</span>
-            <p class="eyebrow"><span></span> 转发与用户资料</p>
-            <h3>少跳转一步，<br />多看完整一点。</h3>
-            <p>转发内容可直接展开，悬停在 @用户名上即可查看资料、关注数据，并快速关注。</p>
+            </figure>
           </div>
-          <div class="screenshot-frame">
+          <div class="feature-links">
+            <a href="https://web.okjike.com/" target="_blank" rel="noreferrer">
+              打开即刻首页，对照原始布局 <span aria-hidden="true">↗</span>
+            </a>
+          </div>
+        </article>
+
+        <article class="feature-story">
+          <header class="feature-story-heading">
+            <p class="feature-story-kicker"><span>02</span> 转发与用户资料</p>
+            <h3>内容不折叠，<br /><em>资料不必跳转。</em></h3>
+          </header>
+          <div class="feature-screenshot">
             <img
               src="/assets/user-hover-card.png"
               alt="即刻 Web 动态详情中的完整转发内容和用户悬浮资料卡片"
@@ -150,16 +152,22 @@
               loading="lazy"
             />
           </div>
+          <div class="feature-links">
+            <a href="https://web.okjike.com/u/34953782-20EA-4675-9108-FD005F127C53/repost/6a3c111c3d621d7862d5f30c" target="_blank" rel="noreferrer">
+              查看转发卡片示例 <span aria-hidden="true">↗</span>
+            </a>
+            <a href="https://web.okjike.com/u/28e960ee-9e3a-45bb-bee3-d859b34416c1/repost/69c14cecc5a1d4e6497efb7d" target="_blank" rel="noreferrer">
+              查看用户悬浮卡片示例 <span aria-hidden="true">↗</span>
+            </a>
+          </div>
         </article>
 
-        <article class="feature-proof feature-proof-reverse">
-          <div class="feature-proof-copy">
-            <span class="feature-index">02</span>
-            <p class="eyebrow"><span></span> 图片灯箱缩放</p>
-            <h3>放大细节，<br />操作依旧自然。</h3>
-            <p>支持滚轮、双击、拖拽、键盘快捷键与工具栏按钮，可在 1×–6× 之间查看图片细节。</p>
-          </div>
-          <div class="screenshot-frame">
+        <article class="feature-story">
+          <header class="feature-story-heading">
+            <p class="feature-story-kicker"><span>03</span> 图片灯箱</p>
+            <h3>图片看得细，<br /><em>操作依然轻。</em></h3>
+          </header>
+          <div class="feature-screenshot">
             <img
               src="/assets/lightbox-multi-zoom.png"
               alt="即刻 Web 图片灯箱放大后的实际效果与缩放控制按钮"
@@ -167,6 +175,11 @@
               height="800"
               loading="lazy"
             />
+          </div>
+          <div class="feature-links">
+            <a href="https://web.okjike.com/u/34953782-20EA-4675-9108-FD005F127C53/repost/6a3c111c3d621d7862d5f30c" target="_blank" rel="noreferrer">
+              打开带图动态，体验图片灯箱 <span aria-hidden="true">↗</span>
+            </a>
           </div>
         </article>
       </section>

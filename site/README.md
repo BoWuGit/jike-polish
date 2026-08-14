@@ -56,6 +56,8 @@ Worker 名称为 `jike-polish-site`。正式地址：
 
 更新原始截图时应同步复制到 `site/assets/`。
 
+下载卡片使用本地托管的 Chrome、Safari、Edge 和 Firefox 官方图形，文件位于 `site/assets/browsers/`，来源为 [`alrra/browser-logos`](https://github.com/alrra/browser-logos)。不要改回 CSS 绘制的近似图标，也不要从第三方 CDN 直接加载。
+
 ## 隐私政策
 
 `site/privacy/index.html` 是仓库根目录 `PRIVACY.md` 的站点版。修改政策时请同步维护两处内容。
