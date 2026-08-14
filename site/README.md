@@ -39,11 +39,22 @@ Worker 名称为 `jike-polish-site`。正式地址：
 
 ## 浏览器商店链接
 
-首页下载区在 `site/index.html`：
+首页下载区在 `site/index.html`，并紧接首屏展示：
 
 - Chrome、Edge、Safari 已使用公开商店地址；
 - Firefox 当前显示“待上线”；
 - Firefox 发布后，把对应的 `browser-card-pending` 容器改成带 `href` 的 `<a class="browser-card">`。
+
+## 功能截图
+
+首页只使用 README 中已有的实际运行截图，不使用功能示意图。部署目录中的图片是对应仓库图片的副本：
+
+- `site/assets/plugin-effect.png` ← `screenshot.png`
+- `site/assets/native-effect.png` ← `screenshot-native.png`
+- `site/assets/user-hover-card.png` ← `chrome/store-assets/screenshots/chrome-user-hover-card.png`
+- `site/assets/lightbox-multi-zoom.png` ← `chrome/store-assets/screenshots/chrome-lightbox-multi-zoom.png`
+
+更新原始截图时应同步复制到 `site/assets/`。
 
 ## 隐私政策
 
