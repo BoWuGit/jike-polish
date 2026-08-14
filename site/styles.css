@@ -343,7 +343,7 @@ a.browser-card-primary:hover {
 
 .features-heading {
   max-width: 800px;
-  margin: 0 0 115px;
+  margin: 0 0 100px;
   text-align: left;
 }
 
@@ -373,9 +373,9 @@ a.browser-card-primary:hover {
 
 .feature-story h3 {
   margin: 0;
-  font-size: clamp(38px, 4.4vw, 60px);
-  line-height: 1.17;
-  letter-spacing: -0.055em;
+  font-size: clamp(30px, 3.2vw, 44px);
+  line-height: 1.22;
+  letter-spacing: -0.045em;
 }
 
 .comparison-grid {
@@ -682,7 +682,7 @@ footer > p {
   }
 
   .feature-story h3 {
-    font-size: 36px;
+    font-size: 30px;
   }
 
   .feature-story h3 em {
