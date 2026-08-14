@@ -21,19 +21,21 @@ export CLOUDFLARE_ACCOUNT_ID="..."
 npm run site:deploy
 ```
 
-Worker 名称为 `jike-polish-site`。当前临时访问地址：
+Worker 名称为 `jike-polish-site`。正式地址：
 
-> https://jike-polish-site.brieffeed.workers.dev
+> https://jikepolish.com
 
-## 绑定自定义域名
+`workers_dev` 已关闭，生产访问统一使用自定义域名。
 
-域名确定后，取消 `wrangler.jsonc` 中 `routes` 示例的注释并替换 `<YOUR_DOMAIN>`：
+## 自定义域名
+
+`wrangler.jsonc` 已通过 Custom Domain route 将主域名绑定到 Worker：
 
 ```jsonc
-"routes": [{ "pattern": "<YOUR_DOMAIN>", "custom_domain": true }]
+"routes": [{ "pattern": "jikepolish.com", "custom_domain": true }]
 ```
 
-要求该域名所在 zone 已加入同一个 Cloudflare 账户。也可以在 Cloudflare Dashboard 的 Workers & Pages → `jike-polish-site` → Settings → Domains & Routes 中添加 Custom Domain。
+域名 zone 与 Worker 必须位于同一个 Cloudflare 账户。后续如更换域名，应同步更新首页 canonical、Open Graph URL、`robots.txt` 和 `sitemap.xml`。
 
 ## 浏览器商店链接
 

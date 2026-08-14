@@ -4,7 +4,7 @@
 
 ## 安装
 
-- [官方网站](https://jike-polish-site.brieffeed.workers.dev)
+- [官方网站](https://jikepolish.com)
 - [Mac App Store：安装 macOS Safari 版](https://apps.apple.com/cn/app/%E9%98%85%E8%B5%8F/id6794301352?mt=12)
 - [Chrome Web Store：安装 Chrome 版](https://chromewebstore.google.com/detail/hnbakdoibeogigpihopfjfjbacfmcfck)
 - [Microsoft Edge Add-ons：安装 Edge 版](https://microsoftedge.microsoft.com/addons/detail/%E9%98%85%E8%B5%8F/hlnncldckloekgkkbimpbhlgopjcmbdi)
@@ -15,7 +15,7 @@ Microsoft Edge Add-ons 发布材料见 [`edge/README.md`](./edge/README.md)；Fi
 
 ## 官方网站
 
-项目 Landing Page 已部署至 <https://jike-polish-site.brieffeed.workers.dev>。源码位于 [`site/`](./site/)，开发与部署说明见 [`site/README.md`](./site/README.md)。
+项目 Landing Page 已部署至 <https://jikepolish.com>。源码位于 [`site/`](./site/)，开发与部署说明见 [`site/README.md`](./site/README.md)。
 
 ## 布局与字体对比
 
