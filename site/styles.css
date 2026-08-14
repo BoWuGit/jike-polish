@@ -97,8 +97,7 @@ img {
 }
 
 .brand img,
-.footer-brand img,
-.hero-icon {
+.footer-brand img {
   border-radius: 12px;
   box-shadow: 0 7px 18px rgba(25, 54, 132, 0.2);
 }
@@ -142,14 +141,6 @@ nav a:hover {
   margin: 0 auto;
   padding: 70px 0 105px;
   text-align: center;
-}
-
-.hero-icon {
-  width: 96px;
-  height: 96px;
-  margin-bottom: 34px;
-  border-radius: 23px;
-  box-shadow: 0 20px 42px rgba(25, 54, 132, 0.22);
 }
 
 h1,
@@ -610,13 +601,6 @@ footer > p {
 
   .hero {
     padding: 54px 0 78px;
-  }
-
-  .hero-icon {
-    width: 82px;
-    height: 82px;
-    margin-bottom: 26px;
-    border-radius: 20px;
   }
 
   h1 {
