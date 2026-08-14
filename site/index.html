@@ -40,33 +40,14 @@
 
     <main id="main">
       <section class="hero" id="top">
-        <img class="hero-icon" src="/assets/icon-160.webp" alt="阅赏扩展图标" width="104" height="104" />
-        <p class="eyebrow"><span></span> 专为即刻 Web 打造 <span></span></p>
+        <img class="hero-icon" src="/assets/icon-160.webp" alt="阅赏扩展图标" width="96" height="96" />
         <h1>让每一次浏览，<br /><em>都值得阅赏。</em></h1>
         <p class="hero-lead">
-          一款轻量、克制的浏览器扩展。优化排版，补全内容，改善交互，
-          让即刻 Web 回归舒适的阅读体验。
+          优化即刻 Web 的排版与字体，展开转发内容，悬停查看用户资料，
+          并为图片灯箱补上顺手的缩放操作。
         </p>
-        <div class="hero-actions">
-          <a class="button button-primary" href="#download">
-            获取阅赏
-            <svg aria-hidden="true" viewBox="0 0 20 20"><path d="m7 4 6 6-6 6" /></svg>
-          </a>
-          <a class="button button-secondary" href="https://github.com/BoWuGit/jike-polish" target="_blank" rel="noreferrer">
-            查看源码
-          </a>
-        </div>
-        <p class="hero-meta">免费使用 · 无广告 · 无遥测 · 源码公开</p>
-      </section>
 
-      <section class="section download" id="download">
-        <div class="download-copy">
-          <p class="eyebrow"><span></span> 选择你的浏览器</p>
-          <h2>现在，开始阅赏。</h2>
-          <p>阅赏支持主流桌面浏览器。选择你正在使用的平台，即刻拥有更舒适的浏览体验。</p>
-        </div>
-
-        <div class="browser-grid">
+        <div class="browser-grid" id="download" aria-label="下载阅赏">
           <a class="browser-card browser-card-primary" href="https://chromewebstore.google.com/detail/hnbakdoibeogigpihopfjfjbacfmcfck" target="_blank" rel="noreferrer">
             <img class="browser-logo" src="/assets/browsers/chrome.svg" alt="" width="48" height="48" />
             <span><strong>Chrome</strong><small>Chrome Web Store</small></span>
@@ -92,23 +73,23 @@
           </div>
         </div>
 
-        <p class="download-help">
-          商店暂时无法访问？
-          <a href="https://github.com/BoWuGit/jike-polish/releases" target="_blank" rel="noreferrer">前往 GitHub Releases</a>
-          查看其他安装方式。
+        <p class="hero-meta">
+          免费使用 · 无广告 · 无遥测 · 源码公开
+          <span aria-hidden="true">·</span>
+          <a href="https://github.com/BoWuGit/jike-polish" target="_blank" rel="noreferrer">查看源码</a>
+          <span aria-hidden="true">·</span>
+          <a href="https://github.com/BoWuGit/jike-polish/releases" target="_blank" rel="noreferrer">其他安装方式</a>
         </p>
       </section>
 
       <section class="section actual-features" id="features">
         <header class="features-heading">
-          <p class="eyebrow"><span></span> 真实运行效果 <span></span></p>
           <h2>熟悉的即刻，<br /><em>更舒服的样子。</em></h2>
         </header>
 
         <article class="feature-story">
           <header class="feature-story-heading">
-            <p class="feature-story-kicker"><span>01</span> 排版与布局</p>
-            <h3>版面舒展，<br /><em>文字更耐读。</em></h3>
+            <h3>版面舒展，<em>文字更耐读。</em></h3>
           </header>
           <div class="comparison-grid">
             <figure class="screenshot-card screenshot-card-highlight">
@@ -140,8 +121,7 @@
 
         <article class="feature-story">
           <header class="feature-story-heading">
-            <p class="feature-story-kicker"><span>02</span> 转发与用户资料</p>
-            <h3>内容不折叠，<br /><em>资料不必跳转。</em></h3>
+            <h3>内容不折叠，<em>资料不必跳转。</em></h3>
           </header>
           <div class="feature-screenshot">
             <img
@@ -164,8 +144,7 @@
 
         <article class="feature-story">
           <header class="feature-story-heading">
-            <p class="feature-story-kicker"><span>03</span> 图片灯箱</p>
-            <h3>图片看得细，<br /><em>操作依然轻。</em></h3>
+            <h3>图片看得细，<em>操作依然轻。</em></h3>
           </header>
           <div class="feature-screenshot">
             <img

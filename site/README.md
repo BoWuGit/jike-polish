@@ -39,7 +39,7 @@ Worker 名称为 `jike-polish-site`。正式地址：
 
 ## 浏览器商店链接
 
-首页下载区在 `site/index.html`，并紧接首屏展示：
+首页下载卡片在 `site/index.html`，与功能概述合并在首屏展示：
 
 - Chrome、Edge、Safari 已使用公开商店地址；
 - Firefox 当前显示“待上线”；
