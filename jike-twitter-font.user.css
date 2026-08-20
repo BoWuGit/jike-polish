@@ -445,7 +445,7 @@
     display: -webkit-box !important;
     max-height: calc(2.375rem * var(--mantine-scale)) !important;
     overflow: hidden !important;
-    color: var(--color-text-primary, #1d2129) !important;
+    color: var(--tint-primary, inherit) !important;
     font-size: calc(1rem * var(--mantine-scale)) !important;
     line-height: calc(1.1875rem * var(--mantine-scale)) !important;
     text-overflow: ellipsis !important;
@@ -456,7 +456,7 @@
   ._root_1kp3y_1 .jp-repost-link-footer {
     min-height: calc(1.25rem * var(--mantine-scale)) !important;
     overflow: hidden !important;
-    color: var(--jp-text-secondary, #707684) !important;
+    color: var(--tint-secondary, inherit) !important;
     font-size: .8125rem !important;
     line-height: calc(1.25rem * var(--mantine-scale)) !important;
     text-overflow: ellipsis !important;
@@ -825,9 +825,9 @@
     border-color: var(--jp-divider-muted, rgba(15, 23, 42, 0.08)) !important;
   }
 
-  /* 只降低引用卡片正文，不压标题 */
-  ._content_1kp3y_20 {
-    color: var(--jp-text-secondary, #707684) !important;
+  /* 引用卡片正文跟随即刻原生主题色，避免暗色模式下对比度过低 */
+  ._root_1kp3y_1 ._content_1kp3y_20 {
+    color: var(--tint-primary, inherit) !important;
   }
 
   /* ============================================================
