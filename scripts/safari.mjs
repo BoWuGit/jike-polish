@@ -11,7 +11,7 @@ const DERIVED_DATA = path.join(ROOT, "build/safari");
 const APP_BUNDLE_IDENTIFIER = "com.bowugit.jikepolish";
 const EXTENSION_BUNDLE_IDENTIFIER = `${APP_BUNDLE_IDENTIFIER}.Extension`;
 const APP_DISPLAY_NAME = "阅赏";
-const SAFARI_BUILD_NUMBER = "6";
+const SAFARI_BUILD_NUMBER = "7";
 const EXTENSION_RESOURCES = [
   "manifest.json",
   "content.js",

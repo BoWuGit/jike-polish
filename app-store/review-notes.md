@@ -2,7 +2,7 @@
 
 ## 中文
 
-1.2.8 是一次小型稳定性更新，改进了长内容的位置显示、运行时容错，以及图片灯箱的键盘操作与焦点管理。
+1.2.10 是一次小型显示修复，调整了深色模式下转发卡片的背景和文字颜色，使其与页面整体风格一致。
 
 应用继续使用原创品牌“阅赏”，并提供完整的离线功能演示；无需账号、网络或安装其他 App，即可审核全部主要功能。
 
@@ -20,7 +20,7 @@
 
 ## English
 
-Version 1.2.8 is a small stability update. It improves location display for long content, runtime resilience, and keyboard/focus handling in the image lightbox.
+Version 1.2.10 is a small visual fix. It adjusts repost card background and text colors in dark mode so they match the rest of the page.
 
 The app continues to use the original “阅赏” identity and includes a complete offline demonstration. No account, network connection, or other app is required to review all primary features.
 
