@@ -40,7 +40,7 @@ The extension is not affiliated with, authorized by, endorsed by, or sponsored b
 ## Exact text submitted — under 2,000 characters
 
 ```text
-Yueshang (阅赏) is an open-source, unofficial extension. This update changes only the public Store listing by adding two real extension screenshots already used for the Chrome listing; the extension package and functionality remain version 1.2.8. It has no extension-owned account, payment, advertising, analytics, telemetry, or tracking. Live integration runs only on https://web.okjike.com/*.
+Yueshang (阅赏) is an open-source, unofficial extension. Version 1.2.10 only fixes repost card background and text colors in dark mode. It has no extension-owned account, payment, advertising, analytics, telemetry, or tracking. Live integration runs only on https://web.okjike.com/*.
 
 OFFLINE REVIEW — NO ACCOUNT OR NETWORK REQUIRED
 1. Click the 阅赏 toolbar icon.
@@ -56,7 +56,7 @@ The third-party website requires QR sign-in through its mobile app. We cannot pr
 Repost/profile card: https://web.okjike.com/u/34953782-20EA-4675-9108-FD005F127C53/repost/6a3c111c3d621d7862d5f30c
 Link preview: https://web.okjike.com/u/1656C862-60ED-4CC7-895B-6EE776B46C9A/post/6a4b6d1fae0108c0411560ea
 
-All executable JS/CSS is packaged; no remote code is downloaded or executed. During live use, HTTPS requests to https://api.ruguoapp.com retrieve target-site JSON/profile/post/media metadata, refresh the target-site session, or perform a user-requested follow/unfollow. Authentication data goes only to the service that issued it, never to the developer.
+All executable JS/CSS is packaged; no remote code is downloaded or executed. Live HTTPS requests only retrieve target-site data or perform an explicit user-requested action. Authentication data goes only to the service that issued it, never to the developer.
 
 Privacy: https://bowugit.github.io/jike-polish/privacy/
 Source/support: https://github.com/BoWuGit/jike-polish

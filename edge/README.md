@@ -14,8 +14,8 @@
 | 商店文案 | 已准备 | 见 [`store-listing.zh-CN.md`](./store-listing.zh-CN.md)。 |
 | 审核说明 | 已准备 | 见 [`review-notes.md`](./review-notes.md)。 |
 | 隐私政策 | 已发布 | 公开 URL 已显示新版跨浏览器政策。 |
-| Microsoft Edge Add-ons | 已发布 | “阅赏”1.2.8 已公开发布：[商店页面](https://microsoftedge.microsoft.com/addons/detail/%E9%98%85%E8%B5%8F/hlnncldckloekgkkbimpbhlgopjcmbdi)。 |
-| 商店截图更新 | 审核中 | 已提交 3 张图：离线演示，以及 Chrome 商店同款的实际用户卡片和灯箱截图；当前公开版保持可用。 |
+| Microsoft Edge Add-ons | 更新审核中 | “阅赏”1.2.8 保持公开；1.2.10 已于 2026-08-21 提交审核：[商店页面](https://microsoftedge.microsoft.com/addons/detail/%E9%98%85%E8%B5%8F/hlnncldckloekgkkbimpbhlgopjcmbdi)。 |
+| 商店截图 | 已提交 | 3 张图包含离线演示，以及 Chrome 商店同款的实际用户卡片和灯箱截图。 |
 
 ## Edge 包与通用包的区别
 
