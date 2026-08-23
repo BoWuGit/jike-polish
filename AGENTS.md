@@ -20,7 +20,7 @@
 ## Microsoft Edge Add-ons release
 
 - For Edge compatibility, store metadata, privacy declarations, review notes, or submission work, read `edge/README.md` and use its current checklist.
-- Run `npm run edge:package` and upload `jike-polish-edge-v<version>.zip`; the generic Chrome package omits the Edge offline review demo.
+- Run `npm run release:edge` to validate and package without uploading. From a clean tree, use `--mode upload` for a draft or `--mode submit --confirm` for review; the pinned Product ID prevents cross-project uploads.
 - The Edge demo sources are in `edge/demo/`; its generated package reuses the Safari container demo's `Style.css` and `Script.js`, so changes to those shared interactions must keep both demos working.
 
 ## Firefox Add-ons release

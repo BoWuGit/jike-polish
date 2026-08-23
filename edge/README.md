@@ -35,11 +35,13 @@ Microsoft Edge 基于 Chromium。官方迁移文档说明 Chrome 扩展 API 与 
 
 ```bash
 npm ci
-npm run edge:package
+npm run release:edge
 EDGE_ZIP="jike-polish-edge-v$(node -p "require('./manifest.json').version").zip"
 unzip -t "$EDGE_ZIP"
 unzip -l "$EDGE_ZIP"
 ```
+
+`npm run edge:package` 是底层打包命令；`release:edge` 在其上提供后续版本的 API 上传与提审流程。
 
 预期 zip 根目录只包含运行所需文件：
 
@@ -152,9 +154,32 @@ Microsoft 要求，只要扩展访问、收集或传输个人信息就应选择 
 
 实际运行截图可能包含目标网站公开展示的用户资料或动态内容；每次提交前都要重新检查画面中没有 Token、私密信息或无关扩展 UI，并确认公开使用这些素材符合 [Edge 政策 1.5.4](https://learn.microsoft.com/en-us/legal/microsoft-edge/extensions/developer-policies#154-sharing-information-of-non-users)。小型推广图（440×280）、大型推广图（1400×560）和 YouTube 视频均为可选。
 
-## 首次发布后的自动化
+## 后续版本 API 提审
 
-Edge Add-ons REST API 只能更新**已经发布**的产品包，不能创建新产品或更新商店元数据。因此首次提交必须在 Partner Center 完成。首次通过后，可从 Overview 获取 Product ID，在 Publish API 页面创建 Client ID/API key，再为后续版本接入上传与发布脚本。不要把 API key 写入仓库。
+Edge Add-ons REST API 只能更新**已经发布**的产品包，不能创建新产品或更新商店元数据。“阅赏”的 Product ID 已固定在发布脚本中，避免把包上传到同一账号下的其他扩展。
+
+```bash
+# 仅校验和打包（默认，不调用 API）
+npm run release:edge
+
+# 上传并完成程序包校验，保留为草稿
+npm run release:edge -- --mode upload
+
+# 上传、校验并提交审核；必须是干净 Git 工作区
+npm run release:edge -- --mode submit --confirm
+
+# 执行同样的本地检查，但不调用 API
+npm run release:edge -- --mode submit --dry-run
+```
+
+提交前更新 [`review-notes.md`](./review-notes.md) 的 `Exact text submitted` 代码块：必须包含当前 `Version <version>`，并保持在 2,000 字符内。脚本会把该代码块作为 certification notes 发送，并等待程序包校验和提审操作都返回成功。API 受理只代表开始审核，不代表立即公开。
+
+凭据按以下顺序读取：
+
+1. 进程环境中的 `EDGE_CLIENT_ID` 和 `EDGE_API_KEY`；
+2. macOS Keychain 的 `bowugit` 账户、`microsoft-edge-addons-client-id` 与 `microsoft-edge-addons-api-key` 服务项。
+
+本机已使用第二种方式配置。凭据、`.env`、API 响应日志和临时认证文件都必须留在仓库外。API 无法更新商店文案、隐私声明或截图；这些变化仍在 Partner Center 手工完成。
 
 官方 API 文档：[Use the REST API to update an extension](https://learn.microsoft.com/en-us/microsoft-edge/extensions/update/api/using-addons-api)。
 
