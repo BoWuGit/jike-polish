@@ -40,9 +40,11 @@ test("the macOS container links to the website from its home and About views", a
   assert.ok(storyboard.includes('selector="showAboutPanel:"'));
 });
 
-test("the website footer publishes the author Jike and X accounts", async () => {
+test("the website navigation reaches the author Jike and X accounts", async () => {
   const homepage = await source("site/index.html");
 
+  assert.match(homepage, /<a class="nav-contact" href="#contact">联系<\/a>/);
+  assert.match(homepage, /<footer id="contact">/);
   assert.ok(homepage.includes("https://m.okjike.com/users/0e9b4dba-9e57-45f5-91b8-8ce80b0cce84"));
   assert.ok(homepage.includes("https://x.com/xawubo/"));
   assert.equal((homepage.match(/rel="me noopener noreferrer"/g) ?? []).length, 2);

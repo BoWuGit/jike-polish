@@ -653,8 +653,8 @@ footer > p {
     font-size: 12px;
   }
 
-  nav a:first-child,
-  nav a:nth-child(3) {
+  .nav-features,
+  .nav-privacy {
     display: none;
   }
 
