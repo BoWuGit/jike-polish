@@ -3,6 +3,7 @@
   "name": "阅赏",
   "version": "1.2.10",
   "description": "网页阅读增强：字体与布局优化、引用卡片、用户悬浮卡片和图片灯箱缩放",
+  "homepage_url": "https://jikepolish.com/",
   "browser_specific_settings": {
     "gecko": {
       "id": "jike-polish@bowugit.github.io",

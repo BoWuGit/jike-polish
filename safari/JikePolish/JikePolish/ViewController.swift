@@ -3,6 +3,9 @@ import SafariServices
 import WebKit
 
 private let extensionBundleIdentifier = "com.bowugit.jikepolish.Extension"
+private let websiteURL = URL(
+    string: "https://jikepolish.com/?utm_source=macos_about&utm_medium=product&utm_campaign=website_link"
+)!
 
 final class ViewController: NSViewController, WKNavigationDelegate, WKScriptMessageHandler {
     @IBOutlet private var webView: WKWebView!
@@ -32,7 +35,14 @@ final class ViewController: NSViewController, WKNavigationDelegate, WKScriptMess
     }
 
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
-        guard message.body as? String == "open-preferences" else {
+        guard let action = message.body as? String else {
+            return
+        }
+        if action == "open-website" {
+            NSWorkspace.shared.open(websiteURL)
+            return
+        }
+        guard action == "open-preferences" else {
             return
         }
 

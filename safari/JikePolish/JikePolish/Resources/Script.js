@@ -25,6 +25,10 @@ function openPreferences() {
     window.webkit?.messageHandlers?.controller?.postMessage("open-preferences");
 }
 
+function openWebsite() {
+    window.webkit?.messageHandlers?.controller?.postMessage("open-website");
+}
+
 function setDemoOpen(open) {
     overview.hidden = open;
     demo.hidden = !open;
@@ -111,6 +115,7 @@ function moveCanvas(deltaX, deltaY) {
 }
 
 document.querySelector(".open-preferences")?.addEventListener("click", openPreferences);
+document.querySelector(".open-website")?.addEventListener("click", openWebsite);
 document.querySelector(".open-demo")?.addEventListener("click", () => setDemoOpen(true));
 document.querySelector(".close-demo")?.addEventListener("click", () => setDemoOpen(false));
 

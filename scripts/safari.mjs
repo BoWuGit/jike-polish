@@ -83,14 +83,26 @@ async function generateIcons() {
 async function validate() {
   await validateIcons();
 
-  const [manifest, packageJson, packageLock, appInfo, projectFile, viewController, mainHtml] = await Promise.all([
+  const [
+    manifest,
+    packageJson,
+    packageLock,
+    appInfo,
+    projectFile,
+    appDelegate,
+    viewController,
+    mainHtml,
+    mainStoryboard,
+  ] = await Promise.all([
     readJson("manifest.json"),
     readJson("package.json"),
     readJson("package-lock.json"),
     readJson("app-store/metadata/app-info/zh-Hans.json"),
     readFile(PROJECT_FILE, "utf8"),
+    readFile(path.join(ROOT, "safari/JikePolish/JikePolish/AppDelegate.swift"), "utf8"),
     readFile(path.join(ROOT, "safari/JikePolish/JikePolish/ViewController.swift"), "utf8"),
     readFile(path.join(ROOT, "safari/JikePolish/JikePolish/Resources/Base.lproj/Main.html"), "utf8"),
+    readFile(path.join(ROOT, "safari/JikePolish/JikePolish/Base.lproj/Main.storyboard"), "utf8"),
   ]);
 
   const versions = new Map([
@@ -134,6 +146,19 @@ async function validate() {
   }
   if (!mainHtml.includes("打开离线功能演示") || !mainHtml.includes("1×–6×")) {
     throw new Error("Safari container must include the account-free offline feature demo.");
+  }
+  if (manifest.homepage_url !== "https://jikepolish.com/") {
+    throw new Error("Browser extensions must link to the official website.");
+  }
+  if (!mainHtml.includes("jikepolish.com") || !viewController.includes("utm_source=macos_about")) {
+    throw new Error("Safari container must include its official website link.");
+  }
+  if (
+    !appDelegate.includes("utm_source=macos_about")
+    || !appDelegate.includes("orderFrontStandardAboutPanel")
+    || !mainStoryboard.includes('selector="showAboutPanel:"')
+  ) {
+    throw new Error("Safari container must include a website link in the macOS About panel.");
   }
 
   for (const bundleIdentifier of [APP_BUNDLE_IDENTIFIER, EXTENSION_BUNDLE_IDENTIFIER]) {
