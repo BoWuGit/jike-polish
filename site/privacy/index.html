@@ -4,12 +4,12 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="light dark" />
-    <meta name="theme-color" content="#172b78" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#0b1020" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#172b78" />
     <meta name="description" content="阅赏浏览器扩展隐私政策。" />
     <link rel="canonical" href="https://jikepolish.com/privacy/" />
     <title>隐私政策 — 阅赏</title>
     <link rel="icon" href="/assets/icon.png" />
+    <script src="/theme.js"></script>
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body class="legal-page">
@@ -20,6 +20,15 @@
       </a>
       <nav aria-label="隐私政策导航">
         <a href="/">返回首页</a>
+        <button class="theme-toggle" type="button" data-theme-toggle aria-label="切换到深色模式">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path class="theme-icon-moon" d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z" />
+            <g class="theme-icon-sun">
+              <circle cx="12" cy="12" r="4" />
+              <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
+            </g>
+          </svg>
+        </button>
         <a class="nav-github" href="https://github.com/BoWuGit/jike-polish" target="_blank" rel="noreferrer">GitHub</a>
       </nav>
     </header>

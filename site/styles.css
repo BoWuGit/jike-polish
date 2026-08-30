@@ -167,6 +167,53 @@ nav a:hover {
   background: var(--surface-glass);
 }
 
+.theme-toggle {
+  display: none;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  color: var(--nav-ink);
+  background: var(--surface-glass);
+  cursor: pointer;
+  place-items: center;
+  transition: color 160ms ease, border-color 160ms ease, background-color 160ms ease,
+    transform 160ms ease;
+}
+
+.js .theme-toggle {
+  display: grid;
+}
+
+.theme-toggle:hover {
+  border-color: var(--line-hover);
+  color: var(--blue);
+  transform: translateY(-1px);
+}
+
+.theme-toggle svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+.theme-icon-sun {
+  display: none;
+}
+
+:root[data-theme="dark"] .theme-icon-moon {
+  display: none;
+}
+
+:root[data-theme="dark"] .theme-icon-sun {
+  display: initial;
+}
+
 .hero {
   width: min(1180px, calc(100% - 48px));
   margin: 0 auto;
@@ -639,8 +686,50 @@ footer > p {
   border-top: 1px solid var(--line);
 }
 
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #0b1020;
+  --surface: #131a2b;
+  --surface-glass: rgba(19, 26, 43, 0.78);
+  --surface-glass-strong: rgba(19, 26, 43, 0.9);
+  --surface-subtle: #0f1626;
+  --page-subtle: #080d19;
+  --badge: #202b43;
+  --code-surface: #1a2438;
+  --ink: #eef3ff;
+  --muted: #aeb9d0;
+  --nav-ink: #b8c2d8;
+  --quiet: #9aa6bf;
+  --quiet-strong: #aeb9d0;
+  --hero-meta: #9aa6bf;
+  --hero-separator: #5d6982;
+  --legal-copy: #b6c0d5;
+  --code-ink: #d7e1f5;
+  --blue: #8eafff;
+  --blue-solid: #315db9;
+  --blue-deep: #294fa4;
+  --blue-gradient-end: #376bc7;
+  --blue-card-gradient-end: #376bc7;
+  --line: #2b3650;
+  --line-hover: #465779;
+  --frame-line: #303d5b;
+  --frame-highlight-line: #526991;
+  --focus-ring: #9bc1ff;
+  --ambient-cyan: rgba(66, 180, 205, 0.1);
+  --ambient-purple: rgba(128, 104, 220, 0.12);
+  --shadow-icon: 0 7px 20px rgba(0, 0, 0, 0.35);
+  --shadow-button: 0 13px 27px rgba(0, 0, 0, 0.32);
+  --shadow-button-hover: 0 17px 32px rgba(0, 0, 0, 0.42);
+  --shadow-card-hover: 0 16px 35px rgba(0, 0, 0, 0.3);
+  --shadow-primary-card: 0 15px 35px rgba(0, 0, 0, 0.3);
+  --shadow-primary-card-hover: 0 19px 40px rgba(0, 0, 0, 0.42);
+  --shadow-frame: 0 22px 60px rgba(0, 0, 0, 0.28);
+  --shadow-frame-highlight: 0 26px 68px rgba(0, 0, 0, 0.38);
+  --shadow-legal: 0 20px 55px rgba(0, 0, 0, 0.3);
+}
+
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme]) {
     color-scheme: dark;
     --page: #0b1020;
     --surface: #131a2b;
