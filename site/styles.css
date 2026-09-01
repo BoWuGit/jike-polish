@@ -202,15 +202,15 @@ nav a:hover {
   stroke-width: 1.8;
 }
 
-.theme-icon-sun {
+.theme-icon-auto,
+.theme-icon-light,
+.theme-icon-dark {
   display: none;
 }
 
-:root[data-theme="dark"] .theme-icon-moon {
-  display: none;
-}
-
-:root[data-theme="dark"] .theme-icon-sun {
+:root[data-theme-mode="auto"] .theme-icon-auto,
+:root[data-theme-mode="light"] .theme-icon-light,
+:root[data-theme-mode="dark"] .theme-icon-dark {
   display: initial;
 }
 

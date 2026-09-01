@@ -1,13 +1,15 @@
 (() => {
   const storageKey = "yueshang-theme";
+  const modes = ["auto", "light", "dark"];
+  const modeNames = { auto: "自动（跟随系统）", light: "浅色", dark: "深色" };
   const root = document.documentElement;
   const media = matchMedia("(prefers-color-scheme: dark)");
   const themeColor = document.querySelector('meta[name="theme-color"]');
-  let selectedTheme = null;
+  let selectedMode = "auto";
 
   try {
-    const storedTheme = localStorage.getItem(storageKey);
-    if (storedTheme === "light" || storedTheme === "dark") selectedTheme = storedTheme;
+    const storedMode = localStorage.getItem(storageKey);
+    if (storedMode === "light" || storedMode === "dark") selectedMode = storedMode;
   } catch {
     // Storage may be unavailable in privacy-focused browser modes.
   }
@@ -16,47 +18,53 @@
     return media.matches ? "dark" : "light";
   }
 
-  function updateButton(button, theme) {
+  function nextMode(mode) {
+    return modes[(modes.indexOf(mode) + 1) % modes.length];
+  }
+
+  function updateButton(button) {
     if (!button) return;
-    const isDark = theme === "dark";
-    const label = isDark ? "切换到浅色模式" : "切换到深色模式";
+    const next = nextMode(selectedMode);
+    const label = `显示模式：${modeNames[selectedMode]}；切换到${modeNames[next]}模式`;
+    button.dataset.themeMode = selectedMode;
     button.setAttribute("aria-label", label);
-    button.setAttribute("aria-pressed", String(isDark));
     button.setAttribute("title", label);
   }
 
-  function applyTheme(theme, persist = false, button = null) {
+  function applyMode(mode, persist = false, button = null) {
+    selectedMode = mode;
+    const theme = mode === "auto" ? systemTheme() : mode;
     root.dataset.theme = theme;
+    root.dataset.themeMode = mode;
     root.style.colorScheme = theme;
     if (themeColor) themeColor.content = theme === "dark" ? "#0b1020" : "#172b78";
 
     if (persist) {
-      selectedTheme = theme;
       try {
-        localStorage.setItem(storageKey, theme);
+        if (mode === "auto") localStorage.removeItem(storageKey);
+        else localStorage.setItem(storageKey, mode);
       } catch {
         // The visual switch still works when storage is unavailable.
       }
     }
 
-    updateButton(button, theme);
+    updateButton(button);
   }
 
   root.classList.add("js");
-  applyTheme(selectedTheme ?? systemTheme());
+  applyMode(selectedMode);
 
   document.addEventListener("DOMContentLoaded", () => {
     const button = document.querySelector("[data-theme-toggle]");
     if (!button) return;
 
-    updateButton(button, root.dataset.theme);
+    updateButton(button);
     button.addEventListener("click", () => {
-      const nextTheme = root.dataset.theme === "dark" ? "light" : "dark";
-      applyTheme(nextTheme, true, button);
+      applyMode(nextMode(selectedMode), true, button);
     });
   });
 
   media.addEventListener("change", () => {
-    if (selectedTheme === null) applyTheme(systemTheme());
+    if (selectedMode === "auto") applyMode("auto");
   });
 })();
