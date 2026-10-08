@@ -419,16 +419,16 @@ h1 em {
 .browser-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
+  gap: 12px;
 }
 
 .browser-card {
   position: relative;
   display: flex;
   align-items: center;
-  min-height: 76px;
+  min-height: 60px;
   gap: 14px;
-  padding: 16px;
+  padding: 12px 16px;
   border: 1px solid var(--line);
   border-radius: 14px;
   background: var(--surface);
@@ -467,26 +467,9 @@ a.browser-card-primary:hover {
   min-width: 0;
 }
 
-.browser-card strong,
-.browser-card small {
-  display: block;
-}
-
 .browser-card strong {
-  margin-bottom: 5px;
-  font-size: 15px;
-}
-
-.browser-card small {
-  overflow: hidden;
-  color: var(--quiet);
-  font-size: 12px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.browser-card-primary small {
-  color: rgba(255, 255, 255, 0.72);
+  display: block;
+  font-size: 16px;
 }
 
 .browser-card > b {
@@ -517,17 +500,13 @@ a.browser-card-primary:hover {
   font-size: 16px;
 }
 
-.browser-recommended small {
-  display: none;
-}
-
 .browser-recommended .browser-card > b {
   display: none;
 }
 
 [data-browser] .browser-picker .browser-card {
-  min-height: 72px;
-  padding: 14px;
+  min-height: 56px;
+  padding: 11px 14px;
   border-color: transparent;
   border-radius: 11px;
 }
