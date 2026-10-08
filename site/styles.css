@@ -221,7 +221,7 @@ nav a:hover {
 .hero {
   width: min(1180px, calc(100% - 48px));
   margin: 0 auto;
-  padding: 92px 0 105px;
+  padding: 80px 0 88px;
 }
 
 .hero-intro {
@@ -252,6 +252,12 @@ h1 {
   letter-spacing: -0.065em;
 }
 
+.hero h1 {
+  font-size: clamp(44px, 4.5vw, 64px);
+  line-height: 1.2;
+  letter-spacing: -0.025em;
+}
+
 h1 em {
   color: var(--blue);
   font-style: normal;
@@ -263,8 +269,9 @@ h1 em {
   max-width: 500px;
   margin-bottom: 0;
   color: var(--muted);
-  font-size: 16px;
-  line-height: 1.9;
+  font-size: 18px;
+  line-height: 1.8;
+  text-wrap: balance;
 }
 
 .hero-download {
@@ -300,7 +307,7 @@ h1 em {
   width: fit-content;
   min-height: 44px;
   color: var(--muted);
-  font-size: 13px;
+  font-size: 14px;
   cursor: pointer;
   list-style: none;
   transition: color 160ms ease;
@@ -383,7 +390,7 @@ h1 em {
 .hero-meta {
   margin: 16px 0 0;
   color: var(--hero-meta);
-  font-size: 11px;
+  font-size: 13px;
   letter-spacing: 0.02em;
   text-align: left;
 }
@@ -473,7 +480,7 @@ a.browser-card-primary:hover {
 .browser-card small {
   overflow: hidden;
   color: var(--quiet);
-  font-size: 9px;
+  font-size: 12px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -507,7 +514,7 @@ a.browser-card-primary:hover {
 
 .browser-recommended strong {
   margin: 0;
-  font-size: 14px;
+  font-size: 16px;
 }
 
 .browser-recommended small {
@@ -537,27 +544,23 @@ a.browser-card-primary:hover {
   height: 32px;
 }
 
-[data-browser] .browser-picker small {
-  font-size: 10px;
-}
-
 .actual-features {
   width: min(1180px, calc(100% - 48px));
-  padding: 125px 0 160px;
+  padding: 88px 0 104px;
   border-top: 1px solid var(--line);
 }
 
 .features-heading {
   max-width: 800px;
-  margin: 0 0 100px;
+  margin: 0 0 56px;
   text-align: left;
 }
 
 .features-heading h2 {
   margin-bottom: 0;
-  font-size: clamp(46px, 5vw, 70px);
-  line-height: 1.16;
-  letter-spacing: -0.06em;
+  font-size: clamp(32px, 3.2vw, 44px);
+  line-height: 1.25;
+  letter-spacing: -0.025em;
 }
 
 .features-heading h2 em,
@@ -567,21 +570,21 @@ a.browser-card-primary:hover {
 }
 
 .feature-story + .feature-story {
-  margin-top: 150px;
-  padding-top: 120px;
+  margin-top: 100px;
+  padding-top: 80px;
   border-top: 1px solid var(--line);
 }
 
 .feature-story-heading {
-  margin: 0 0 42px;
+  margin: 0 0 32px;
   text-align: left;
 }
 
 .feature-story h3 {
   margin: 0;
-  font-size: clamp(30px, 3.2vw, 44px);
-  line-height: 1.22;
-  letter-spacing: -0.045em;
+  font-size: clamp(26px, 2.3vw, 32px);
+  line-height: 1.35;
+  letter-spacing: -0.02em;
 }
 
 .comparison-grid {
@@ -637,7 +640,7 @@ a.browser-card-primary:hover {
   border-radius: 999px;
   color: var(--nav-ink);
   background: var(--surface-glass-strong);
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
   transition: color 160ms ease, border-color 160ms ease, transform 160ms ease;
 }
@@ -684,7 +687,7 @@ footer {
 .footer-brand small,
 footer > p {
   color: var(--quiet);
-  font-size: 9px;
+  font-size: 12px;
 }
 
 .footer-meta {
@@ -699,7 +702,7 @@ footer > p {
   display: flex;
   align-items: center;
   color: var(--quiet-strong);
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 650;
 }
 
@@ -714,7 +717,7 @@ footer > p {
 .footer-author > span {
   margin-right: 3px;
   color: var(--quiet-strong);
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 650;
 }
 
@@ -915,6 +918,11 @@ footer > p {
     grid-row: auto;
   }
 
+  .hero-intro h1 {
+    margin-right: auto;
+    margin-left: auto;
+  }
+
   .hero-lead {
     margin-right: auto;
     margin-left: auto;
@@ -976,15 +984,19 @@ footer > p {
   }
 
   .hero {
-    padding: 54px 0 78px;
+    padding: 48px 0 64px;
   }
 
   h1 {
     font-size: clamp(43px, 13vw, 60px);
   }
 
+  .hero h1 {
+    font-size: clamp(36px, 9.6vw, 42px);
+  }
+
   .hero-lead {
-    font-size: 15px;
+    font-size: 16px;
     line-height: 1.8;
   }
 
@@ -1021,17 +1033,21 @@ footer > p {
   }
 
   .actual-features {
-    padding-top: 90px;
-    padding-bottom: 110px;
+    padding-top: 64px;
+    padding-bottom: 80px;
   }
 
   .features-heading {
-    margin-bottom: 80px;
+    margin-bottom: 40px;
+  }
+
+  .features-heading h2 {
+    font-size: clamp(28px, 7.5vw, 32px);
   }
 
   .feature-story + .feature-story {
-    margin-top: 100px;
-    padding-top: 80px;
+    margin-top: 64px;
+    padding-top: 56px;
   }
 
   .feature-story-heading {
@@ -1040,7 +1056,7 @@ footer > p {
   }
 
   .feature-story h3 {
-    font-size: 30px;
+    font-size: 24px;
   }
 
   .feature-story h3 em {
