@@ -39,11 +39,12 @@ Worker 名称为 `jike-polish-site`。正式地址：
 
 ## 浏览器商店链接
 
-首页下载卡片在 `site/index.html`，与功能概述合并在首屏展示：
+首页下载入口在 `site/index.html`，紧接标题展示，与功能概述组成同一个首屏区域：
 
-- Chrome、Edge、Safari 已使用公开商店地址；
-- Firefox 当前显示“待上线”；
-- Firefox 发布后，把对应的 `browser-card-pending` 容器改成带 `href` 的 `<a class="browser-card">`。
+- Chrome、Edge、Safari、Firefox 均使用公开商店地址；
+- Firefox 商店地址：https://addons.mozilla.org/firefox/addon/yueshang/，支持桌面 Firefox 142+。
+- `site/download.js` 根据浏览器信息默认展示对应的桌面安装按钮，其他版本通过“其他浏览器”展开；Safari 仅在 macOS 上推荐。
+- 移动设备、无法识别的浏览器或禁用 JavaScript 时保留完整的浏览器选择。识别只在本地进行，不保存或上传浏览器信息。
 
 ## 功能截图
 

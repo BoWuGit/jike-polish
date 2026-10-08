@@ -22,7 +22,8 @@
     <link rel="icon" href="/assets/icon.png" />
     <link rel="apple-touch-icon" href="/assets/icon.png" />
     <script src="/theme.js?v=theme-auto"></script>
-    <link rel="stylesheet" href="/styles.css?v=theme-auto" />
+    <link rel="stylesheet" href="/styles.css?v=compact-hero" />
+    <script src="/download.js?v=browser-download" defer></script>
   </head>
   <body>
     <a class="skip-link" href="#main">跳到正文</a>
@@ -62,40 +63,46 @@
             优化即刻 Web 的排版与字体，展开转发内容，悬停查看用户资料，
             并为图片灯箱补上顺手的缩放操作。
           </p>
-        </div>
+          <div class="hero-download" id="download">
+            <div class="download-actions">
+              <div class="browser-recommended" data-browser-recommended hidden></div>
+              <details class="browser-picker" open>
+                <summary><span data-browser-picker-label>选择浏览器</span><svg viewBox="0 0 16 16" aria-hidden="true"><path d="m4 6 4 4 4-4" /></svg></summary>
+                <div class="browser-grid" aria-label="下载阅赏">
+                  <a class="browser-card" data-browser="chrome" href="https://chromewebstore.google.com/detail/hnbakdoibeogigpihopfjfjbacfmcfck" target="_blank" rel="noreferrer">
+                    <img class="browser-logo" src="/assets/browsers/chrome.svg" alt="" width="48" height="48" />
+                    <span><strong>Chrome</strong><small>Chrome Web Store</small></span>
+                    <b aria-hidden="true">↗</b>
+                  </a>
 
-        <div class="hero-download" id="download">
-          <div class="browser-grid" aria-label="下载阅赏">
-          <a class="browser-card browser-card-primary" href="https://chromewebstore.google.com/detail/hnbakdoibeogigpihopfjfjbacfmcfck" target="_blank" rel="noreferrer">
-            <img class="browser-logo" src="/assets/browsers/chrome.svg" alt="" width="48" height="48" />
-            <span><strong>Chrome</strong><small>Chrome Web Store</small></span>
-            <b aria-hidden="true">↗</b>
-          </a>
+                  <a class="browser-card" data-browser="safari" href="https://apps.apple.com/cn/app/%E9%98%85%E8%B5%8F/id6794301352?mt=12" target="_blank" rel="noreferrer">
+                    <img class="browser-logo" src="/assets/browsers/safari.svg" alt="" width="48" height="48" />
+                    <span><strong>Safari</strong><small>Mac App Store</small></span>
+                    <b aria-hidden="true">↗</b>
+                  </a>
 
-          <a class="browser-card" href="https://apps.apple.com/cn/app/%E9%98%85%E8%B5%8F/id6794301352?mt=12" target="_blank" rel="noreferrer">
-            <img class="browser-logo" src="/assets/browsers/safari.svg" alt="" width="48" height="48" />
-            <span><strong>Safari</strong><small>Mac App Store</small></span>
-            <b aria-hidden="true">↗</b>
-          </a>
+                  <a class="browser-card" data-browser="edge" href="https://microsoftedge.microsoft.com/addons/detail/%E9%98%85%E8%B5%8F/hlnncldckloekgkkbimpbhlgopjcmbdi" target="_blank" rel="noreferrer">
+                    <img class="browser-logo" src="/assets/browsers/edge.svg" alt="" width="48" height="48" />
+                    <span><strong>Edge</strong><small>Microsoft Edge Add-ons</small></span>
+                    <b aria-hidden="true">↗</b>
+                  </a>
 
-          <a class="browser-card" href="https://microsoftedge.microsoft.com/addons/detail/%E9%98%85%E8%B5%8F/hlnncldckloekgkkbimpbhlgopjcmbdi" target="_blank" rel="noreferrer">
-            <img class="browser-logo" src="/assets/browsers/edge.svg" alt="" width="48" height="48" />
-            <span><strong>Edge</strong><small>Microsoft Edge Add-ons</small></span>
-            <b aria-hidden="true">↗</b>
-          </a>
+                  <a class="browser-card" data-browser="firefox" href="https://addons.mozilla.org/firefox/addon/yueshang/" target="_blank" rel="noreferrer">
+                    <img class="browser-logo" src="/assets/browsers/firefox.svg" alt="" width="48" height="48" />
+                    <span><strong>Firefox</strong><small>Firefox Add-ons</small></span>
+                    <b aria-hidden="true">↗</b>
+                  </a>
+                </div>
+              </details>
+              <p class="download-note" data-download-note hidden>请在电脑浏览器中安装</p>
+            </div>
 
-          <div class="browser-card browser-card-pending" aria-label="Firefox 商店链接即将上线">
-            <img class="browser-logo" src="/assets/browsers/firefox.svg" alt="" width="48" height="48" />
-            <span><strong>Firefox</strong><small>商店链接即将上线</small></span>
-            <b>待上线</b>
+            <p class="hero-meta">
+              免费使用 · 无遥测
+              <span aria-hidden="true">·</span>
+              <a href="https://github.com/BoWuGit/jike-polish" target="_blank" rel="noreferrer">查看源码</a>
+            </p>
           </div>
-          </div>
-
-          <p class="hero-meta">
-            免费使用 · 无遥测
-            <span aria-hidden="true">·</span>
-            <a href="https://github.com/BoWuGit/jike-polish" target="_blank" rel="noreferrer">查看源码</a>
-          </p>
         </div>
       </section>
 
