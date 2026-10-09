@@ -339,6 +339,8 @@
      ============================================================ */
 
   ._content_1kp3y_20 {
+    /* 保留原帖的换行与空行，避免转发正文的段落挤在一起。 */
+    white-space: pre-wrap !important;
     line-height: calc(1.5rem * var(--mantine-scale)) !important;
     max-height: calc(3rem * var(--mantine-scale)) !important;
     transition: max-height .16s ease !important;
