@@ -1,0 +1,34 @@
+{
+  "date": "2026-10-03",
+  "version": "1.2.10",
+  "source_commit": "2613199bcbb3aaab3cb8f91b3e24c8a235fd9c6a",
+  "gecko_id": "jike-polish@bowugit.github.io",
+  "amo_addon_id": 3085122,
+  "amo_version_id": 6537119,
+  "amo_file_id": 5081262,
+  "slug": "yueshang",
+  "status": "public",
+  "developer_url": "https://addons.mozilla.org/zh-CN/developers/addon/yueshang/versions/6537119",
+  "listing_url": "https://addons.mozilla.org/firefox/addon/yueshang/",
+  "source_attached": true,
+  "listing_locales": [
+    "zh-CN",
+    "en-US"
+  ],
+  "privacy_policy": "bilingual policy from PRIVACY.md",
+  "license": "all-rights-reserved",
+  "screenshot_preview_id": 417992,
+  "tests_passed": 24,
+  "mozilla_validation": {
+    "errors": 0,
+    "warnings": 0,
+    "notices": 0
+  },
+  "artifacts_sha256": {
+    "jike-polish-firefox-v1.2.10.zip": "19e6eec09a474feff4734d5fbbc316d9b76effcd23b0344424d8bc519e08cec9",
+    "jike-polish-firefox-source-v1.2.10.zip": "9111c7adb139dda9584eb5f486257232b14d1e2320e2cf1f9af21f223a78d530"
+  },
+  "reviewed_at": "2026-10-06T07:20:24Z",
+  "public_status_verified_on": "2026-10-06",
+  "public_status_source": "https://addons.mozilla.org/api/v5/addons/addon/yueshang/"
+}

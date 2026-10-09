@@ -9,7 +9,7 @@
 - [Chrome Web Store：安装 Chrome 版](https://chromewebstore.google.com/detail/hnbakdoibeogigpihopfjfjbacfmcfck)
 - [Microsoft Edge Add-ons：安装 Edge 版](https://microsoftedge.microsoft.com/addons/detail/%E9%98%85%E8%B5%8F/hlnncldckloekgkkbimpbhlgopjcmbdi)
 
-Microsoft Edge Add-ons 发布材料见 [`edge/README.md`](./edge/README.md)；Firefox/AMO 打包、审核材料与待办见 [`firefox/README.md`](./firefox/README.md)，公开商店版本尚待账号所有者提交。
+Microsoft Edge Add-ons 发布材料见 [`edge/README.md`](./edge/README.md)；Firefox/AMO 打包、审核材料与待办见 [`firefox/README.md`](./firefox/README.md)，Firefox 1.2.10 已于 2026-10-06 通过 AMO 自动筛查并公开上架，可从 [Firefox Add-ons](https://addons.mozilla.org/firefox/addon/yueshang/) 安装。
 
 [隐私政策](./PRIVACY.md) · [Firefox 发布说明](./firefox/README.md) · [Safari 版本说明](./safari/README.md)
 

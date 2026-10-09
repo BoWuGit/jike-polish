@@ -1,6 +1,6 @@
 # Firefox / AMO 发布准备
 
-本目录记录“阅赏”Firefox 桌面版的兼容性、打包、审核材料和 addons.mozilla.org（AMO）提交流程。调研与材料更新日期：2026-08-12。
+本目录记录“阅赏”Firefox 桌面版的兼容性、打包、审核材料和 addons.mozilla.org（AMO）提交流程。调研日期：2026-08-12；首次 AMO 提交：2026-10-03。
 
 ## 当前状态
 
@@ -16,8 +16,10 @@
 | 商店文案和审核说明 | 已准备 | [`amo-metadata.json`](./amo-metadata.json) 可供 API 提交，人工字段见 [`store-listing.md`](./store-listing.md)。 |
 | 截图 | 已准备 | 1280×800、本地虚构内容，见 [`store-assets/screenshots/firefox-offline-demo.png`](./store-assets/screenshots/firefox-offline-demo.png)。 |
 | 真实站点登录回归 | 待账号所有者 | 需要用自己的目标网站扫码登录，按本页清单复测资料卡、转发媒体和灯箱。 |
-| AMO 首次提交 | 待账号所有者 | 需要 Mozilla Account，并确认许可证、隐私政策字段和最终文案。 |
+| AMO 首次提交 | 已公开上架 | 2026-10-03 提交 1.2.10，2026-10-06 通过自动筛查并公开上架；安装包、源码包、中英文介绍、隐私政策、图标及截图已保存。[版本后台](https://addons.mozilla.org/zh-CN/developers/addon/yueshang/versions/6537119)。 |
 | 后续版本自动提交 | 已接入 | `npm run release:firefox -- --mode submit --confirm`；需要 AMO JWT issuer/secret。 |
+
+本次提交记录见 [`submission-receipt.json`](./submission-receipt.json)。公开地址为 https://addons.mozilla.org/firefox/addon/yueshang/，支持桌面 Firefox 142+。Mozilla 后续仍可进行人工复审。API 凭据仍需配置完整 secret，当前网页提审不依赖 API 凭据。
 
 ## 为什么要求 Firefox 142+
 
