@@ -40,7 +40,7 @@ The extension is not affiliated with, authorized by, endorsed by, or sponsored b
 ## Exact text submitted — under 2,000 characters
 
 ```text
-Yueshang (阅赏) is an open-source, unofficial extension. Version 1.2.10 only fixes repost card background and text colors in dark mode. It has no extension-owned account, payment, advertising, analytics, telemetry, or tracking. Live integration runs only on https://web.okjike.com/*.
+Yueshang (阅赏) is an open-source, unofficial extension. Version 1.2.11 preserves line breaks in repost cards. It has no extension-owned account, payment, advertising, analytics, telemetry, or tracking. Live integration runs only on https://web.okjike.com/*.
 
 OFFLINE REVIEW — NO ACCOUNT OR NETWORK REQUIRED
 1. Click the 阅赏 toolbar icon.
