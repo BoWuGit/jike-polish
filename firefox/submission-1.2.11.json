@@ -1,0 +1,13 @@
+{
+  "version": "1.2.11",
+  "id": 6557911,
+  "source_attached": true,
+  "file_status": "unreviewed",
+  "created": "2026-10-09T09:07:29Z",
+  "source_commit": "6ee0da8",
+  "gecko_id": "jike-polish@bowugit.github.io",
+  "artifacts_sha256": {
+    "jike-polish-firefox-v1.2.11.zip": "62e503af57260d33812eec3c2e00b67a70a948ac59eb49143466bf13ded42ec5",
+    "jike-polish-firefox-source-v1.2.11.zip": "45716cc3bfc9f997d9abff099cb2ee6378af2af187c81df705080aac7750f0e0"
+  }
+}
