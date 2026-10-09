@@ -19,7 +19,7 @@
 | AMO 首次提交 | 已公开上架 | 2026-10-03 提交 1.2.10，2026-10-06 通过自动筛查并公开上架；安装包、源码包、中英文介绍、隐私政策、图标及截图已保存。[版本后台](https://addons.mozilla.org/zh-CN/developers/addon/yueshang/versions/6537119)。 |
 | 后续版本自动提交 | 已接入 | `npm run release:firefox -- --mode submit --confirm`；需要 AMO JWT issuer/secret。 |
 
-本次提交记录见 [`submission-receipt.json`](./submission-receipt.json)。公开地址为 https://addons.mozilla.org/firefox/addon/yueshang/，支持桌面 Firefox 142+。Mozilla 后续仍可进行人工复审。API 凭据仍需配置完整 secret，当前网页提审不依赖 API 凭据。
+本次提交记录见 [`submission-receipt.json`](./submission-receipt.json)。公开地址为 https://addons.mozilla.org/firefox/addon/yueshang/，支持桌面 Firefox 142+。Mozilla 后续仍可进行人工复审。2026-10-09 已通过命令行提交 1.2.11 及匹配源码包，AMO 版本 ID 为 6557911，等待审核。
 
 ## 为什么要求 Firefox 142+
 
@@ -125,6 +125,8 @@ npm run firefox:run
 仓库当前没有 `LICENSE` 文件，因此 [`amo-metadata.json`](./amo-metadata.json) 保守使用 `all-rights-reserved`。如果产品应以 MIT、MPL-2.0 等开源许可证发布，账号所有者必须先确认版权和许可证，添加相应 `LICENSE`，再同步修改 AMO metadata。不要在未确认的情况下把 AMO 许可证改成开源许可证。
 
 ## 后续版本自动提交
+
+本机共享凭据已保存在 macOS Keychain：账户 `bowugit`，服务项 `firefox-amo-api-key` 和 `firefox-amo-api-secret`。当前脚本只读环境变量，运行时需从钥匙串读取并注入下列变量，不要打印凭据。
 
 AMO 列表创建后，到 [AMO API Keys](https://addons.mozilla.org/developers/addon/api/key/) 创建个人 JWT 凭据，只通过进程环境注入：
 
