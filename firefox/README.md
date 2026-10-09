@@ -126,16 +126,45 @@ npm run firefox:run
 
 ## 后续版本自动提交
 
-本机共享凭据已保存在 macOS Keychain：账户 `bowugit`，服务项 `firefox-amo-api-key` 和 `firefox-amo-api-secret`。当前脚本只读环境变量，运行时需从钥匙串读取并注入下列变量，不要打印凭据。
+### 凭据：环境变量与 macOS 钥匙串
 
-AMO 列表创建后，到 [AMO API Keys](https://addons.mozilla.org/developers/addon/api/key/) 创建个人 JWT 凭据，只通过进程环境注入：
+本机共享凭据已保存在 macOS Keychain，2026-10-09 已用它们成功提交“阅赏”。环境变量为空时，应先检查这些服务项：
+
+| Keychain 账户 | 服务项 | 注入的环境变量 |
+| --- | --- | --- |
+| `bowugit` | `firefox-amo-api-key` | `WEB_EXT_API_KEY` |
+| `bowugit` | `firefox-amo-api-secret` | `WEB_EXT_API_SECRET` |
+
+`release:firefox` 当前只读环境变量，不会自动回退到钥匙串。下面的命令优先使用现有环境变量，否则从钥匙串读取，仅向发布子进程注入凭据，不打印或写入文件。在仓库根目录、干净且已推送的 Git 工作区中运行：
 
 ```bash
-export WEB_EXT_API_KEY="<AMO_JWT_ISSUER>"
-export WEB_EXT_API_SECRET="<AMO_JWT_SECRET>"
-export AMO_EXISTING_LISTING="jike-polish@bowugit.github.io"
-npm run release:firefox -- --mode submit --confirm
+python3 - <<'PY'
+import os
+import subprocess
+
+release_env = os.environ.copy()
+for name, service in [
+    ("WEB_EXT_API_KEY", "firefox-amo-api-key"),
+    ("WEB_EXT_API_SECRET", "firefox-amo-api-secret"),
+]:
+    if not release_env.get(name, "").strip():
+        result = subprocess.run(
+            ["security", "find-generic-password", "-a", "bowugit", "-s", service, "-w"],
+            capture_output=True, text=True,
+        )
+        if result.returncode or not result.stdout.strip():
+            raise SystemExit(f"Keychain credential unavailable: {service}")
+        release_env[name] = result.stdout.strip()
+
+release_env["AMO_EXISTING_LISTING"] = "jike-polish@bowugit.github.io"
+raise SystemExit(subprocess.call(
+    ["npm", "run", "release:firefox", "--", "--mode", "submit", "--confirm"],
+    env=release_env,
+))
+PY
 ```
+
+这组 AMO 账号凭据与 BriefFeed 项目共享，但目标必须保持为“阅赏”的 Gecko ID；不要复制其他项目的扩展 ID 或提交命令。仅在环境变量和钥匙串都不可用时，再到 [AMO API Keys](https://addons.mozilla.org/developers/addon/api/key/) 配置凭据。网页里已遮罩的 secret 不能用于认证，重新生成还会使旧凭据失效。
 
 默认命令只检查和打包：
 

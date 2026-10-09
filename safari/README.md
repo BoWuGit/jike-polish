@@ -60,6 +60,21 @@ npm run check
 npm run safari:build
 ```
 
-然后在 Xcode 中选择 Product → Archive，并通过 Organizer 完成签名和分发。仓库不保存 Development Team、证书、Provisioning Profile 或 App Store Connect 凭据。
+然后在 Xcode 中选择 Product → Archive，并通过 Organizer 完成签名和分发；也可使用本机已配置的 `asc` CLI 上传签名包并提审。仓库不保存 Development Team、证书、Provisioning Profile 或 App Store Connect 凭据。
 
 版本升级时，`manifest.json`、`package.json`、`package-lock.json` 和 Xcode 工程里的四处 `MARKETING_VERSION` 必须一致；`npm run safari:check` 会验证这些值。
+
+### 本机 App Store Connect 认证
+
+`asc` 使用自己保存在 System Keychain 的认证。2026-10-09 已验证默认 profile `BriefFeedRelease` 能发布“阅赏”；该名称来自另一个项目，认证可以共享，发布目标仍须显式指定“阅赏”的 App ID `6794301352` 和平台 `MAC_OS`。
+
+发布前先检查认证来源和目标应用（以下命令只读）：
+
+```bash
+asc auth status
+asc versions list --app 6794301352 --platform MAC_OS --output table
+```
+
+环境中没有 App Store Connect 凭据并不代表未配置认证。优先复用 `asc auth status` 显示的可用 profile，无需从钥匙串导出私钥。App Store Connect API 认证与本机签名证书、Provisioning Profile 分别配置；认证成功后仍须确认签名归档和导出成功。
+
+构建号需同步修改 Xcode 工程的四处 `CURRENT_PROJECT_VERSION` 与 `scripts/safari.mjs` 的 `SAFARI_BUILD_NUMBER`。商店归档使用已安装的正式版 Xcode，通过命令的 `DEVELOPER_DIR` 指定，避免随系统默认路径选中 beta。当前机器的正式版路径为 `/Applications/Xcode-26.6.0.app/Contents/Developer`，升级 Xcode 后重新核实。

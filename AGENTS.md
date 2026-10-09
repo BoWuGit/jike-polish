@@ -7,6 +7,11 @@
 - Safari directly packages the shared root extension resources referenced by the Xcode project. Do not add the repository, `node_modules`, screenshots, archives, or credentials to the Extension target's Resources phase.
 - `assets/icon-1024.png` is the canonical icon master. Run `npm run safari:icons` to regenerate root `icon.png`, Firefox icon sizes, the Safari container image, and all macOS AppIcon sizes.
 
+## Release credentials
+
+- Before release work or diagnosing missing credentials, read the credential instructions in `firefox/README.md`, `edge/README.md`, and `safari/README.md` for the target platforms. Check their documented macOS Keychain or CLI authentication sources as well as the process environment before reporting credentials unavailable.
+- Shared account credentials do not select the product. Keep this repository's extension IDs, Gecko ID, bundle IDs, and App Store app ID when reusing authentication from another project.
+
 ## Chrome Web Store release
 
 - The public Chrome Web Store item ID is `hnbakdoibeogigpihopfjfjbacfmcfck`; the release script pins this ID to prevent cross-project uploads.
