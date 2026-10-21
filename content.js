@@ -405,8 +405,8 @@
   var scrollBridgeNeedsFocus = false;
   var bridgedMainScroller = null;
   var keyboardScrollTarget = null;
-  var syncingMainScroller = false;
-  var syncingWindowScroller = false;
+  var syncedMainScrollTop = null;
+  var syncedWindowScrollTop = null;
   function getMainScrollViewport() {
     return Array.from(document.querySelectorAll(MAIN_SCROLL_VIEWPORT_SELECTOR)).find((element) => element instanceof HTMLElement && element.scrollHeight > element.clientHeight + 4) || null;
   }
@@ -431,22 +431,24 @@
   }
   function syncWindowScrollToMainScroller(top) {
     const documentScroller = getDocumentScroller();
-    if (Math.abs(documentScroller.scrollTop - top) <= SCROLL_SYNC_EPSILON) return;
-    syncingWindowScroller = true;
-    documentScroller.scrollTop = top;
-    requestAnimationFrame(() => {
-      syncingWindowScroller = false;
-    });
+    if (Math.abs(documentScroller.scrollTop - top) > SCROLL_SYNC_EPSILON) {
+      documentScroller.scrollTop = top;
+    }
+    syncedWindowScrollTop = documentScroller.scrollTop;
   }
   function handleMainScrollerBridgeScroll() {
-    if (syncingMainScroller) return;
+    if (bridgedMainScroller?.scrollTop === syncedMainScrollTop) return;
     const scroller = syncWindowScrollBridge({ syncWindow: false });
-    if (scroller) syncWindowScrollToMainScroller(scroller.scrollTop);
+    if (scroller) {
+      syncedMainScrollTop = scroller.scrollTop;
+      syncWindowScrollToMainScroller(scroller.scrollTop);
+    }
   }
   function bindWindowScrollBridgeScroller(scroller) {
     if (bridgedMainScroller === scroller) return;
     bridgedMainScroller?.removeEventListener("scroll", handleMainScrollerBridgeScroll);
     bridgedMainScroller = scroller;
+    syncedMainScrollTop = null;
     bridgedMainScroller.addEventListener("scroll", handleMainScrollerBridgeScroll, { passive: true });
   }
   function teardownWindowScrollBridge() {
@@ -454,8 +456,8 @@
     document.getElementById(WINDOW_SCROLL_BRIDGE_ID)?.remove();
     bridgedMainScroller?.removeEventListener("scroll", handleMainScrollerBridgeScroll);
     bridgedMainScroller = null;
-    syncingMainScroller = false;
-    syncingWindowScroller = false;
+    syncedMainScrollTop = null;
+    syncedWindowScrollTop = null;
   }
   function syncWindowScrollBridge({ syncWindow = true } = {}) {
     const scroller = getMainScrollViewport();
@@ -465,21 +467,23 @@
     }
     document.documentElement.classList.add("jp-window-scroll-bridge");
     syncWindowScrollBridgeHeight(scroller);
+    const scrollerChanged = bridgedMainScroller !== scroller;
     bindWindowScrollBridgeScroller(scroller);
-    if (syncWindow) syncWindowScrollToMainScroller(scroller.scrollTop);
+    if (syncWindow && (scrollerChanged || getDocumentScroller().scrollTop === syncedWindowScrollTop)) {
+      syncedMainScrollTop = scroller.scrollTop;
+      syncWindowScrollToMainScroller(scroller.scrollTop);
+    }
     return scroller;
   }
   function handleWindowBridgeScroll() {
-    if (syncingWindowScroller) return;
+    const top = getDocumentScroller().scrollTop;
+    if (top === syncedWindowScrollTop) return;
     const scroller = syncWindowScrollBridge({ syncWindow: false });
     if (!scroller) return;
-    const top = getDocumentScroller().scrollTop;
+    syncedWindowScrollTop = top;
     if (Math.abs(scroller.scrollTop - top) <= SCROLL_SYNC_EPSILON) return;
-    syncingMainScroller = true;
     scroller.scrollTop = top;
-    requestAnimationFrame(() => {
-      syncingMainScroller = false;
-    });
+    syncedMainScrollTop = scroller.scrollTop;
   }
   function findScrollableContainer(startNode = document.body) {
     const start = startNode instanceof Element ? startNode : document.body;

@@ -22,8 +22,8 @@ let postLocationTooltipRaf = 0;
 let scrollBridgeNeedsFocus = false;
 let bridgedMainScroller = null;
 let keyboardScrollTarget = null;
-let syncingMainScroller = false;
-let syncingWindowScroller = false;
+let syncedMainScrollTop = null;
+let syncedWindowScrollTop = null;
 
 function getMainScrollViewport() {
   return Array.from(document.querySelectorAll(MAIN_SCROLL_VIEWPORT_SELECTOR))
@@ -60,25 +60,26 @@ function syncWindowScrollBridgeHeight(scroller) {
 
 function syncWindowScrollToMainScroller(top) {
   const documentScroller = getDocumentScroller();
-  if (Math.abs(documentScroller.scrollTop - top) <= SCROLL_SYNC_EPSILON) return;
-
-  syncingWindowScroller = true;
-  documentScroller.scrollTop = top;
-  requestAnimationFrame(() => {
-    syncingWindowScroller = false;
-  });
+  if (Math.abs(documentScroller.scrollTop - top) > SCROLL_SYNC_EPSILON) {
+    documentScroller.scrollTop = top;
+  }
+  syncedWindowScrollTop = documentScroller.scrollTop;
 }
 
 function handleMainScrollerBridgeScroll() {
-  if (syncingMainScroller) return;
+  if (bridgedMainScroller?.scrollTop === syncedMainScrollTop) return;
   const scroller = syncWindowScrollBridge({ syncWindow: false });
-  if (scroller) syncWindowScrollToMainScroller(scroller.scrollTop);
+  if (scroller) {
+    syncedMainScrollTop = scroller.scrollTop;
+    syncWindowScrollToMainScroller(scroller.scrollTop);
+  }
 }
 
 function bindWindowScrollBridgeScroller(scroller) {
   if (bridgedMainScroller === scroller) return;
   bridgedMainScroller?.removeEventListener("scroll", handleMainScrollerBridgeScroll);
   bridgedMainScroller = scroller;
+  syncedMainScrollTop = null;
   bridgedMainScroller.addEventListener("scroll", handleMainScrollerBridgeScroll, { passive: true });
 }
 
@@ -87,8 +88,8 @@ function teardownWindowScrollBridge() {
   document.getElementById(WINDOW_SCROLL_BRIDGE_ID)?.remove();
   bridgedMainScroller?.removeEventListener("scroll", handleMainScrollerBridgeScroll);
   bridgedMainScroller = null;
-  syncingMainScroller = false;
-  syncingWindowScroller = false;
+  syncedMainScrollTop = null;
+  syncedWindowScrollTop = null;
 }
 
 export function syncWindowScrollBridge({ syncWindow = true } = {}) {
@@ -100,23 +101,29 @@ export function syncWindowScrollBridge({ syncWindow = true } = {}) {
 
   document.documentElement.classList.add("jp-window-scroll-bridge");
   syncWindowScrollBridgeHeight(scroller);
+  const scrollerChanged = bridgedMainScroller !== scroller;
   bindWindowScrollBridgeScroller(scroller);
-  if (syncWindow) syncWindowScrollToMainScroller(scroller.scrollTop);
+  // Layout/mutation callbacks can run after Vimium advances the document but
+  // before its scroll event. Preserve that input until the event forwards it.
+  if (syncWindow && (scrollerChanged || getDocumentScroller().scrollTop === syncedWindowScrollTop)) {
+    syncedMainScrollTop = scroller.scrollTop;
+    syncWindowScrollToMainScroller(scroller.scrollTop);
+  }
   return scroller;
 }
 
 function handleWindowBridgeScroll() {
-  if (syncingWindowScroller) return;
+  const top = getDocumentScroller().scrollTop;
+  if (top === syncedWindowScrollTop) return;
   const scroller = syncWindowScrollBridge({ syncWindow: false });
   if (!scroller) return;
 
-  const top = getDocumentScroller().scrollTop;
+  syncedWindowScrollTop = top;
   if (Math.abs(scroller.scrollTop - top) <= SCROLL_SYNC_EPSILON) return;
-  syncingMainScroller = true;
+  // Ignore only the position we wrote, not every scroll in the next frame.
+  // Vimium can advance its animation before our mirrored scroll event arrives.
   scroller.scrollTop = top;
-  requestAnimationFrame(() => {
-    syncingMainScroller = false;
-  });
+  syncedMainScrollTop = scroller.scrollTop;
 }
 
 export function findScrollableContainer(startNode = document.body) {
