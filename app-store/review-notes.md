@@ -2,7 +2,7 @@
 
 ## 中文
 
-1.2.11 是一次小型显示修复，保留转发卡片正文中的换行和段落格式。
+1.2.12 是一次小型兼容性修复，改善与 Vimium 平滑滚动的兼容性。
 
 应用继续使用原创品牌“阅赏”，并提供完整的离线功能演示；无需账号、网络或安装其他 App，即可审核全部主要功能。
 
@@ -20,7 +20,7 @@
 
 ## English
 
-Version 1.2.11 is a small visual fix. It preserves line breaks and paragraph formatting in repost cards.
+Version 1.2.12 is a small compatibility fix. It improves compatibility with Vimium smooth scrolling.
 
 The app continues to use the original “阅赏” identity and includes a complete offline demonstration. No account, network connection, or other app is required to review all primary features.
 
