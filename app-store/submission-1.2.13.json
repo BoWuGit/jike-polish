@@ -1,0 +1,18 @@
+{
+  "version": "1.2.13",
+  "build_number": 10,
+  "source_commit": "03429b727acb35734bea821c4ed369ec3503d6b2",
+  "app_id": "6794301352",
+  "version_id": "8f3a6b61-06de-4f79-a5b3-5f7c179d923c",
+  "build_id": "8e924807-004e-4eaf-8f69-c4c6ed3a3ff7",
+  "review_submission_id": "86402dff-2a50-4241-a563-7047faed356e",
+  "status": "WAITING_FOR_REVIEW",
+  "submitted_at": "2026-11-05T09:09:43.431Z",
+  "pkg_sha256": "63b8f7a3c2b70ec78c3cb59b17c9e5d6d685d69991d8b3e90e5dd759d27d0d7e",
+  "xcode": "27.1",
+  "readiness": {
+    "errors": 0,
+    "warnings": 0
+  },
+  "submission_note": "The high-level review submit command stopped at its final relationship check. The existing submission item was read back with include=appStoreVersion and matched this version. The same submission was then submitted and verified as WAITING_FOR_REVIEW."
+}

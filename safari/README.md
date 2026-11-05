@@ -51,7 +51,7 @@ npm run safari:build
 
 ## 发布
 
-2026-10-22 已通过 App Store Connect CLI 提交 1.2.12（构建号 9），并确认状态为 `WAITING_FOR_REVIEW`。更新记录见 [`submission-1.2.12.json`](../app-store/submission-1.2.12.json)。
+2026-11-05 已通过 App Store Connect CLI 提交 1.2.13（构建号 10），并确认状态为 `WAITING_FOR_REVIEW`。更新记录见 [`submission-1.2.13.json`](../app-store/submission-1.2.13.json)。
 
 发布前执行：
 
@@ -77,4 +77,4 @@ asc versions list --app 6794301352 --platform MAC_OS --output table
 
 环境中没有 App Store Connect 凭据并不代表未配置认证。优先复用 `asc auth status` 显示的可用 profile，无需从钥匙串导出私钥。App Store Connect API 认证与本机签名证书、Provisioning Profile 分别配置；认证成功后仍须确认签名归档和导出成功。
 
-构建号需同步修改 Xcode 工程的四处 `CURRENT_PROJECT_VERSION` 与 `scripts/safari.mjs` 的 `SAFARI_BUILD_NUMBER`。商店归档使用已安装的正式版 Xcode，通过命令的 `DEVELOPER_DIR` 指定，避免随系统默认路径选中 beta。当前机器的正式版路径为 `/Applications/Xcode-26.6.0.app/Contents/Developer`，升级 Xcode 后重新核实。
+构建号需同步修改 Xcode 工程的四处 `CURRENT_PROJECT_VERSION` 与 `scripts/safari.mjs` 的 `SAFARI_BUILD_NUMBER`。商店归档使用已安装的正式版 Xcode，通过命令的 `DEVELOPER_DIR` 指定，避免随系统默认路径选中 beta。当前机器的 Xcode 路径为 `/Users/bowu/Applications/Xcode-27.1.0.app/Contents/Developer`，升级 Xcode 后重新核实。
