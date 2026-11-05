@@ -40,7 +40,7 @@ The extension is not affiliated with, authorized by, endorsed by, or sponsored b
 ## Exact text submitted — under 2,000 characters
 
 ```text
-Yueshang (阅赏) is an open-source, unofficial extension. Version 1.2.12 fixes compatibility with Vimium smooth scrolling. It has no extension-owned account, payment, advertising, analytics, telemetry, or tracking. Live integration runs only on https://web.okjike.com/*.
+Yueshang (阅赏) is an open-source, unofficial extension. Version 1.2.13 removes duplicate podcast show names from episode titles and refines card styling. It has no extension-owned account, payment, advertising, analytics, telemetry, or tracking. Live integration runs only on https://web.okjike.com/*.
 
 OFFLINE REVIEW — NO ACCOUNT OR NETWORK REQUIRED
 1. Click the 阅赏 toolbar icon.
