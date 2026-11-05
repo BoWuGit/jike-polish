@@ -14,6 +14,34 @@
     }
   }
 
+  // src/shared/link-presentation.js
+  function comparableText(value) {
+    return value.normalize("NFKC").replace(/\s+/gu, "").toLowerCase();
+  }
+  function episodeTitle(title, author) {
+    if (!author) return title;
+    const expected = comparableText(author);
+    for (const match of title.matchAll(/\s*[-–—|｜:：·•]+\s*/gu)) {
+      const before = title.slice(0, match.index).trim();
+      const after = title.slice(match.index + match[0].length).trim();
+      if (after && comparableText(before) === expected) return after;
+      if (before && comparableText(after) === expected) return before;
+    }
+    return title;
+  }
+  function linkPresentation(linkInfo) {
+    const originalTitle = stringValue(linkInfo?.title);
+    const isAudio = !!linkInfo?.audio && typeof linkInfo.audio === "object";
+    const author = isAudio ? stringValue(linkInfo.audio.author) : "";
+    const title = isAudio ? episodeTitle(stringValue(linkInfo.audio.title) || originalTitle, author) || author : originalTitle;
+    return {
+      title,
+      author: comparableText(title) === comparableText(author) ? "" : author,
+      originalTitle,
+      isAudio
+    };
+  }
+
   // src/page-bridge/post-data.js
   function getReactFiber(element) {
     for (const key of Object.keys(element)) {
@@ -58,6 +86,14 @@
   }
   function getLinkInfo(data) {
     return hasUsableLinkInfo(data?.linkInfo) ? data.linkInfo : null;
+  }
+  function getNativeLinkInfo(card) {
+    for (let node = getReactFiber(card); node; node = node.return) {
+      const props = node.memoizedProps || node.pendingProps;
+      if (isPostLike(props?.data)) return null;
+      if (hasUsableLinkInfo(props?.data)) return props.data;
+    }
+    return null;
   }
   function getMediaSource(data) {
     if (getPictures(data).length) return data;
@@ -488,18 +524,17 @@
     media.style.setProperty("--jp-repost-media-width", `${Math.round(displayWidth)}px`);
     media.style.setProperty("--jp-repost-media-aspect-ratio", `${width} / ${height}`);
   }
-  function linkFooterText(linkInfo) {
-    return stringValue(linkInfo?.audio?.author);
-  }
   function stopAttachmentEventPropagation(element) {
     for (const eventName of ["click", "pointerdown", "keydown"]) {
       element.addEventListener(eventName, (event) => event.stopPropagation());
     }
   }
   function createLinkCard(linkInfo) {
+    const presentation = linkPresentation(linkInfo);
     const href = safeHttpUrl(linkInfo?.linkUrl);
     const card = document.createElement(href ? "a" : "div");
     card.className = LINK_CLASS;
+    card.classList.toggle("jp-audio-card", presentation.isAudio);
     card.dataset.jpRepostAttachmentOrder = "10";
     if (href) {
       card.href = href;
@@ -527,11 +562,12 @@
     body.className = LINK_BODY_CLASS;
     const title = document.createElement("div");
     title.className = LINK_TITLE_CLASS;
-    title.textContent = stringValue(linkInfo?.title) || href || "\u6253\u5F00\u94FE\u63A5";
+    title.textContent = presentation.title || href || "\u6253\u5F00\u94FE\u63A5";
+    title.title = presentation.originalTitle || title.textContent;
     body.appendChild(title);
     const footer = document.createElement("div");
     footer.className = LINK_FOOTER_CLASS;
-    footer.textContent = linkFooterText(linkInfo);
+    footer.textContent = presentation.author;
     if (!footer.textContent) footer.setAttribute("aria-hidden", "true");
     body.appendChild(footer);
     card.appendChild(body);
@@ -666,6 +702,24 @@
     else removeVideo(card, `${videoSource.type}:${videoSource.id}:video:none`);
   }
 
+  // src/page-bridge/link-card.js
+  var NATIVE_LINK_CARD_SELECTOR = "._root_8timl_1";
+  function syncNativeLinkCard(card) {
+    const info = getNativeLinkInfo(card);
+    const presentation = linkPresentation(info);
+    card.classList.toggle("jp-audio-card", presentation.isAudio);
+    if (!presentation.isAudio) return;
+    const title = card.querySelector("._header_8timl_20");
+    const footer = card.querySelector("._footer_8timl_31");
+    const author = footer?.firstElementChild;
+    if (title && presentation.title) {
+      if (title.textContent !== presentation.title) title.textContent = presentation.title;
+      title.title = presentation.originalTitle || presentation.title;
+    }
+    if (author && author.textContent !== presentation.author) author.textContent = presentation.author;
+    footer?.classList.toggle("jp-audio-footer-empty", !footer.textContent.trim());
+  }
+
   // src/jike-polish-page-bridge.js
   var BRIDGE_KEY = "__JIKE_POLISH_REPOST_MEDIA_BRIDGE__";
   var WARMUP_SCAN_DELAYS = [120, 360, 800, 1600, 3e3, 5e3];
@@ -679,7 +733,10 @@
     const bridge = { rescan: null };
     window[BRIDGE_KEY] = bridge;
     let scanTimer = 0;
-    function scanQuoteCards() {
+    function scanCards() {
+      for (const card of document.querySelectorAll(NATIVE_LINK_CARD_SELECTOR)) {
+        syncNativeLinkCard(card);
+      }
       for (const card of document.querySelectorAll(QUOTE_CARD_SELECTOR)) {
         void syncQuoteCard(card);
       }
@@ -688,7 +745,7 @@
       if (scanTimer) return;
       scanTimer = setTimeout(() => {
         scanTimer = 0;
-        scanQuoteCards();
+        scanCards();
       }, 32);
     }
     function scheduleWarmupScans() {

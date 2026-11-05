@@ -1,4 +1,5 @@
 import { safeHttpUrl, stringValue } from "../shared/values.js";
+import { linkPresentation } from "../shared/link-presentation.js";
 import { openLightbox } from "./lightbox.js";
 import { fetchPostDetail, fetchVideoUrl } from "./post-api.js";
 import {
@@ -143,10 +144,6 @@ function syncSingleImageWidth(media, picture) {
   media.style.setProperty("--jp-repost-media-aspect-ratio", `${width} / ${height}`);
 }
 
-function linkFooterText(linkInfo) {
-  return stringValue(linkInfo?.audio?.author);
-}
-
 function stopAttachmentEventPropagation(element) {
   for (const eventName of ["click", "pointerdown", "keydown"]) {
     element.addEventListener(eventName, (event) => event.stopPropagation());
@@ -154,9 +151,11 @@ function stopAttachmentEventPropagation(element) {
 }
 
 function createLinkCard(linkInfo) {
+  const presentation = linkPresentation(linkInfo);
   const href = safeHttpUrl(linkInfo?.linkUrl);
   const card = document.createElement(href ? "a" : "div");
   card.className = LINK_CLASS;
+  card.classList.toggle("jp-audio-card", presentation.isAudio);
   card.dataset.jpRepostAttachmentOrder = "10";
   if (href) {
     card.href = href;
@@ -187,12 +186,13 @@ function createLinkCard(linkInfo) {
 
   const title = document.createElement("div");
   title.className = LINK_TITLE_CLASS;
-  title.textContent = stringValue(linkInfo?.title) || href || "打开链接";
+  title.textContent = presentation.title || href || "打开链接";
+  title.title = presentation.originalTitle || title.textContent;
   body.appendChild(title);
 
   const footer = document.createElement("div");
   footer.className = LINK_FOOTER_CLASS;
-  footer.textContent = linkFooterText(linkInfo);
+  footer.textContent = presentation.author;
   if (!footer.textContent) footer.setAttribute("aria-hidden", "true");
   body.appendChild(footer);
 

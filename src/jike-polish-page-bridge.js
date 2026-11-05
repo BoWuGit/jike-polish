@@ -1,4 +1,5 @@
 import { QUOTE_CARD_SELECTOR, syncQuoteCard } from "./page-bridge/quote-card.js";
+import { NATIVE_LINK_CARD_SELECTOR, syncNativeLinkCard } from "./page-bridge/link-card.js";
 
 const BRIDGE_KEY = "__JIKE_POLISH_REPOST_MEDIA_BRIDGE__";
 const WARMUP_SCAN_DELAYS = [120, 360, 800, 1600, 3000, 5000];
@@ -15,7 +16,10 @@ function installPageBridge() {
   window[BRIDGE_KEY] = bridge;
   let scanTimer = 0;
 
-  function scanQuoteCards() {
+  function scanCards() {
+    for (const card of document.querySelectorAll(NATIVE_LINK_CARD_SELECTOR)) {
+      syncNativeLinkCard(card);
+    }
     for (const card of document.querySelectorAll(QUOTE_CARD_SELECTOR)) {
       void syncQuoteCard(card);
     }
@@ -25,7 +29,7 @@ function installPageBridge() {
     if (scanTimer) return;
     scanTimer = setTimeout(() => {
       scanTimer = 0;
-      scanQuoteCards();
+      scanCards();
     }, 32);
   }
 

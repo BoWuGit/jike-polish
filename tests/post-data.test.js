@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   getLinkInfo,
   getLinkSource,
+  getNativeLinkInfo,
   getMediaSource,
   getPictures,
   getQuoteData,
@@ -80,4 +81,19 @@ test("samePost compares stable identity only", () => {
   assert.equal(samePost(post(), post({ user: { id: "another-user" } })), true);
   assert.equal(samePost(post(), post({ id: "other-id" })), false);
   assert.equal(samePost(null, post()), false);
+});
+
+test("native link data comes from its own component rather than the owning post", () => {
+  const link = { title: "Episode", audio: { author: "Podcast" } };
+  const owner = { memoizedProps: { data: post({ title: "Post title", linkInfo: link }) }, return: null };
+  const card = {
+    __reactFiber$test: {
+      memoizedProps: {},
+      return: { memoizedProps: { data: link }, return: owner },
+    },
+  };
+  assert.equal(getNativeLinkInfo(card), link);
+  card.__reactFiber$test.return = owner;
+  assert.equal(getNativeLinkInfo(card), null);
+  assert.equal(getNativeLinkInfo({}), null);
 });

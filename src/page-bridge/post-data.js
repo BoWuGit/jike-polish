@@ -78,6 +78,15 @@ export function getLinkInfo(data) {
   return hasUsableLinkInfo(data?.linkInfo) ? data.linkInfo : null;
 }
 
+export function getNativeLinkInfo(card) {
+  for (let node = getReactFiber(card); node; node = node.return) {
+    const props = node.memoizedProps || node.pendingProps;
+    if (isPostLike(props?.data)) return null;
+    if (hasUsableLinkInfo(props?.data)) return props.data;
+  }
+  return null;
+}
+
 export function getMediaSource(data) {
   if (getPictures(data).length) return data;
   if (getPictures(data?.target).length) return data.target;
