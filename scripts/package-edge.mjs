@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 
-import { spawnSync } from "node:child_process";
 import {
   mkdir,
   mkdtemp,
@@ -16,6 +15,7 @@ import {
   assertNonEmptyFile,
   normalizeArchiveFiles,
   readJson,
+  run,
 } from "./script-utils.mjs";
 
 const EXTENSION_FILES = [
@@ -41,11 +41,6 @@ const PACKAGE_FILES = [
   EDGE_LOCALE_FILE,
   ...DEMO_FILES.values(),
 ];
-
-function run(command, args, cwd = ROOT, env = process.env) {
-  const result = spawnSync(command, args, { cwd, env, stdio: "inherit" });
-  if (result.status !== 0) throw new Error(`${command} ${args.join(" ")} failed.`);
-}
 
 async function packageEdge() {
   const [manifest, packageJson] = await Promise.all([
@@ -105,8 +100,7 @@ async function packageEdge() {
         output,
         ...PACKAGE_FILES,
       ],
-      stage,
-      { ...process.env, TZ: "UTC" },
+      { cwd: stage, env: { ...process.env, TZ: "UTC" } },
     );
 
     const outputSize = await assertNonEmptyFile(output, "Edge package");

@@ -1,8 +1,8 @@
-import { JIKE_API_ORIGIN, requestJike } from "../shared/jike-api.js";
+import { requestJike } from "../shared/jike-api.js";
 import { safeHttpUrl } from "../shared/values.js";
 const DETAIL_ENDPOINT_BY_TYPE = {
-  ORIGINAL_POST: "/1.0/originalPosts/get",
-  REPOST: "/1.0/reposts/get",
+  ORIGINAL_POST: "originalPosts/get",
+  REPOST: "reposts/get",
 };
 
 const detailRequests = new Map();
@@ -23,7 +23,7 @@ export function fetchPostDetail(data) {
   if (!endpoint) return Promise.resolve(null);
   const cacheKey = `${data.type}:${data.id}`;
   return memoizeTruthyRequest(detailRequests, cacheKey, () => (
-    requestJike(`${JIKE_API_ORIGIN}${endpoint}?id=${encodeURIComponent(data.id)}`, {
+    requestJike(`${endpoint}?id=${encodeURIComponent(data.id)}`, {
       allowAnonymous: true,
     })
       .then((response) => response.ok ? response.json() : null)
@@ -48,7 +48,7 @@ export function fetchVideoUrl(source) {
   const cacheKey = `${source.type}:${source.id}`;
   return memoizeTruthyRequest(videoUrlRequests, cacheKey, () => {
     const parameters = new URLSearchParams({ id: source.id, type: source.type });
-    return requestJike(`${JIKE_API_ORIGIN}/1.0/mediaMeta/interactive?${parameters}`, {
+    return requestJike(`mediaMeta/interactive?${parameters}`, {
       allowAnonymous: true,
       method: "POST",
       headers: { "Content-Type": "application/json" },

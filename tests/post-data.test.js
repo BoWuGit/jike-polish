@@ -11,7 +11,6 @@ import {
   getVideoSource,
   linkImageUrl,
   pictureUrl,
-  samePost,
   shouldFetchDetail,
   shouldFetchLinkImage,
 } from "../src/page-bridge/post-data.js";
@@ -75,12 +74,6 @@ test("quote data follows the owning React fiber chain", () => {
     },
   };
   assert.equal(getQuoteData(card), data);
-});
-
-test("samePost compares stable identity only", () => {
-  assert.equal(samePost(post(), post({ user: { id: "another-user" } })), true);
-  assert.equal(samePost(post(), post({ id: "other-id" })), false);
-  assert.equal(samePost(null, post()), false);
 });
 
 test("native link data comes from its own component rather than the owning post", () => {

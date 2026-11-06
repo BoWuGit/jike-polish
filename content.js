@@ -842,7 +842,7 @@
         const payload = await response.json();
         const nextAccessToken = stringValue(payload?.["x-jike-access-token"]);
         const nextRefreshToken = stringValue(payload?.["x-jike-refresh-token"]);
-        if (!nextAccessToken) return null;
+        if (!nextAccessToken || refreshToken() !== currentRefreshToken) return null;
         localStorage.setItem("JK_ACCESS_TOKEN", nextAccessToken);
         if (nextRefreshToken) localStorage.setItem("JK_REFRESH_TOKEN", nextRefreshToken);
         return nextAccessToken;
@@ -857,7 +857,10 @@
   }
   async function requestJike(path, options = {}) {
     const { allowAnonymous = false, headers: extraHeaders, ...fetchOptions } = options;
-    const url = path.startsWith("http") ? path : `${API_BASE}/${path.replace(/^\/+/, "")}`;
+    const url = new URL(path.replace(/^\/+/, ""), `${API_BASE}/`);
+    if (url.origin !== JIKE_API_ORIGIN || !url.pathname.startsWith("/1.0/")) {
+      throw new Error("Jike API requests must stay within the API origin and /1.0/ path.");
+    }
     const sendRequest = (requestToken) => fetch(url, {
       ...fetchOptions,
       headers: jikeApiHeaders(requestToken, extraHeaders)
@@ -867,11 +870,70 @@
     if (!token && !allowAnonymous) return null;
     let response = await sendRequest(token);
     if (response.status !== 401 || fetchOptions.signal?.aborted) return response;
-    token = allowAnonymous ? null : await refreshAccessToken();
+    const currentToken = accessToken();
+    if (allowAnonymous) token = null;
+    else if (currentToken && currentToken !== token) token = currentToken;
+    else token = await refreshAccessToken();
     if (fetchOptions.signal?.aborted) return response;
     if (!token && !allowAnonymous) return response;
     response = await sendRequest(token);
     return response;
+  }
+
+  // src/content/profile-api.js
+  var AUTH_EXPIRED = Symbol("auth-expired");
+  var profileCache = /* @__PURE__ */ new Map();
+  var pendingProfiles = /* @__PURE__ */ new Map();
+  function sameIdentifier(left, right) {
+    return String(left || "").toLowerCase() === String(right || "").toLowerCase();
+  }
+  async function fetchUser(id) {
+    if (profileCache.has(id)) return profileCache.get(id);
+    if (pendingProfiles.has(id)) return pendingProfiles.get(id);
+    const isUuid = /^[0-9a-f]{8}-/i.test(id);
+    const keys = isUuid ? ["username", "id"] : ["username"];
+    const task = (async () => {
+      try {
+        for (const key of keys) {
+          const parameter = `${key}=${encodeURIComponent(id)}`;
+          try {
+            const response = await requestJike(`/users/profile?${parameter}`);
+            if (!response || response.status === 401) return AUTH_EXPIRED;
+            if (!response.ok) continue;
+            const payload = await response.json();
+            if (sameIdentifier(payload.user?.[key], id)) {
+              if (pendingProfiles.get(id) === task) profileCache.set(id, payload.user);
+              return payload.user;
+            }
+          } catch (error) {
+            log("fetch err", parameter, error);
+          }
+        }
+        return null;
+      } finally {
+        if (pendingProfiles.get(id) === task) pendingProfiles.delete(id);
+      }
+    })();
+    pendingProfiles.set(id, task);
+    return task;
+  }
+  async function toggleFollow(username, isFollowing) {
+    if (!username || !hasJikeAuthToken()) return null;
+    const endpoint = isFollowing ? "userRelation/unfollow" : "userRelation/follow";
+    try {
+      const response = await requestJike(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username })
+      });
+      if (!response?.ok) return false;
+      profileCache.clear();
+      pendingProfiles.clear();
+      return true;
+    } catch (error) {
+      log("follow err", error);
+      return false;
+    }
   }
 
   // src/content/profile-card.js
@@ -882,9 +944,6 @@
   var USER_CARD_MAX_HEIGHT = 220;
   var USER_CARD_MIN_WIDTH = 120;
   var SHOW_DELAY = 140;
-  var AUTH_EXPIRED = Symbol("auth-expired");
-  var profileCache = /* @__PURE__ */ new Map();
-  var pendingProfiles = /* @__PURE__ */ new Map();
   var activeLink = null;
   var hideTimer = null;
   var hoverTimer = null;
@@ -944,60 +1003,11 @@
     const profileLink = getProfileLink(link);
     if (!profileLink) return null;
     const match = (profileLink.getAttribute("href") || "").match(/\/u\/([^/?#]+)/i);
-    return match ? decodeURIComponent(match[1]) : null;
-  }
-  function sameIdentifier(left, right) {
-    return String(left || "").toLowerCase() === String(right || "").toLowerCase();
-  }
-  function userMatchesProfileQuery(user, query) {
-    if (!user) return false;
-    if (query.key === "username") return sameIdentifier(user.username, query.value);
-    if (query.key === "id") return sameIdentifier(user.id, query.value);
-    return false;
-  }
-  async function fetchUser(id) {
-    if (profileCache.has(id)) return profileCache.get(id);
-    if (pendingProfiles.has(id)) return pendingProfiles.get(id);
-    const isUuid = /^[0-9a-f]{8}-/i.test(id);
-    const queries = isUuid ? [{ key: "username", value: id }, { key: "id", value: id }] : [{ key: "username", value: id }];
-    const task = (async () => {
-      try {
-        for (const query of queries) {
-          const parameter = `${query.key}=${encodeURIComponent(query.value)}`;
-          try {
-            const response = await requestJike(`/users/profile?${parameter}`);
-            if (!response || response.status === 401) return AUTH_EXPIRED;
-            if (!response.ok) continue;
-            const payload = await response.json();
-            if (userMatchesProfileQuery(payload.user, query)) {
-              profileCache.set(id, payload.user);
-              return payload.user;
-            }
-          } catch (error) {
-            log("fetch err", parameter, error);
-          }
-        }
-        return null;
-      } finally {
-        pendingProfiles.delete(id);
-      }
-    })();
-    pendingProfiles.set(id, task);
-    return task;
-  }
-  async function toggleFollow(username, isFollowing) {
-    if (!username || !hasJikeAuthToken()) return null;
-    const endpoint = isFollowing ? "userRelation/unfollow" : "userRelation/follow";
+    if (!match) return null;
     try {
-      const response = await requestJike(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username })
-      });
-      return !!response?.ok;
-    } catch (error) {
-      log("follow err", error);
-      return false;
+      return decodeURIComponent(match[1]);
+    } catch {
+      return null;
     }
   }
   function removePopup() {
@@ -1120,7 +1130,7 @@
   function profileUrl(username) {
     return new URL(`/u/${encodeURIComponent(stringValue(username))}`, "https://web.okjike.com").href;
   }
-  function bindFollowButton(button, user, anchor) {
+  function bindFollowButton(button, user) {
     if (user.isSelf) {
       button.remove();
       return;
@@ -1139,8 +1149,6 @@
       if (updated) {
         isFollowing = !isFollowing;
         renderFollowState();
-        const activeId = extractId(anchor);
-        if (activeId) profileCache.delete(activeId);
       }
       button.disabled = false;
     });
@@ -1189,7 +1197,7 @@
     const bio = card.querySelector(".jp-bio");
     bio.textContent = stringValue(user.bio || user.briefIntro);
     if (!bio.textContent) bio.remove();
-    bindFollowButton(card.querySelector(".jp-follow"), user, anchor);
+    bindFollowButton(card.querySelector(".jp-follow"), user);
     mountCard(card, anchor);
   }
   function scheduleShow(link, { immediate = false } = {}) {

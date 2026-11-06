@@ -120,7 +120,3 @@ export function shouldFetchDetail(data) {
   if (data.type === "REPOST") return !hasOwn(data, "target");
   return false;
 }
-
-export function samePost(left, right) {
-  return !!left && !!right && left.id === right.id && left.type === right.type;
-}

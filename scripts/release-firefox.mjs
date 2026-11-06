@@ -2,6 +2,7 @@
 
 import { rm } from "node:fs/promises";
 import path from "node:path";
+import { parseReleaseOptions } from "./release-options.mjs";
 
 import {
   ROOT,
@@ -14,7 +15,6 @@ import {
 const FIREFOX_ID = "jike-polish@bowugit.github.io";
 const AMO_DASHBOARD_URL = "https://addons.mozilla.org/developers/addons";
 const AMO_METADATA = path.join(ROOT, "firefox/amo-metadata.json");
-const MODES = new Set(["package", "submit"]);
 const CLEAN_GIT_ERROR = "AMO submission requires a clean Git working tree.";
 
 function usage() {
@@ -30,35 +30,6 @@ Options:
 
 AMO credentials are read only from WEB_EXT_API_KEY and WEB_EXT_API_SECRET.
 `;
-}
-
-function parseArgs(args) {
-  const options = {
-    mode: "package",
-    confirm: false,
-    allowNewListing: false,
-    dryRun: false,
-    help: false,
-  };
-
-  for (let index = 0; index < args.length; index += 1) {
-    const arg = args[index];
-    if (arg === "--confirm") options.confirm = true;
-    else if (arg === "--allow-new-listing") options.allowNewListing = true;
-    else if (arg === "--dry-run") options.dryRun = true;
-    else if (arg === "--help" || arg === "-h") options.help = true;
-    else if (arg === "--mode") {
-      options.mode = args[index + 1] || "";
-      index += 1;
-    } else if (arg.startsWith("--mode=")) options.mode = arg.slice("--mode=".length);
-    else throw new Error(`Unknown option: ${arg}`);
-  }
-
-  if (!MODES.has(options.mode)) throw new Error("--mode must be package or submit.");
-  if (options.mode === "submit" && !options.confirm && !options.dryRun) {
-    throw new Error("--mode submit requires --confirm.");
-  }
-  return options;
 }
 
 function assertCredential(name) {
@@ -142,7 +113,10 @@ async function release(options) {
 }
 
 try {
-  const options = parseArgs(process.argv.slice(2));
+  const options = parseReleaseOptions(process.argv.slice(2), {
+    modes: ["package", "submit"],
+    allowNewListing: true,
+  });
   if (options.help) process.stdout.write(usage());
   else await release(options);
 } catch (error) {

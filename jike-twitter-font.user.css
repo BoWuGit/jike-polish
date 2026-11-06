@@ -27,7 +27,7 @@
      ============================================================ */
 
   :root, html {
-    font-family:
+    --jp-font-family:
       -apple-system,
       BlinkMacSystemFont,
       "Segoe UI",
@@ -40,6 +40,7 @@
       "Noto Sans CJK SC",
       Arial,
       sans-serif !important;
+    font-family: var(--jp-font-family) !important;
 
     /* 行高：Twitter 正文约 1.5625（25px/16px） */
     line-height: 1.5625 !important;
@@ -48,32 +49,8 @@
     letter-spacing: 0 !important;
 
     /* 覆盖 Mantine CSS 变量，影响所有使用变量的组件 */
-    --mantine-font-family:
-      -apple-system,
-      BlinkMacSystemFont,
-      "Segoe UI",
-      Roboto,
-      "Helvetica Neue",
-      "PingFang SC",
-      "Microsoft YaHei",
-      "Hiragino Sans GB",
-      "Noto Sans SC",
-      "Noto Sans CJK SC",
-      Arial,
-      sans-serif !important;
-    --mantine-font-family-headings:
-      -apple-system,
-      BlinkMacSystemFont,
-      "Segoe UI",
-      Roboto,
-      "Helvetica Neue",
-      "PingFang SC",
-      "Microsoft YaHei",
-      "Hiragino Sans GB",
-      "Noto Sans SC",
-      "Noto Sans CJK SC",
-      Arial,
-      sans-serif !important;
+    --mantine-font-family: var(--jp-font-family) !important;
+    --mantine-font-family-headings: var(--jp-font-family) !important;
 
     /* 行高变量 */
     --mantine-line-height: 1.5625 !important;
@@ -93,19 +70,7 @@
 
   /* body 直接覆盖（字体、渲染方式、字间距） */
   body {
-    font-family:
-      -apple-system,
-      BlinkMacSystemFont,
-      "Segoe UI",
-      Roboto,
-      "Helvetica Neue",
-      "PingFang SC",
-      "Microsoft YaHei",
-      "Hiragino Sans GB",
-      "Noto Sans SC",
-      "Noto Sans CJK SC",
-      Arial,
-      sans-serif !important;
+    font-family: var(--jp-font-family) !important;
 
     /* auto（次像素渲染）让苹方/雅黑笔画更饱满厚实，比 antialiased 更接近 Twitter */
     -webkit-font-smoothing: auto !important;

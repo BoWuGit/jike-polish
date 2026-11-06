@@ -1,4 +1,10 @@
 (() => {
+  // src/shared/debug.js
+  var DEBUG = localStorage.getItem("JIKE_POLISH_DEBUG") === "1";
+  function log(...args) {
+    if (DEBUG) console.log("[jike-polish]", ...args);
+  }
+
   // src/shared/values.js
   function stringValue(value) {
     return typeof value === "string" ? value.trim() : "";
@@ -12,6 +18,130 @@
     } catch {
       return "";
     }
+  }
+
+  // src/shared/jike-api.js
+  var JIKE_API_ORIGIN = "https://api.ruguoapp.com";
+  var API_BASE = `${JIKE_API_ORIGIN}/1.0`;
+  var AUTH_REFRESH_PATH = "/app_auth_tokens.refresh";
+  var authRefreshTask = null;
+  function accessToken() {
+    return localStorage.getItem("JK_ACCESS_TOKEN");
+  }
+  function refreshToken() {
+    return localStorage.getItem("JK_REFRESH_TOKEN");
+  }
+  function deviceId() {
+    return localStorage.getItem("JK_DEVICE_ID");
+  }
+  function jikeApiHeaders(token, extraHeaders = {}) {
+    const headers = { ...extraHeaders, platform: "web" };
+    if (token) headers["x-jike-access-token"] = token;
+    const device = deviceId();
+    if (device) headers["x-jike-device-id"] = device;
+    return headers;
+  }
+  async function refreshAccessToken() {
+    if (authRefreshTask) return authRefreshTask;
+    const currentRefreshToken = refreshToken();
+    if (!currentRefreshToken) return null;
+    authRefreshTask = (async () => {
+      try {
+        const response = await fetch(`${JIKE_API_ORIGIN}${AUTH_REFRESH_PATH}`, {
+          method: "POST",
+          headers: jikeApiHeaders(null, {
+            "x-jike-refresh-token": currentRefreshToken,
+            "Content-Type": "application/json"
+          }),
+          body: "{}"
+        });
+        if (!response.ok) return null;
+        const payload = await response.json();
+        const nextAccessToken = stringValue(payload?.["x-jike-access-token"]);
+        const nextRefreshToken = stringValue(payload?.["x-jike-refresh-token"]);
+        if (!nextAccessToken || refreshToken() !== currentRefreshToken) return null;
+        localStorage.setItem("JK_ACCESS_TOKEN", nextAccessToken);
+        if (nextRefreshToken) localStorage.setItem("JK_REFRESH_TOKEN", nextRefreshToken);
+        return nextAccessToken;
+      } catch (error) {
+        log("refresh err", error);
+        return null;
+      } finally {
+        authRefreshTask = null;
+      }
+    })();
+    return authRefreshTask;
+  }
+  async function requestJike(path, options = {}) {
+    const { allowAnonymous = false, headers: extraHeaders, ...fetchOptions } = options;
+    const url = new URL(path.replace(/^\/+/, ""), `${API_BASE}/`);
+    if (url.origin !== JIKE_API_ORIGIN || !url.pathname.startsWith("/1.0/")) {
+      throw new Error("Jike API requests must stay within the API origin and /1.0/ path.");
+    }
+    const sendRequest = (requestToken) => fetch(url, {
+      ...fetchOptions,
+      headers: jikeApiHeaders(requestToken, extraHeaders)
+    });
+    let token = accessToken();
+    if (!token && !allowAnonymous) token = await refreshAccessToken();
+    if (!token && !allowAnonymous) return null;
+    let response = await sendRequest(token);
+    if (response.status !== 401 || fetchOptions.signal?.aborted) return response;
+    const currentToken = accessToken();
+    if (allowAnonymous) token = null;
+    else if (currentToken && currentToken !== token) token = currentToken;
+    else token = await refreshAccessToken();
+    if (fetchOptions.signal?.aborted) return response;
+    if (!token && !allowAnonymous) return response;
+    response = await sendRequest(token);
+    return response;
+  }
+
+  // src/page-bridge/post-api.js
+  var DETAIL_ENDPOINT_BY_TYPE = {
+    ORIGINAL_POST: "originalPosts/get",
+    REPOST: "reposts/get"
+  };
+  var detailRequests = /* @__PURE__ */ new Map();
+  var videoUrlRequests = /* @__PURE__ */ new Map();
+  function memoizeTruthyRequest(cache, key, load) {
+    if (cache.has(key)) return cache.get(key);
+    const request = load().then((result) => {
+      if (!result) cache.delete(key);
+      return result;
+    });
+    cache.set(key, request);
+    return request;
+  }
+  function fetchPostDetail(data) {
+    const endpoint = DETAIL_ENDPOINT_BY_TYPE[data.type];
+    if (!endpoint) return Promise.resolve(null);
+    const cacheKey = `${data.type}:${data.id}`;
+    return memoizeTruthyRequest(detailRequests, cacheKey, () => requestJike(`${endpoint}?id=${encodeURIComponent(data.id)}`, {
+      allowAnonymous: true
+    }).then((response) => response.ok ? response.json() : null).then((payload) => payload?.data || null).catch(() => null));
+  }
+  function embeddedVideoUrl(video) {
+    const sources = Array.isArray(video?.source) ? video.source : [];
+    for (const source of sources) {
+      const url = safeHttpUrl(typeof source === "string" ? source : source?.url || source?.src);
+      if (url) return url;
+    }
+    return "";
+  }
+  function fetchVideoUrl(source) {
+    const embeddedUrl = embeddedVideoUrl(source.video);
+    if (embeddedUrl) return Promise.resolve(embeddedUrl);
+    const cacheKey = `${source.type}:${source.id}`;
+    return memoizeTruthyRequest(videoUrlRequests, cacheKey, () => {
+      const parameters = new URLSearchParams({ id: source.id, type: source.type });
+      return requestJike(`mediaMeta/interactive?${parameters}`, {
+        allowAnonymous: true,
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: "{}"
+      }).then((response) => response.ok ? response.json() : null).then((payload) => safeHttpUrl(payload?.url)).catch(() => "");
+    });
   }
 
   // src/shared/link-presentation.js
@@ -122,9 +252,6 @@
     if (data.type === "ORIGINAL_POST") return !hasOwn(data, "pictures");
     if (data.type === "REPOST") return !hasOwn(data, "target");
     return false;
-  }
-  function samePost(left, right) {
-    return !!left && !!right && left.id === right.id && left.type === right.type;
   }
 
   // src/page-bridge/lightbox.js
@@ -296,132 +423,7 @@
     closeButton.focus({ preventScroll: true });
   }
 
-  // src/shared/debug.js
-  var DEBUG = localStorage.getItem("JIKE_POLISH_DEBUG") === "1";
-  function log(...args) {
-    if (DEBUG) console.log("[jike-polish]", ...args);
-  }
-
-  // src/shared/jike-api.js
-  var JIKE_API_ORIGIN = "https://api.ruguoapp.com";
-  var API_BASE = `${JIKE_API_ORIGIN}/1.0`;
-  var AUTH_REFRESH_PATH = "/app_auth_tokens.refresh";
-  var authRefreshTask = null;
-  function accessToken() {
-    return localStorage.getItem("JK_ACCESS_TOKEN");
-  }
-  function refreshToken() {
-    return localStorage.getItem("JK_REFRESH_TOKEN");
-  }
-  function deviceId() {
-    return localStorage.getItem("JK_DEVICE_ID");
-  }
-  function jikeApiHeaders(token, extraHeaders = {}) {
-    const headers = { ...extraHeaders, platform: "web" };
-    if (token) headers["x-jike-access-token"] = token;
-    const device = deviceId();
-    if (device) headers["x-jike-device-id"] = device;
-    return headers;
-  }
-  async function refreshAccessToken() {
-    if (authRefreshTask) return authRefreshTask;
-    const currentRefreshToken = refreshToken();
-    if (!currentRefreshToken) return null;
-    authRefreshTask = (async () => {
-      try {
-        const response = await fetch(`${JIKE_API_ORIGIN}${AUTH_REFRESH_PATH}`, {
-          method: "POST",
-          headers: jikeApiHeaders(null, {
-            "x-jike-refresh-token": currentRefreshToken,
-            "Content-Type": "application/json"
-          }),
-          body: "{}"
-        });
-        if (!response.ok) return null;
-        const payload = await response.json();
-        const nextAccessToken = stringValue(payload?.["x-jike-access-token"]);
-        const nextRefreshToken = stringValue(payload?.["x-jike-refresh-token"]);
-        if (!nextAccessToken) return null;
-        localStorage.setItem("JK_ACCESS_TOKEN", nextAccessToken);
-        if (nextRefreshToken) localStorage.setItem("JK_REFRESH_TOKEN", nextRefreshToken);
-        return nextAccessToken;
-      } catch (error) {
-        log("refresh err", error);
-        return null;
-      } finally {
-        authRefreshTask = null;
-      }
-    })();
-    return authRefreshTask;
-  }
-  async function requestJike(path, options = {}) {
-    const { allowAnonymous = false, headers: extraHeaders, ...fetchOptions } = options;
-    const url = path.startsWith("http") ? path : `${API_BASE}/${path.replace(/^\/+/, "")}`;
-    const sendRequest = (requestToken) => fetch(url, {
-      ...fetchOptions,
-      headers: jikeApiHeaders(requestToken, extraHeaders)
-    });
-    let token = accessToken();
-    if (!token && !allowAnonymous) token = await refreshAccessToken();
-    if (!token && !allowAnonymous) return null;
-    let response = await sendRequest(token);
-    if (response.status !== 401 || fetchOptions.signal?.aborted) return response;
-    token = allowAnonymous ? null : await refreshAccessToken();
-    if (fetchOptions.signal?.aborted) return response;
-    if (!token && !allowAnonymous) return response;
-    response = await sendRequest(token);
-    return response;
-  }
-
-  // src/page-bridge/post-api.js
-  var DETAIL_ENDPOINT_BY_TYPE = {
-    ORIGINAL_POST: "/1.0/originalPosts/get",
-    REPOST: "/1.0/reposts/get"
-  };
-  var detailRequests = /* @__PURE__ */ new Map();
-  var videoUrlRequests = /* @__PURE__ */ new Map();
-  function memoizeTruthyRequest(cache, key, load) {
-    if (cache.has(key)) return cache.get(key);
-    const request = load().then((result) => {
-      if (!result) cache.delete(key);
-      return result;
-    });
-    cache.set(key, request);
-    return request;
-  }
-  function fetchPostDetail(data) {
-    const endpoint = DETAIL_ENDPOINT_BY_TYPE[data.type];
-    if (!endpoint) return Promise.resolve(null);
-    const cacheKey = `${data.type}:${data.id}`;
-    return memoizeTruthyRequest(detailRequests, cacheKey, () => requestJike(`${JIKE_API_ORIGIN}${endpoint}?id=${encodeURIComponent(data.id)}`, {
-      allowAnonymous: true
-    }).then((response) => response.ok ? response.json() : null).then((payload) => payload?.data || null).catch(() => null));
-  }
-  function embeddedVideoUrl(video) {
-    const sources = Array.isArray(video?.source) ? video.source : [];
-    for (const source of sources) {
-      const url = safeHttpUrl(typeof source === "string" ? source : source?.url || source?.src);
-      if (url) return url;
-    }
-    return "";
-  }
-  function fetchVideoUrl(source) {
-    const embeddedUrl = embeddedVideoUrl(source.video);
-    if (embeddedUrl) return Promise.resolve(embeddedUrl);
-    const cacheKey = `${source.type}:${source.id}`;
-    return memoizeTruthyRequest(videoUrlRequests, cacheKey, () => {
-      const parameters = new URLSearchParams({ id: source.id, type: source.type });
-      return requestJike(`${JIKE_API_ORIGIN}/1.0/mediaMeta/interactive?${parameters}`, {
-        allowAnonymous: true,
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: "{}"
-      }).then((response) => response.ok ? response.json() : null).then((payload) => safeHttpUrl(payload?.url)).catch(() => "");
-    });
-  }
-
-  // src/page-bridge/quote-card.js
-  var QUOTE_CARD_SELECTOR = "._root_1kp3y_1";
+  // src/page-bridge/quote-attachments.js
   var QUOTE_MAIN_SELECTOR = "._main_1kp3y_9";
   var MEDIA_CLASS = "jp-repost-media";
   var MEDIA_ITEM_CLASS = "jp-repost-media-item";
@@ -434,37 +436,31 @@
   var LINK_BODY_CLASS = "jp-repost-link-body";
   var LINK_TITLE_CLASS = "jp-repost-link-title";
   var LINK_FOOTER_CLASS = "jp-repost-link-footer";
-  var ATTACHMENT_SELECTOR = `.${LINK_CLASS}, .${MEDIA_CLASS}, .${VIDEO_CLASS}`;
+  var ATTACHMENT_CLASSES = [LINK_CLASS, MEDIA_CLASS, VIDEO_CLASS];
   function getDirectChildByClass(card, className) {
     return Array.from(card.children).find((child) => child.classList?.contains(className)) || null;
   }
   function getAttachments(card) {
-    return Array.from(card.children).filter((child) => child.matches?.(ATTACHMENT_SELECTOR));
+    return ATTACHMENT_CLASSES.map((className) => getDirectChildByClass(card, className)).filter(Boolean);
   }
-  function attachmentOrder(attachment) {
-    return Number(attachment.dataset?.jpRepostAttachmentOrder) || 0;
-  }
-  function insertAfter(card, node, reference) {
-    if (reference?.nextSibling) card.insertBefore(node, reference.nextSibling);
-    else card.appendChild(node);
-  }
-  function insertAttachment(card, attachment) {
-    const order = attachmentOrder(attachment);
-    const siblings = getAttachments(card).filter((child) => child !== attachment);
-    const next = siblings.find((child) => attachmentOrder(child) > order);
-    if (next) {
-      card.insertBefore(attachment, next);
-      return;
+  function syncAttachment(card, className, key, create) {
+    const existing = getDirectChildByClass(card, className);
+    if (!create) {
+      existing?.remove();
+      return null;
     }
-    for (let index = siblings.length - 1; index >= 0; index -= 1) {
-      if (attachmentOrder(siblings[index]) <= order) {
-        insertAfter(card, attachment, siblings[index]);
-        return;
-      }
+    if (existing?.dataset.jpRepostKey === key) return existing;
+    const attachment = create();
+    attachment.dataset.jpRepostKey = key;
+    if (existing) {
+      existing.replaceWith(attachment);
+      return attachment;
     }
-    const main = card.querySelector(QUOTE_MAIN_SELECTOR);
-    if (main) insertAfter(card, attachment, main);
-    else card.appendChild(attachment);
+    const index = ATTACHMENT_CLASSES.indexOf(className);
+    const next = ATTACHMENT_CLASSES.slice(index + 1).map((name) => getDirectChildByClass(card, name)).find(Boolean);
+    const previous = getAttachments(card).at(-1) || card.querySelector(QUOTE_MAIN_SELECTOR);
+    card.insertBefore(attachment, next || previous?.nextSibling || null);
+    return attachment;
   }
   function actualContentBottom(content) {
     const range = document.createRange();
@@ -491,22 +487,6 @@
     if (offset < 0) {
       attachments[0].style.setProperty("--jp-repost-attachment-offset", `${offset}px`);
     }
-  }
-  function removeAttachment(card, className, keyProperty, key) {
-    const attachment = getDirectChildByClass(card, className);
-    if (!attachment && card.dataset[keyProperty] === key) return;
-    attachment?.remove();
-    if (key) card.dataset[keyProperty] = key;
-    syncAttachmentGapOffset(card);
-  }
-  function removeMedia(card, key) {
-    removeAttachment(card, MEDIA_CLASS, "jpRepostMediaKey", key);
-  }
-  function removeVideo(card, key) {
-    removeAttachment(card, VIDEO_CLASS, "jpRepostVideoKey", key);
-  }
-  function removeLink(card, key) {
-    removeAttachment(card, LINK_CLASS, "jpRepostLinkKey", key);
   }
   function openLightboxFromMedia(event, pictures, index) {
     event.preventDefault();
@@ -535,7 +515,6 @@
     const card = document.createElement(href ? "a" : "div");
     card.className = LINK_CLASS;
     card.classList.toggle("jp-audio-card", presentation.isAudio);
-    card.dataset.jpRepostAttachmentOrder = "10";
     if (href) {
       card.href = href;
       card.target = "_blank";
@@ -573,15 +552,16 @@
     card.appendChild(body);
     return card;
   }
-  function renderLink(card, source, linkInfo) {
-    const linkKey = `${source.type || "UNKNOWN"}:${source.id}:${stringValue(linkInfo.linkUrl) || stringValue(linkInfo.title) || linkImageUrl(linkInfo)}`;
-    const existingLink = getDirectChildByClass(card, LINK_CLASS);
-    if (card.dataset.jpRepostLinkKey === linkKey && existingLink) return;
-    existingLink?.remove();
-    const link = createLinkCard(linkInfo);
-    insertAttachment(card, link);
-    card.dataset.jpRepostLinkKey = linkKey;
-    syncAttachmentGapOffset(card);
+  function renderLink(card, source) {
+    const info = getLinkInfo(source);
+    const key = info && JSON.stringify([
+      source.type,
+      source.id,
+      safeHttpUrl(info.linkUrl),
+      linkPresentation(info),
+      safeHttpUrl(linkImageUrl(info))
+    ]);
+    syncAttachment(card, LINK_CLASS, key, info ? () => createLinkCard(info) : null);
   }
   function createMediaItem(picture, index, pictures, thumbnailCount) {
     const item = document.createElement("div");
@@ -619,87 +599,86 @@
     }
     return item;
   }
-  function renderMedia(card, source, pictures) {
-    const mediaKey = `${source.type || "UNKNOWN"}:${source.id}:${pictures.map((picture) => picture.key || fullPictureUrl(picture)).join(",")}`;
-    const existingMedia = getDirectChildByClass(card, MEDIA_CLASS);
-    if (card.dataset.jpRepostMediaKey === mediaKey && existingMedia) return;
-    existingMedia?.remove();
-    const shownPictures = pictures.slice(0, 4);
-    const media = document.createElement("div");
-    media.className = MEDIA_CLASS;
-    media.dataset.jpRepostAttachmentOrder = "20";
-    media.dataset.count = String(shownPictures.length);
-    media.dataset.total = String(pictures.length);
-    if (shownPictures.length === 1) syncSingleImageWidth(media, shownPictures[0]);
-    shownPictures.forEach((picture, index) => {
-      media.appendChild(createMediaItem(picture, index, pictures, shownPictures.length));
-    });
-    insertAttachment(card, media);
-    card.dataset.jpRepostMediaKey = mediaKey;
-    syncAttachmentGapOffset(card);
+  function renderMedia(card, source) {
+    const pictures = getPictures(source);
+    const key = source && JSON.stringify([
+      source.type,
+      source.id,
+      pictures.map((picture) => [
+        pictureUrl(picture, Math.min(pictures.length, 4)),
+        fullPictureUrl(picture),
+        picture.width,
+        picture.height
+      ])
+    ]);
+    syncAttachment(card, MEDIA_CLASS, key, pictures.length ? () => {
+      const shownPictures = pictures.slice(0, 4);
+      const media = document.createElement("div");
+      media.className = MEDIA_CLASS;
+      media.dataset.count = String(shownPictures.length);
+      media.dataset.total = String(pictures.length);
+      if (shownPictures.length === 1) syncSingleImageWidth(media, shownPictures[0]);
+      shownPictures.forEach((picture, index) => {
+        media.appendChild(createMediaItem(picture, index, pictures, shownPictures.length));
+      });
+      return media;
+    } : null);
   }
   function renderVideo(card, source, url) {
-    const poster = safeHttpUrl(source.video?.thumbnailUrl);
-    const videoKey = `${source.type}:${source.id}:${url}`;
-    const existingVideo = getDirectChildByClass(card, VIDEO_CLASS);
-    if (card.dataset.jpRepostVideoKey === videoKey && existingVideo) return;
-    existingVideo?.remove();
-    const video = document.createElement("video");
-    video.className = VIDEO_CLASS;
-    video.dataset.jpRepostAttachmentOrder = "30";
-    video.controls = true;
-    video.muted = true;
-    video.playsInline = true;
-    video.preload = "metadata";
-    video.src = url;
-    if (poster) video.poster = poster;
-    video.setAttribute("aria-label", "\u8F6C\u53D1\u539F\u5E16\u89C6\u9891");
-    stopAttachmentEventPropagation(video);
-    insertAttachment(card, video);
-    card.dataset.jpRepostVideoKey = videoKey;
-    syncAttachmentGapOffset(card);
+    const poster = safeHttpUrl(source?.video?.thumbnailUrl);
+    const key = source && JSON.stringify([source.type, source.id, url]);
+    const video = syncAttachment(card, VIDEO_CLASS, key, url ? () => {
+      const video2 = document.createElement("video");
+      video2.className = VIDEO_CLASS;
+      video2.controls = true;
+      video2.muted = true;
+      video2.playsInline = true;
+      video2.preload = "metadata";
+      video2.src = url;
+      video2.setAttribute("aria-label", "\u8F6C\u53D1\u539F\u5E16\u89C6\u9891");
+      stopAttachmentEventPropagation(video2);
+      return video2;
+    } : null);
+    if (video) {
+      if (poster) video.poster = poster;
+      else video.removeAttribute("poster");
+    }
   }
-  function isCurrentQuoteCard(card, data) {
-    return document.contains(card) && samePost(getQuoteData(card), data);
-  }
+
+  // src/page-bridge/quote-card.js
+  var QUOTE_CARD_SELECTOR = "._root_1kp3y_1";
+  var cardSyncs = /* @__PURE__ */ new WeakMap();
   async function syncQuoteCard(card) {
     if (!(card instanceof HTMLElement)) return;
     const data = getQuoteData(card);
     if (!isPostLike(data)) return;
+    const sync = {};
+    cardSyncs.set(card, sync);
+    const isCurrent = () => document.contains(card) && cardSyncs.get(card) === sync && getQuoteData(card) === data;
     let mediaSource = getMediaSource(data);
     let videoSource = getVideoSource(data);
     let linkSource = getLinkSource(data);
     if ((!mediaSource || !videoSource || !linkSource) && shouldFetchDetail(data)) {
       const detail = await fetchPostDetail(data);
-      if (!isCurrentQuoteCard(card, data)) return;
+      if (!isCurrent()) return;
       mediaSource ||= getMediaSource(detail);
       videoSource ||= getVideoSource(detail);
       linkSource ||= getLinkSource(detail);
     }
+    const videoUrlTask = videoSource ? fetchVideoUrl(videoSource) : Promise.resolve("");
     if (shouldFetchLinkImage(linkSource)) {
       const detail = await fetchPostDetail(linkSource);
-      if (!isCurrentQuoteCard(card, data)) return;
+      if (!isCurrent()) return;
       const detailedLinkSource = getLinkSource(detail);
       if (linkImageUrl(getLinkInfo(detailedLinkSource))) linkSource = detailedLinkSource;
     }
-    const linkInfo = getLinkInfo(linkSource);
-    if (linkInfo) renderLink(card, linkSource, linkInfo);
-    else removeLink(card, `${data.type}:${data.id}:link:none`);
-    if (!mediaSource) {
-      removeMedia(card, `${data.type}:${data.id}:media:none`);
-    } else {
-      const pictures = getPictures(mediaSource);
-      if (pictures.length) renderMedia(card, mediaSource, pictures);
-      else removeMedia(card, `${mediaSource.type}:${mediaSource.id}:media:none`);
-    }
-    if (!videoSource) {
-      removeVideo(card, `${data.type}:${data.id}:video:none`);
-      return;
-    }
-    const videoUrl = await fetchVideoUrl(videoSource);
-    if (!isCurrentQuoteCard(card, data)) return;
-    if (videoUrl) renderVideo(card, videoSource, videoUrl);
-    else removeVideo(card, `${videoSource.type}:${videoSource.id}:video:none`);
+    renderLink(card, linkSource);
+    renderMedia(card, mediaSource);
+    syncAttachmentGapOffset(card);
+    const videoUrl = await videoUrlTask;
+    if (!isCurrent()) return;
+    renderVideo(card, videoSource, videoUrl);
+    syncAttachmentGapOffset(card);
   }
 
   // src/page-bridge/link-card.js

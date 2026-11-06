@@ -2,6 +2,7 @@
 
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+import { parseReleaseOptions } from "./release-options.mjs";
 
 import {
   readMicrosoftEdgeAddonsConfig,
@@ -19,7 +20,6 @@ import {
 const PRODUCT_ID = "9cd2ac4e-c35f-466b-9636-2f6fee51c0c2";
 const DASHBOARD_URL = `https://partner.microsoft.com/dashboard/microsoftedge/${PRODUCT_ID}/packages/dashboard`;
 const REVIEW_NOTES_PATH = path.join(ROOT, "edge/review-notes.md");
-const MODES = new Set(["package", "upload", "submit"]);
 const CLEAN_GIT_ERROR = "Edge Add-ons upload and submit require a clean Git working tree.";
 
 function usage() {
@@ -36,26 +36,6 @@ Options:
 Credentials are read from EDGE_CLIENT_ID and EDGE_API_KEY, or from the shared
 macOS Keychain items documented in edge/README.md.
 `;
-}
-
-function parseArgs(args) {
-  const options = { mode: "package", confirm: false, dryRun: false, help: false };
-  for (let index = 0; index < args.length; index += 1) {
-    const arg = args[index];
-    if (arg === "--confirm") options.confirm = true;
-    else if (arg === "--dry-run") options.dryRun = true;
-    else if (arg === "--help" || arg === "-h") options.help = true;
-    else if (arg === "--mode") {
-      options.mode = args[index + 1] || "";
-      index += 1;
-    } else if (arg.startsWith("--mode=")) options.mode = arg.slice("--mode=".length);
-    else throw new Error(`Unknown option: ${arg}`);
-  }
-  if (!MODES.has(options.mode)) throw new Error("--mode must be package, upload, or submit.");
-  if (options.mode === "submit" && !options.confirm && !options.dryRun) {
-    throw new Error("--mode submit requires --confirm.");
-  }
-  return options;
 }
 
 async function buildPackage() {
@@ -122,7 +102,7 @@ async function release(options) {
 }
 
 try {
-  const options = parseArgs(process.argv.slice(2));
+  const options = parseReleaseOptions(process.argv.slice(2));
   if (options.help) process.stdout.write(usage());
   else await release(options);
 } catch (error) {

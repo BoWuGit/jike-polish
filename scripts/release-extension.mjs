@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
-import { spawnSync } from "node:child_process";
 import path from "node:path";
+import { parseReleaseOptions } from "./release-options.mjs";
 
 import {
   readChromeWebStoreConfig,
@@ -13,11 +13,11 @@ import {
   assertCleanGit,
   assertNonEmptyFile,
   readJson,
+  run,
 } from "./script-utils.mjs";
 
 const EXTENSION_ID = "hnbakdoibeogigpihopfjfjbacfmcfck";
 const DASHBOARD_URL = "https://chrome.google.com/webstore/devconsole";
-const MODES = new Set(["package", "upload", "submit"]);
 const CLEAN_GIT_ERROR = "Upload and submit require a clean Git working tree.";
 
 function usage() {
@@ -31,33 +31,6 @@ Options:
   --dry-run       Validate and package without calling the API
   -h, --help      Show this help
 `;
-}
-
-function parseArgs(args) {
-  const options = { mode: "package", confirm: false, dryRun: false, help: false };
-
-  for (let index = 0; index < args.length; index += 1) {
-    const arg = args[index];
-    if (arg === "--confirm") options.confirm = true;
-    else if (arg === "--dry-run") options.dryRun = true;
-    else if (arg === "--help" || arg === "-h") options.help = true;
-    else if (arg === "--mode") {
-      options.mode = args[index + 1] || "";
-      index += 1;
-    } else if (arg.startsWith("--mode=")) options.mode = arg.slice("--mode=".length);
-    else throw new Error(`Unknown option: ${arg}`);
-  }
-
-  if (!MODES.has(options.mode)) throw new Error("--mode must be package, upload, or submit.");
-  if (options.mode === "submit" && !options.confirm && !options.dryRun) {
-    throw new Error("--mode submit requires --confirm.");
-  }
-  return options;
-}
-
-function run(command, args) {
-  const result = spawnSync(command, args, { cwd: ROOT, stdio: "inherit" });
-  if (result.status !== 0) throw new Error(`${command} ${args.join(" ")} failed.`);
 }
 
 async function buildPackage() {
@@ -103,7 +76,7 @@ async function release(options) {
 }
 
 try {
-  const options = parseArgs(process.argv.slice(2));
+  const options = parseReleaseOptions(process.argv.slice(2));
   if (options.help) process.stdout.write(usage());
   else await release(options);
 } catch (error) {

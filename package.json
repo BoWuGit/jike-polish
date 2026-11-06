@@ -6,8 +6,8 @@
   "description": "即刻 Web 浏览器扩展（内容脚本构建与校验）",
   "scripts": {
     "build": "esbuild src/content.js src/jike-polish-page-bridge.js --bundle --outdir=. --format=iife --platform=browser --target=chrome109,firefox142,safari16",
-    "lint": "eslint src scripts safari/JikePolish/JikePolish/Resources/Script.js tests",
-    "lint:fix": "eslint src scripts safari/JikePolish/JikePolish/Resources/Script.js tests --fix",
+    "lint": "eslint src scripts safari/JikePolish/JikePolish/Resources/Script.js site/*.js tests",
+    "lint:fix": "eslint src scripts safari/JikePolish/JikePolish/Resources/Script.js site/*.js tests --fix",
     "test": "node --test",
     "check": "npm run lint && npm test && npm run firefox:check && npm run safari:check",
     "safari:check": "node scripts/safari.mjs check",

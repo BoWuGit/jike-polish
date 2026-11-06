@@ -19,7 +19,7 @@ export default [
     }
   },
   {
-    files: ["safari/**/Resources/*.js"],
+    files: ["safari/**/Resources/*.js", "site/*.js"],
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: "script",
