@@ -1,4 +1,5 @@
 import { fetchPostDetail, fetchVideoUrl } from "./post-api.js";
+import { renderQuoteSource } from "./quote-source.js";
 import {
   renderLink, renderMedia, renderVideo, syncAttachmentGapOffset,
 } from "./quote-attachments.js";
@@ -24,9 +25,11 @@ export async function syncQuoteCard(card) {
   let mediaSource = getMediaSource(data);
   let videoSource = getVideoSource(data);
   let linkSource = getLinkSource(data);
-  if ((!mediaSource || !videoSource || !linkSource) && shouldFetchDetail(data)) {
+  let target = data.type === "REPOST" ? data.target : null;
+  if (shouldFetchDetail(data)) {
     const detail = await fetchPostDetail(data);
     if (!isCurrent()) return;
+    if (data.type === "REPOST") target = detail?.target;
     mediaSource ||= getMediaSource(detail);
     videoSource ||= getVideoSource(detail);
     linkSource ||= getLinkSource(detail);
@@ -41,12 +44,24 @@ export async function syncQuoteCard(card) {
   }
 
   // Video lookup does not delay the link and image previews.
-  renderLink(card, linkSource);
-  renderMedia(card, mediaSource);
+  const sourceCard = renderQuoteSource(card, isPostLike(target) ? target : null);
+  const belongsToTarget = (source) => sourceCard && source
+    && source.type === target.type && source.id === target.id;
+  renderLink(card, belongsToTarget(linkSource) ? null : linkSource);
+  renderMedia(card, belongsToTarget(mediaSource) ? null : mediaSource);
+  if (sourceCard) {
+    renderLink(sourceCard, belongsToTarget(linkSource) ? linkSource : null);
+    renderMedia(sourceCard, belongsToTarget(mediaSource) ? mediaSource : null);
+  }
   syncAttachmentGapOffset(card);
 
   const videoUrl = await videoUrlTask;
   if (!isCurrent()) return;
-  renderVideo(card, videoSource, videoUrl);
+  renderVideo(card, belongsToTarget(videoSource) ? null : videoSource,
+    belongsToTarget(videoSource) ? "" : videoUrl);
+  if (sourceCard) {
+    renderVideo(sourceCard, belongsToTarget(videoSource) ? videoSource : null,
+      belongsToTarget(videoSource) ? videoUrl : "");
+  }
   syncAttachmentGapOffset(card);
 }

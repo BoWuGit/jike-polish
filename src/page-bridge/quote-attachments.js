@@ -15,7 +15,7 @@ const LINK_PLACEHOLDER_CLASS = "jp-repost-link-placeholder";
 const LINK_BODY_CLASS = "jp-repost-link-body";
 const LINK_TITLE_CLASS = "jp-repost-link-title";
 const LINK_FOOTER_CLASS = "jp-repost-link-footer";
-const ATTACHMENT_CLASSES = [LINK_CLASS, MEDIA_CLASS, VIDEO_CLASS];
+const ATTACHMENT_CLASSES = [LINK_CLASS, MEDIA_CLASS, VIDEO_CLASS, "jp-repost-source"];
 
 function getDirectChildByClass(card, className) {
   return Array.from(card.children).find((child) => child.classList?.contains(className)) || null;
@@ -27,7 +27,7 @@ function getAttachments(card) {
 }
 
 /** Replace in place and preserve native card children; all attachment types share this lifecycle. */
-function syncAttachment(card, className, key, create) {
+export function syncAttachment(card, className, key, create) {
   const existing = getDirectChildByClass(card, className);
   if (!create) {
     existing?.remove();

@@ -936,9 +936,53 @@
     }
   }
 
+  // src/content/profile-presentation.js
+  function getProfileTags(user) {
+    if (Array.isArray(user.profileTags)) {
+      return user.profileTags.map((tag) => ({
+        text: stringValue(tag?.text),
+        imageUrl: safeHttpUrl(tag?.picUrl),
+        gender: tag?.type === "MALE_RELATIONSHIP_STATE" ? "m" : tag?.type === "FEMALE_RELATIONSHIP_STATE" ? "f" : ""
+      })).filter((tag) => tag.text || tag.imageUrl);
+    }
+    const tags = [];
+    if (user.gender === "MALE") tags.push({ text: "\u2642", gender: "m" });
+    else if (user.gender === "FEMALE") tags.push({ text: "\u2640", gender: "f" });
+    const province = stringValue(user.province);
+    for (const text of [province && !/^\d+$/.test(province) ? province : "", stringValue(user.industry)]) {
+      if (text) tags.push({ text });
+    }
+    return tags;
+  }
+  function getProfileSponsorIcons(user) {
+    const sponsor = user.decorations?.sponsor;
+    const light = safeHttpUrl(sponsor?.picUrl);
+    const dark = safeHttpUrl(sponsor?.themes?.dark?.picUrl) || light;
+    return { light, dark };
+  }
+
+  // src/content/quote-author.js
+  var NATIVE_QUOTE_CONTENT_SELECTOR = "._content_1kp3y_20";
+  var NATIVE_QUOTE_AVATAR_SELECTOR = "a._avatar_1kp3y_16";
+  function getQuoteAuthorLink(element, pointer) {
+    const directAvatar = element.closest(NATIVE_QUOTE_AVATAR_SELECTOR);
+    if (directAvatar) return directAvatar;
+    if (!pointer || !Number.isFinite(pointer.clientX) || !Number.isFinite(pointer.clientY)) return null;
+    const content = element.closest(NATIVE_QUOTE_CONTENT_SELECTOR);
+    const name = content?.firstChild;
+    if (name?.nodeType !== Node.TEXT_NODE || !name.nextSibling?.textContent?.startsWith(":")) return null;
+    const avatar = content.closest("._main_1kp3y_9")?.querySelector(NATIVE_QUOTE_AVATAR_SELECTOR);
+    if (!avatar) return null;
+    const range = document.createRange();
+    range.selectNodeContents(name);
+    const overName = Array.from(range.getClientRects()).some((rect) => pointer.clientX >= rect.left && pointer.clientX < rect.right && pointer.clientY >= rect.top && pointer.clientY < rect.bottom);
+    range.detach?.();
+    return overName ? avatar : null;
+  }
+
   // src/content/profile-card.js
   var PROFILE_LINK_SELECTOR = 'a[href*="/u/"]';
-  var PROFILE_HOVER_CONTENT_SELECTOR = '[class*="_mentionUser_"], [class*="_name_1rdwv_"], [class*="_avatar_1rdwv_"], [class*="_root_1y0hs_"]';
+  var PROFILE_HOVER_CONTENT_SELECTOR = '.jp-repost-source-author, [class*="_mentionUser_"], [class*="_name_1rdwv_"], [class*="_avatar_1rdwv_"], [class*="_root_1y0hs_"]';
   var USER_CARD_TRIGGER_SELECTOR = '[class*="_userCard_"]';
   var USER_CARD_MAX_ANCESTOR_DEPTH = 8;
   var USER_CARD_MAX_HEIGHT = 220;
@@ -962,7 +1006,10 @@
     return luminance < 0.45;
   }
   function applyPopupTheme(card) {
-    card.classList.toggle("jp-dark", isDarkModeActive());
+    const dark = isDarkModeActive();
+    card.classList.toggle("jp-dark", dark);
+    const sponsor = card.querySelector(".jp-sponsor-icon");
+    if (sponsor) sponsor.src = dark ? sponsor.dataset.darkSrc : sponsor.dataset.lightSrc;
   }
   function isProfileHoverLink(element) {
     if (!(element instanceof Element)) return false;
@@ -992,8 +1039,12 @@
     const links = Array.from(element.querySelectorAll(PROFILE_LINK_SELECTOR));
     return links.find(isProfileHoverLink) || links[0] || null;
   }
-  function getLink(element) {
+  function getLink(element, pointer) {
     if (!(element instanceof Element)) return null;
+    const sourceAuthor = element.closest("a.jp-repost-source-author");
+    if (sourceAuthor) return sourceAuthor;
+    const quoteAuthor = getQuoteAuthorLink(element, pointer);
+    if (quoteAuthor) return quoteAuthor;
     const card = findUserCardTrigger(element);
     if (card) return card;
     const link = element.closest(PROFILE_LINK_SELECTOR);
@@ -1021,9 +1072,11 @@
   }
   function cancelHide() {
     clearTimeout(hideTimer);
+    hideTimer = null;
   }
   function cancelHover() {
     clearTimeout(hoverTimer);
+    hoverTimer = null;
   }
   function closePopup() {
     requestSequence += 1;
@@ -1120,11 +1173,17 @@
     card.querySelector(".jp-status-text").textContent = message;
     mountCard(card, anchor);
   }
-  function appendTag(container, text, className = "") {
-    if (!text) return;
+  function appendTag(container, { text, imageUrl, gender }) {
     const tag = document.createElement("span");
-    tag.className = `jp-tag${className ? ` ${className}` : ""}`;
-    tag.textContent = text;
+    tag.className = `jp-tag${gender ? ` jp-gender-${gender}` : ""}`;
+    if (imageUrl) {
+      const image = document.createElement("img");
+      image.src = imageUrl;
+      image.alt = gender === "m" ? "\u7537" : gender === "f" ? "\u5973" : text;
+      image.referrerPolicy = "no-referrer";
+      tag.appendChild(image);
+    }
+    if (text) tag.appendChild(document.createTextNode(text));
     container.appendChild(tag);
   }
   function profileUrl(username) {
@@ -1158,12 +1217,12 @@
     card.innerHTML = `
     <div class="jp-scroll">
       <div class="jp-head">
-        <a class="jp-av-link"><img class="jp-av" alt=""></a>
+        <a class="jp-av-link"><img class="jp-av" alt=""><img class="jp-sponsor-icon" alt="\u8D5E\u52A9\u8005"></a>
         <div class="jp-info">
-          <a class="jp-name"><span class="jp-screen-name"></span><span class="jp-badge">\u2713</span></a>
+          <a class="jp-name"><span class="jp-screen-name"></span></a>
           <div class="jp-stats">
-            <span><b class="jp-following-count"></b> \u5173\u6CE8</span>
-            <span><b class="jp-follower-count"></b> \u88AB\u5173\u6CE8</span>
+            <span><b class="jp-following-count"></b><span>\u5173\u6CE8</span></span>
+            <span><b class="jp-follower-count"></b><span>\u88AB\u5173\u6CE8</span></span>
           </div>
         </div>
       </div>
@@ -1182,17 +1241,19 @@
     const avatar = card.querySelector(".jp-av");
     if (avatarUrl) avatar.src = avatarUrl;
     else avatar.remove();
+    const sponsor = card.querySelector(".jp-sponsor-icon");
+    const sponsorIcons = getProfileSponsorIcons(user);
+    if (sponsorIcons.light) {
+      sponsor.dataset.lightSrc = sponsorIcons.light;
+      sponsor.dataset.darkSrc = sponsorIcons.dark;
+    } else sponsor.remove();
     card.querySelector(".jp-screen-name").textContent = stringValue(user.screenName);
     card.querySelector(".jp-following-count").textContent = String(user.statsCount?.followingCount ?? 0);
     card.querySelector(".jp-follower-count").textContent = String(
       user.statsCount?.followedCount ?? user.statsCount?.followerCount ?? 0
     );
-    if (!(user.isVerified || user.isBetaUser)) card.querySelector(".jp-badge").remove();
     const tags = card.querySelector(".jp-tags");
-    if (user.gender === "MALE") appendTag(tags, "\u2642", "jp-gender-m");
-    else if (user.gender === "FEMALE") appendTag(tags, "\u2640", "jp-gender-f");
-    appendTag(tags, stringValue(user.province));
-    appendTag(tags, stringValue(user.industry));
+    for (const tag of getProfileTags(user)) appendTag(tags, tag);
     if (!tags.children.length) tags.remove();
     const bio = card.querySelector(".jp-bio");
     bio.textContent = stringValue(user.bio || user.briefIntro);
@@ -1203,7 +1264,10 @@
   function scheduleShow(link, { immediate = false } = {}) {
     cancelHover();
     activeLink = link;
-    const show = () => void showCard(link);
+    const show = () => {
+      hoverTimer = null;
+      void showCard(link);
+    };
     if (immediate) show();
     else hoverTimer = setTimeout(show, SHOW_DELAY);
   }
@@ -1240,13 +1304,33 @@
       attributeFilter: ["class", "data-mantine-color-scheme", "data-theme"]
     });
     themeObserver.observe(document.body, { attributes: true, attributeFilter: ["class"] });
-    document.body.addEventListener("mouseover", (event) => {
-      const link = getLink(event.target);
+    function handleHover(event) {
+      const link = getLink(event.target, event);
       if (link) {
-        if (activeLink === link && document.getElementById(POPUP_ID)) return;
+        if (activeLink === link && (hoverTimer !== null || document.getElementById(POPUP_ID))) {
+          cancelHide();
+          return;
+        }
         scheduleShow(link);
       } else if (activeLink && !event.target.closest?.(`#${POPUP_ID}`)) {
-        hidePopupSoon();
+        cancelHover();
+        if (hideTimer === null) hidePopupSoon();
+      }
+    }
+    for (const eventName of ["pointerover", "mouseover", "focusin"]) {
+      document.addEventListener(eventName, (event) => {
+        if (!(event.target instanceof Element)) return;
+        const avatar = event.target.closest(NATIVE_QUOTE_AVATAR_SELECTOR);
+        if (!avatar) return;
+        event.stopPropagation();
+        if (eventName === "mouseover") handleHover(event);
+        else if (eventName === "focusin") scheduleShow(avatar, { immediate: true });
+      }, true);
+    }
+    document.body.addEventListener("mouseover", handleHover);
+    document.body.addEventListener("mousemove", (event) => {
+      if (event.target instanceof Element && event.target.closest(NATIVE_QUOTE_CONTENT_SELECTOR)) {
+        handleHover(event);
       }
     });
     document.body.addEventListener("focusin", (event) => {
@@ -1318,52 +1402,52 @@
 
   // src/content/styles.js
   var CONTENT_STYLES = `
-#${POPUP_ID}{position:fixed;z-index:99999;width:calc(17.5rem * var(--mantine-scale,1));max-width:calc(100vw - 24px);padding:12px;border-radius:calc(0.75rem * var(--mantine-scale,1));background:var(--bg-body-1,var(--mantine-color-body,#fff)) !important;border:1px solid var(--border-primary,rgba(15,23,42,.08)) !important;box-shadow:0 6px 24px rgba(15,23,42,.16);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif;color:var(--mantine-color-text,var(--color-text-primary,#1d2129)) !important;animation:jpIn .12s ease}
+#${POPUP_ID}{position:fixed;z-index:99999;box-sizing:border-box;width:calc(17.5rem * var(--mantine-scale,1));max-width:calc(100vw - 24px);padding:calc(.75rem * var(--mantine-scale,1));border-radius:calc(.75rem * var(--mantine-scale,1));background:var(--bg-body-1,var(--mantine-color-body,#fff)) !important;border:0;box-shadow:0 2px 12px rgba(0,0,0,.24);font-family:inherit;color:var(--tint-primary,var(--color-text-primary,#333)) !important;animation:jpIn .12s ease}
 @keyframes jpIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
-#${POPUP_ID} .jp-scroll{max-height:min(60vh,420px);overflow-y:auto;overscroll-behavior:contain}
-#${POPUP_ID} .jp-head{display:flex;align-items:flex-start;gap:10px}
-#${POPUP_ID} .jp-av-link{flex-shrink:0}
-#${POPUP_ID} .jp-av{width:48px;height:48px;border-radius:50%;object-fit:cover}
-#${POPUP_ID} .jp-info{display:flex;flex-direction:column}
-#${POPUP_ID} .jp-name{font-size:15px;font-weight:700;color:var(--mantine-color-text,var(--color-text-primary,#1d2129)) !important;text-decoration:none;display:flex;align-items:center;gap:2px;margin-top:2px}
+#${POPUP_ID} .jp-scroll{display:flex;flex-direction:column;gap:calc(.75rem * var(--mantine-scale,1));max-height:min(60vh,420px);overflow-y:auto;overscroll-behavior:contain}
+#${POPUP_ID} .jp-head{display:grid;grid-template-columns:calc(3.5rem * var(--mantine-scale,1)) minmax(0,1fr);align-items:start;gap:calc(.75rem * var(--mantine-scale,1))}
+#${POPUP_ID} .jp-av-link{position:relative;display:block;width:calc(3.5rem * var(--mantine-scale,1));height:calc(3.5rem * var(--mantine-scale,1))}
+#${POPUP_ID} .jp-av{display:block;box-sizing:border-box;width:100%;height:100%;border:1px solid var(--tint-pic-border,rgba(0,0,0,.06));border-radius:50%;object-fit:cover}
+#${POPUP_ID} .jp-sponsor-icon{position:absolute;right:calc(-.125rem * var(--mantine-scale,1));bottom:calc(-.125rem * var(--mantine-scale,1));width:calc(.875rem * var(--mantine-scale,1));height:calc(.875rem * var(--mantine-scale,1))}
+#${POPUP_ID} .jp-info{display:grid;grid-auto-rows:max-content;gap:calc(.5rem * var(--mantine-scale,1));min-width:0;overflow:hidden}
+#${POPUP_ID} .jp-name{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:calc(1.25rem * var(--mantine-scale,1));line-height:calc(1.75rem * var(--mantine-scale,1));font-weight:650;color:var(--tint-primary,var(--color-text-primary,#333)) !important;text-decoration:none}
 #${POPUP_ID} .jp-name:hover{text-decoration:underline}
-#${POPUP_ID} .jp-badge{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:var(--tint-jike-blue,#1da1f2);color:#fff;font-size:9px;font-weight:700;margin-left:3px}
-#${POPUP_ID} .jp-stats{margin-top:6px;font-size:13px;display:flex;gap:14px;color:var(--mantine-color-dimmed,var(--color-text-secondary,#5a5e66)) !important}
+#${POPUP_ID} .jp-stats{display:flex;align-items:center;gap:calc(.5rem * var(--mantine-scale,1));font-size:calc(.875rem * var(--mantine-scale,1));line-height:calc(1.25rem * var(--mantine-scale,1));color:var(--tint-secondary,var(--color-text-secondary,#808080)) !important}
+#${POPUP_ID} .jp-stats>span{display:inline-flex;align-items:center;gap:calc(.125rem * var(--mantine-scale,1));white-space:nowrap}
 #${POPUP_ID} .jp-stats span{color:inherit !important}
-#${POPUP_ID} .jp-stats b{font-weight:700;color:var(--mantine-color-text,var(--color-text-primary,#1d2129)) !important}
-#${POPUP_ID} .jp-tags{margin-top:6px;display:flex;flex-wrap:wrap;gap:4px}
-#${POPUP_ID} .jp-tag{display:inline-block;padding:2px 8px;border-radius:10px;font-size:12px;background:var(--bg-tag,#f0f1f5) !important;color:var(--color-text-secondary,#5a5e66) !important}
-#${POPUP_ID} .jp-gender-m{background:#e8f4fd !important;color:#1da1f2 !important}
-#${POPUP_ID} .jp-gender-f{background:#fde8ef !important;color:#e84887 !important}
-#${POPUP_ID} .jp-bio{margin-top:6px;font-size:13px;line-height:1.45;color:var(--mantine-color-dimmed,var(--color-text-secondary,#5a5e66)) !important;white-space:pre-wrap;word-break:break-word}
-#${POPUP_ID} .jp-follow{margin-top:10px;padding:5px 16px;border-radius:999px;border:1px solid #f8e71c;background:#f8e71c;font-size:13px;font-weight:600;cursor:pointer;color:#1d2129;transition:all .15s}
+#${POPUP_ID} .jp-stats b{font-weight:500;color:var(--tint-primary,var(--color-text-primary,#333)) !important}
+#${POPUP_ID} .jp-tags{display:flex;flex-wrap:wrap;gap:calc(.25rem * var(--mantine-scale,1))}
+#${POPUP_ID} .jp-tag{display:flex;align-items:center;box-sizing:border-box;height:calc(1rem * var(--mantine-scale,1));padding:calc(.125rem * var(--mantine-scale,1)) calc(.375rem * var(--mantine-scale,1));border-radius:calc(1.25rem * var(--mantine-scale,1));font-size:calc(.625rem * var(--mantine-scale,1));line-height:calc(.75rem * var(--mantine-scale,1));white-space:nowrap;background:var(--bg-on-body-2,#f0f3f5) !important;color:var(--tint-primary,#333) !important}
+#${POPUP_ID} .jp-tag img{display:block;width:calc(.75rem * var(--mantine-scale,1));height:calc(.75rem * var(--mantine-scale,1))}
+#${POPUP_ID} .jp-gender-m{background:var(--solid-label-male,rgba(3,169,244,.5)) !important;color:#fff !important}
+#${POPUP_ID} .jp-gender-f{background:var(--solid-label-female,rgba(252,104,157,.5)) !important;color:#fff !important}
+#${POPUP_ID} .jp-bio{font-size:calc(.875rem * var(--mantine-scale,1));line-height:calc(1.25rem * var(--mantine-scale,1));color:var(--tint-secondary,var(--color-text-secondary,#808080)) !important;white-space:normal;overflow-wrap:anywhere}
+#${POPUP_ID} .jp-follow{align-self:flex-start;box-sizing:border-box;min-width:calc(3.5625rem * var(--mantine-scale,1));height:calc(1.875rem * var(--mantine-scale,1));padding:calc(.25rem * var(--mantine-scale,1)) calc(.875rem * var(--mantine-scale,1));border-radius:calc(6.25rem * var(--mantine-scale,1));border:1px solid transparent;background:var(--mantine-color-yellow-filled,#ffe411);font-family:inherit;font-size:calc(.875rem * var(--mantine-scale,1));line-height:calc(1.375rem * var(--mantine-scale,1));font-weight:400;cursor:pointer;color:var(--solid-gray-4,#333);transition:background-color .15s}
 #${POPUP_ID} .jp-follow:hover{filter:brightness(.96)}
-#${POPUP_ID} .jp-follow.jp-following{border-color:var(--border-primary,#d9d9d9);background:transparent;color:var(--color-text-secondary,#5a5e66) !important;font-weight:400}
-#${POPUP_ID} .jp-follow:not(.jp-following){border-color:#f8e71c;color:#1d2129;background:#f8e71c}
+#${POPUP_ID} .jp-follow.jp-following{border-color:var(--tint-separator,#d9d9d9);background:transparent;color:var(--tint-primary,#333) !important}
 #${POPUP_ID} .jp-status{padding:6px 2px 2px}
 #${POPUP_ID} .jp-status-title{font-size:14px;font-weight:700;color:var(--mantine-color-text,var(--color-text-primary,#1d2129)) !important}
 #${POPUP_ID} .jp-status-text{margin-top:6px;font-size:13px;line-height:1.5;color:var(--mantine-color-dimmed,var(--color-text-secondary,#5a5e66)) !important}
 #${POPUP_ID} .jp-skeleton{position:relative;overflow:hidden;background:rgba(15,23,42,.08);border-radius:999px}
 #${POPUP_ID} .jp-skeleton::after{content:"";position:absolute;inset:0;transform:translateX(-100%);background:linear-gradient(90deg,transparent,rgba(255,255,255,.58),transparent);animation:jpShimmer 1.2s infinite}
-#${POPUP_ID} .jp-skeleton-avatar{width:48px;height:48px;border-radius:50%}
+#${POPUP_ID} .jp-skeleton-avatar{width:calc(3.5rem * var(--mantine-scale,1));height:calc(3.5rem * var(--mantine-scale,1));border-radius:50%}
 #${POPUP_ID} .jp-skeleton-group{gap:8px;padding-top:2px}
 #${POPUP_ID} .jp-skeleton-line{height:10px;margin-top:10px}
 #${POPUP_ID} .jp-skeleton-name{width:124px;margin-top:0}
 #${POPUP_ID} .jp-skeleton-meta{width:148px}
 #${POPUP_ID} .jp-skeleton-line-short{width:72%}
-#${POPUP_ID} .jp-skeleton-chip{width:44px;height:22px;border-radius:10px}
+#${POPUP_ID} .jp-skeleton-chip{width:44px;height:calc(1rem * var(--mantine-scale,1));border-radius:10px}
 #${POPUP_ID} .jp-skeleton-chip-wide{width:76px}
 #${POPUP_ID} .jp-skeleton-button{width:84px;height:32px;margin-top:10px}
 @keyframes jpShimmer{100%{transform:translateX(100%)}}
-:is([data-mantine-color-scheme="dark"], [data-theme="dark"], html.dark, body.dark) #${POPUP_ID}{background:var(--bg-body-1,#1d1f24) !important;border-color:var(--border-primary,rgba(255,255,255,.1)) !important;box-shadow:0 8px 30px rgba(0,0,0,.4);color:#eef1f5 !important}
-#${POPUP_ID}.jp-dark{background:var(--mantine-color-dark-7,#1d1f24) !important;border-color:rgba(255,255,255,.1) !important;box-shadow:0 8px 30px rgba(0,0,0,.4);color:#eef1f5 !important}
-:is([data-mantine-color-scheme="dark"], [data-theme="dark"], html.dark, body.dark) #${POPUP_ID} .jp-name,:is([data-mantine-color-scheme="dark"], [data-theme="dark"], html.dark, body.dark) #${POPUP_ID} .jp-stats b,:is([data-mantine-color-scheme="dark"], [data-theme="dark"], html.dark, body.dark) #${POPUP_ID} .jp-status-title,#${POPUP_ID}.jp-dark .jp-name,#${POPUP_ID}.jp-dark .jp-stats b,#${POPUP_ID}.jp-dark .jp-status-title{color:#eef1f5 !important}
-:is([data-mantine-color-scheme="dark"], [data-theme="dark"], html.dark, body.dark) #${POPUP_ID} .jp-bio,:is([data-mantine-color-scheme="dark"], [data-theme="dark"], html.dark, body.dark) #${POPUP_ID} .jp-stats,:is([data-mantine-color-scheme="dark"], [data-theme="dark"], html.dark, body.dark) #${POPUP_ID} .jp-stats span,#${POPUP_ID}.jp-dark .jp-bio,#${POPUP_ID}.jp-dark .jp-stats,#${POPUP_ID}.jp-dark .jp-stats span{color:#b7bfcc !important}
-:is([data-mantine-color-scheme="dark"], [data-theme="dark"], html.dark, body.dark) #${POPUP_ID} .jp-tag,#${POPUP_ID}.jp-dark .jp-tag{background:#2a2d35 !important;color:#b7bfcc !important}
-:is([data-mantine-color-scheme="dark"], [data-theme="dark"], html.dark, body.dark) #${POPUP_ID} .jp-gender-m,#${POPUP_ID}.jp-dark .jp-gender-m{background:#103a5a !important;color:#7ecbff !important}
-:is([data-mantine-color-scheme="dark"], [data-theme="dark"], html.dark, body.dark) #${POPUP_ID} .jp-gender-f,#${POPUP_ID}.jp-dark .jp-gender-f{background:#4d1d34 !important;color:#ff9bc2 !important}
-:is([data-mantine-color-scheme="dark"], [data-theme="dark"], html.dark, body.dark) #${POPUP_ID} .jp-follow:hover,#${POPUP_ID}.jp-dark .jp-follow:hover{background:#2a2d35}
-:is([data-mantine-color-scheme="dark"], [data-theme="dark"], html.dark, body.dark) #${POPUP_ID} .jp-status-text,#${POPUP_ID}.jp-dark .jp-status-text{color:#b7bfcc !important}
+#${POPUP_ID}.jp-dark{background:var(--bg-body-1,#1d1f24) !important;box-shadow:0 2px 12px rgba(0,0,0,.24);color:var(--tint-primary,#eef1f5) !important}
+#${POPUP_ID}.jp-dark .jp-name,#${POPUP_ID}.jp-dark .jp-stats b,#${POPUP_ID}.jp-dark .jp-status-title{color:var(--tint-primary,#eef1f5) !important}
+#${POPUP_ID}.jp-dark .jp-bio,#${POPUP_ID}.jp-dark .jp-stats{color:var(--tint-secondary,#b7bfcc) !important}
+#${POPUP_ID}.jp-dark .jp-tag{background:var(--bg-on-body-2,#2a2d35) !important;color:var(--tint-primary,#eef1f5) !important}
+#${POPUP_ID}.jp-dark .jp-gender-m{background:var(--solid-label-male,rgba(3,169,244,.5)) !important;color:#fff !important}
+#${POPUP_ID}.jp-dark .jp-gender-f{background:var(--solid-label-female,rgba(252,104,157,.5)) !important;color:#fff !important}
+#${POPUP_ID}.jp-dark .jp-follow.jp-following{color:var(--tint-primary,#eef1f5) !important}
+#${POPUP_ID}.jp-dark .jp-status-text{color:var(--tint-secondary,#b7bfcc) !important}
 :is([data-mantine-color-scheme="dark"], [data-theme="dark"], html.dark, body.dark) #${POPUP_ID} .jp-skeleton,#${POPUP_ID}.jp-dark .jp-skeleton{background:rgba(255,255,255,.09)}
 :is([data-mantine-color-scheme="dark"], [data-theme="dark"], html.dark, body.dark) #${POPUP_ID} .jp-skeleton::after,#${POPUP_ID}.jp-dark .jp-skeleton::after{background:linear-gradient(90deg,transparent,rgba(255,255,255,.12),transparent)}
 .mantine-HoverCard-dropdown [class*="_bio"],.mantine-HoverCard-dropdown [class*="_briefIntro"],.mantine-HoverCard-dropdown [class*="_desc"]{-webkit-line-clamp:unset !important;display:block !important;overflow:visible !important;max-height:none !important;text-overflow:unset !important}

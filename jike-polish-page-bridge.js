@@ -436,7 +436,7 @@
   var LINK_BODY_CLASS = "jp-repost-link-body";
   var LINK_TITLE_CLASS = "jp-repost-link-title";
   var LINK_FOOTER_CLASS = "jp-repost-link-footer";
-  var ATTACHMENT_CLASSES = [LINK_CLASS, MEDIA_CLASS, VIDEO_CLASS];
+  var ATTACHMENT_CLASSES = [LINK_CLASS, MEDIA_CLASS, VIDEO_CLASS, "jp-repost-source"];
   function getDirectChildByClass(card, className) {
     return Array.from(card.children).find((child) => child.classList?.contains(className)) || null;
   }
@@ -645,6 +645,71 @@
     }
   }
 
+  // src/page-bridge/quote-source.js
+  function renderQuoteSource(card, source) {
+    const user = source?.user;
+    const name = stringValue(user?.screenName) || "\u672A\u77E5\u4F5C\u8005";
+    const avatar = safeHttpUrl(user?.avatarImage?.thumbnailUrl || user?.profileImageUrl);
+    const content = stringValue(source?.content);
+    const username = stringValue(user?.username);
+    const profileHref = username ? `https://web.okjike.com/u/${encodeURIComponent(username)}` : "";
+    const path = source?.type === "REPOST" ? "repost" : "post";
+    const href = source && profileHref ? `${profileHref}/${path}/${encodeURIComponent(source.id)}` : "";
+    const key = source && JSON.stringify([source.type, source.id]);
+    const section = syncAttachment(card, "jp-repost-source", key, source ? () => {
+      const section2 = document.createElement("section");
+      section2.className = "jp-repost-source";
+      for (const eventName of ["click", "pointerdown", "keydown"]) {
+        section2.addEventListener(eventName, (event) => event.stopPropagation());
+      }
+      return section2;
+    } : null);
+    if (!section) return null;
+    const previewKey = JSON.stringify([name, avatar, content, href]);
+    if (section.dataset.jpSourcePreviewKey !== previewKey) {
+      section.setAttribute("aria-label", `${name}\u7684${source.type === "REPOST" ? "\u8F6C\u53D1" : "\u52A8\u6001"}`);
+      const preview = document.createElement("div");
+      preview.className = "jp-repost-source-preview";
+      const avatarLink = document.createElement(profileHref ? "a" : "span");
+      avatarLink.className = "jp-repost-source-avatar jp-repost-source-author";
+      if (profileHref) {
+        avatarLink.href = profileHref;
+        avatarLink.setAttribute("aria-label", `\u67E5\u770B${name}\u7684\u8D44\u6599`);
+      }
+      if (avatar) {
+        const image = document.createElement("img");
+        image.src = avatar;
+        image.alt = "";
+        image.loading = "lazy";
+        image.referrerPolicy = "no-referrer";
+        avatarLink.appendChild(image);
+      } else {
+        avatarLink.textContent = Array.from(name)[0];
+      }
+      preview.appendChild(avatarLink);
+      const body = document.createElement("div");
+      body.className = "jp-repost-source-body";
+      const author = document.createElement(profileHref ? "a" : "span");
+      author.className = "jp-repost-source-name jp-repost-source-author";
+      if (profileHref) author.href = profileHref;
+      author.textContent = name;
+      body.appendChild(author);
+      if (content) {
+        const text = document.createElement(href ? "a" : "div");
+        text.className = "jp-repost-source-content";
+        if (href) text.href = href;
+        text.textContent = content;
+        body.appendChild(text);
+      }
+      preview.appendChild(body);
+      const existing = section.querySelector(".jp-repost-source-preview");
+      if (existing) existing.replaceWith(preview);
+      else section.insertBefore(preview, section.children[0] || null);
+      section.dataset.jpSourcePreviewKey = previewKey;
+    }
+    return section;
+  }
+
   // src/page-bridge/quote-card.js
   var QUOTE_CARD_SELECTOR = "._root_1kp3y_1";
   var cardSyncs = /* @__PURE__ */ new WeakMap();
@@ -658,9 +723,11 @@
     let mediaSource = getMediaSource(data);
     let videoSource = getVideoSource(data);
     let linkSource = getLinkSource(data);
-    if ((!mediaSource || !videoSource || !linkSource) && shouldFetchDetail(data)) {
+    let target = data.type === "REPOST" ? data.target : null;
+    if (shouldFetchDetail(data)) {
       const detail = await fetchPostDetail(data);
       if (!isCurrent()) return;
+      if (data.type === "REPOST") target = detail?.target;
       mediaSource ||= getMediaSource(detail);
       videoSource ||= getVideoSource(detail);
       linkSource ||= getLinkSource(detail);
@@ -672,12 +739,29 @@
       const detailedLinkSource = getLinkSource(detail);
       if (linkImageUrl(getLinkInfo(detailedLinkSource))) linkSource = detailedLinkSource;
     }
-    renderLink(card, linkSource);
-    renderMedia(card, mediaSource);
+    const sourceCard = renderQuoteSource(card, isPostLike(target) ? target : null);
+    const belongsToTarget = (source) => sourceCard && source && source.type === target.type && source.id === target.id;
+    renderLink(card, belongsToTarget(linkSource) ? null : linkSource);
+    renderMedia(card, belongsToTarget(mediaSource) ? null : mediaSource);
+    if (sourceCard) {
+      renderLink(sourceCard, belongsToTarget(linkSource) ? linkSource : null);
+      renderMedia(sourceCard, belongsToTarget(mediaSource) ? mediaSource : null);
+    }
     syncAttachmentGapOffset(card);
     const videoUrl = await videoUrlTask;
     if (!isCurrent()) return;
-    renderVideo(card, videoSource, videoUrl);
+    renderVideo(
+      card,
+      belongsToTarget(videoSource) ? null : videoSource,
+      belongsToTarget(videoSource) ? "" : videoUrl
+    );
+    if (sourceCard) {
+      renderVideo(
+        sourceCard,
+        belongsToTarget(videoSource) ? videoSource : null,
+        belongsToTarget(videoSource) ? videoUrl : ""
+      );
+    }
     syncAttachmentGapOffset(card);
   }
 

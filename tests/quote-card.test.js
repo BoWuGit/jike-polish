@@ -183,3 +183,81 @@ test("video and link detail lookups start independently", async () => {
   assert.equal(card.querySelector(".jp-repost-link-image").src, "https://cdn.example/cover.jpg");
   assert.equal(card.querySelector(".jp-repost-video").src, "https://cdn.example/video.mp4");
 });
+
+test("a second repost groups the original author, text and attachments in their own quote", async () => {
+  const target = post({
+    id: "original", user: { screenName: "Original author", username: "original-user" },
+    content: "Original text\n\nSecond paragraph",
+    pictures: [{ picUrl: "https://cdn.example/original.jpg" }],
+    linkInfo: link(), video: { source: ["https://cdn.example/original.mp4"] },
+  });
+  const { card, nativeFooter, sync } = fixture(post({ type: "REPOST", target }));
+  await sync();
+  const source = card.querySelector(".jp-repost-source");
+  assert.deepEqual(card.children, [nativeFooter, source]);
+  assert.equal(source["aria-label"], "Original author的动态");
+  assert.equal(source.querySelector(".jp-repost-source-name").textContent, "Original author");
+  assert.equal(source.querySelector(".jp-repost-source-name").href,
+    "https://web.okjike.com/u/original-user");
+  assert.equal(source.querySelector(".jp-repost-source-avatar").href,
+    "https://web.okjike.com/u/original-user");
+  assert.equal(source.querySelector(".jp-repost-source-content").textContent, target.content);
+  assert.equal(source.querySelector(".jp-repost-source-content").href,
+    "https://web.okjike.com/u/original-user/post/original");
+  assert.equal(source.querySelector(".jp-repost-media-img").src, target.pictures[0].picUrl);
+  assert.equal(source.querySelector(".jp-repost-video").src, target.video.source[0]);
+  assert.ok(source.querySelector(".jp-repost-link"));
+});
+
+test("target attribution is recovered from detail even when the repost has its own attachments", async () => {
+  const target = post({ id: "original", content: "Original text", linkInfo: link() });
+  const data = post({ type: "REPOST", pictures: [{ picUrl: "https://cdn.example/reposter.jpg" }] });
+  let requests = 0;
+  const { card, sync } = fixture(data, async () => {
+    requests++;
+    return Response.json({ data: { ...data, target } });
+  });
+  await sync();
+  assert.equal(requests, 1);
+  const source = card.querySelector(".jp-repost-source");
+  assert.ok(source.querySelector(".jp-repost-link"));
+  assert.equal(source.querySelector(".jp-repost-media"), null);
+  assert.equal(card.children.find((child) => child.className === "jp-repost-media")
+    .querySelector(".jp-repost-media-img").src, data.pictures[0].picUrl);
+});
+
+test("target updates preserve playback and remove obsolete quote layers when props change", async () => {
+  const target = post({
+    id: "original", user: { screenName: "Author" }, content: "Text",
+    video: { source: ["https://cdn.example/original.mp4"] },
+  });
+  const data = post({ type: "REPOST", target });
+  const { card, setData, nativeFooter, sync } = fixture(data);
+  await sync();
+  const source = card.querySelector(".jp-repost-source");
+  const video = source.querySelector(".jp-repost-video");
+  await sync();
+  assert.equal(card.querySelector(".jp-repost-source"), source);
+  assert.equal(card.querySelector(".jp-repost-video"), video);
+  target.user.screenName = "Renamed author";
+  target.content = "Updated text";
+  await sync();
+  assert.equal(card.querySelector(".jp-repost-source")["aria-label"], "Renamed author的动态");
+  assert.equal(card.querySelector(".jp-repost-source-content").textContent, "Updated text");
+  assert.equal(card.querySelector(".jp-repost-video"), video);
+  setData(post({ type: "REPOST", target: null }));
+  await sync();
+  assert.deepEqual(card.children, [nativeFooter]);
+});
+
+test("text-only targets still retain attribution and repost targets link to their own details", async () => {
+  const target = post({
+    id: "another-repost", type: "REPOST", user: { username: "user", screenName: "Reposter" },
+    content: "Comment on an earlier post", target: null,
+  });
+  const { card, sync } = fixture(post({ type: "REPOST", target }));
+  await sync();
+  assert.equal(card.querySelector(".jp-repost-source")["aria-label"], "Reposter的转发");
+  assert.equal(card.querySelector(".jp-repost-source-content").href,
+    "https://web.okjike.com/u/user/repost/another-repost");
+});

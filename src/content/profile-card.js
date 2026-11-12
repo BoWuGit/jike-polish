@@ -4,10 +4,14 @@ import { safeHttpUrl, stringValue } from "../shared/values.js";
 import { POPUP_ID } from "./constants.js";
 import { findScrollableContainer } from "./scroll.js";
 import { AUTH_EXPIRED, fetchUser, toggleFollow } from "./profile-api.js";
+import { getProfileSponsorIcons, getProfileTags } from "./profile-presentation.js";
+import {
+  getQuoteAuthorLink, NATIVE_QUOTE_AVATAR_SELECTOR, NATIVE_QUOTE_CONTENT_SELECTOR,
+} from "./quote-author.js";
 
 const PROFILE_LINK_SELECTOR = 'a[href*="/u/"]';
 const PROFILE_HOVER_CONTENT_SELECTOR =
-  '[class*="_mentionUser_"], [class*="_name_1rdwv_"], [class*="_avatar_1rdwv_"], [class*="_root_1y0hs_"]';
+  '.jp-repost-source-author, [class*="_mentionUser_"], [class*="_name_1rdwv_"], [class*="_avatar_1rdwv_"], [class*="_root_1y0hs_"]';
 const USER_CARD_TRIGGER_SELECTOR = '[class*="_userCard_"]';
 const USER_CARD_MAX_ANCESTOR_DEPTH = 8;
 const USER_CARD_MAX_HEIGHT = 220;
@@ -35,7 +39,10 @@ function isDarkModeActive() {
 }
 
 function applyPopupTheme(card) {
-  card.classList.toggle("jp-dark", isDarkModeActive());
+  const dark = isDarkModeActive();
+  card.classList.toggle("jp-dark", dark);
+  const sponsor = card.querySelector(".jp-sponsor-icon");
+  if (sponsor) sponsor.src = dark ? sponsor.dataset.darkSrc : sponsor.dataset.lightSrc;
 }
 
 function isProfileHoverLink(element) {
@@ -76,8 +83,13 @@ function getProfileLink(element) {
   return links.find(isProfileHoverLink) || links[0] || null;
 }
 
-function getLink(element) {
+function getLink(element, pointer) {
   if (!(element instanceof Element)) return null;
+  // A nested quote's author takes precedence over an enclosing native user card.
+  const sourceAuthor = element.closest("a.jp-repost-source-author");
+  if (sourceAuthor) return sourceAuthor;
+  const quoteAuthor = getQuoteAuthorLink(element, pointer);
+  if (quoteAuthor) return quoteAuthor;
   const card = findUserCardTrigger(element);
   if (card) return card;
   const link = element.closest(PROFILE_LINK_SELECTOR);
@@ -109,10 +121,12 @@ function createPopupCard() {
 
 function cancelHide() {
   clearTimeout(hideTimer);
+  hideTimer = null;
 }
 
 function cancelHover() {
   clearTimeout(hoverTimer);
+  hoverTimer = null;
 }
 
 function closePopup() {
@@ -221,11 +235,17 @@ function renderErrorCard(anchor, message) {
   mountCard(card, anchor);
 }
 
-function appendTag(container, text, className = "") {
-  if (!text) return;
+function appendTag(container, { text, imageUrl, gender }) {
   const tag = document.createElement("span");
-  tag.className = `jp-tag${className ? ` ${className}` : ""}`;
-  tag.textContent = text;
+  tag.className = `jp-tag${gender ? ` jp-gender-${gender}` : ""}`;
+  if (imageUrl) {
+    const image = document.createElement("img");
+    image.src = imageUrl;
+    image.alt = gender === "m" ? "男" : gender === "f" ? "女" : text;
+    image.referrerPolicy = "no-referrer";
+    tag.appendChild(image);
+  }
+  if (text) tag.appendChild(document.createTextNode(text));
   container.appendChild(tag);
 }
 
@@ -263,12 +283,12 @@ function renderCard(user, anchor) {
   card.innerHTML = `
     <div class="jp-scroll">
       <div class="jp-head">
-        <a class="jp-av-link"><img class="jp-av" alt=""></a>
+        <a class="jp-av-link"><img class="jp-av" alt=""><img class="jp-sponsor-icon" alt="赞助者"></a>
         <div class="jp-info">
-          <a class="jp-name"><span class="jp-screen-name"></span><span class="jp-badge">✓</span></a>
+          <a class="jp-name"><span class="jp-screen-name"></span></a>
           <div class="jp-stats">
-            <span><b class="jp-following-count"></b> 关注</span>
-            <span><b class="jp-follower-count"></b> 被关注</span>
+            <span><b class="jp-following-count"></b><span>关注</span></span>
+            <span><b class="jp-follower-count"></b><span>被关注</span></span>
           </div>
         </div>
       </div>
@@ -288,19 +308,20 @@ function renderCard(user, anchor) {
   const avatar = card.querySelector(".jp-av");
   if (avatarUrl) avatar.src = avatarUrl;
   else avatar.remove();
+  const sponsor = card.querySelector(".jp-sponsor-icon");
+  const sponsorIcons = getProfileSponsorIcons(user);
+  if (sponsorIcons.light) {
+    sponsor.dataset.lightSrc = sponsorIcons.light;
+    sponsor.dataset.darkSrc = sponsorIcons.dark;
+  } else sponsor.remove();
   card.querySelector(".jp-screen-name").textContent = stringValue(user.screenName);
   card.querySelector(".jp-following-count").textContent = String(user.statsCount?.followingCount ?? 0);
   card.querySelector(".jp-follower-count").textContent = String(
     user.statsCount?.followedCount ?? user.statsCount?.followerCount ?? 0,
   );
 
-  if (!(user.isVerified || user.isBetaUser)) card.querySelector(".jp-badge").remove();
-
   const tags = card.querySelector(".jp-tags");
-  if (user.gender === "MALE") appendTag(tags, "♂", "jp-gender-m");
-  else if (user.gender === "FEMALE") appendTag(tags, "♀", "jp-gender-f");
-  appendTag(tags, stringValue(user.province));
-  appendTag(tags, stringValue(user.industry));
+  for (const tag of getProfileTags(user)) appendTag(tags, tag);
   if (!tags.children.length) tags.remove();
 
   const bio = card.querySelector(".jp-bio");
@@ -314,7 +335,10 @@ function renderCard(user, anchor) {
 function scheduleShow(link, { immediate = false } = {}) {
   cancelHover();
   activeLink = link;
-  const show = () => void showCard(link);
+  const show = () => {
+    hoverTimer = null;
+    void showCard(link);
+  };
   if (immediate) show();
   else hoverTimer = setTimeout(show, SHOW_DELAY);
 }
@@ -357,13 +381,36 @@ export function installProfileCards() {
   });
   themeObserver.observe(document.body, { attributes: true, attributeFilter: ["class"] });
 
-  document.body.addEventListener("mouseover", (event) => {
-    const link = getLink(event.target);
+  function handleHover(event) {
+    const link = getLink(event.target, event);
     if (link) {
-      if (activeLink === link && document.getElementById(POPUP_ID)) return;
+      if (activeLink === link && (hoverTimer !== null || document.getElementById(POPUP_ID))) {
+        cancelHide();
+        return;
+      }
       scheduleShow(link);
     } else if (activeLink && !event.target.closest?.(`#${POPUP_ID}`)) {
-      hidePopupSoon();
+      cancelHover();
+      if (hideTimer === null) hidePopupSoon();
+    }
+  }
+  // Quote avatars and their text names share one popup. Capture before React's
+  // native HoverCard handler so an avatar cannot open a second, differently sized card.
+  for (const eventName of ["pointerover", "mouseover", "focusin"]) {
+    document.addEventListener(eventName, (event) => {
+      if (!(event.target instanceof Element)) return;
+      const avatar = event.target.closest(NATIVE_QUOTE_AVATAR_SELECTOR);
+      if (!avatar) return;
+      event.stopPropagation();
+      if (eventName === "mouseover") handleHover(event);
+      else if (eventName === "focusin") scheduleShow(avatar, { immediate: true });
+    }, true);
+  }
+  document.body.addEventListener("mouseover", handleHover);
+  // Moving between the name and body text does not fire mouseover: both share one div.
+  document.body.addEventListener("mousemove", (event) => {
+    if (event.target instanceof Element && event.target.closest(NATIVE_QUOTE_CONTENT_SELECTOR)) {
+      handleHover(event);
     }
   });
   document.body.addEventListener("focusin", (event) => {
