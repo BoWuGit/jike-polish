@@ -1,0 +1,11 @@
+{
+  "version": "1.2.14",
+  "source_commit": "5d34bbde6f36b919a613b6363b03aa5283d4174c",
+  "product_id": "9cd2ac4e-c35f-466b-9636-2f6fee51c0c2",
+  "submitted_on": "2026-11-12",
+  "package_status": "validated",
+  "submission_status": "submitted_for_review",
+  "artifacts_sha256": {
+    "jike-polish-edge-v1.2.14.zip": "2ef1227a76686c01649989f68ca5b5579302865a691660cc00e83f8b344ec8ea"
+  }
+}

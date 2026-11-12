@@ -1,0 +1,11 @@
+{
+  "version": "1.2.14",
+  "source_commit": "5d34bbde6f36b919a613b6363b03aa5283d4174c",
+  "extension_id": "hnbakdoibeogigpihopfjfjbacfmcfck",
+  "submitted_on": "2026-11-12",
+  "upload_status": "SUCCESS",
+  "submit_status": "OK",
+  "artifacts_sha256": {
+    "jike-polish-v1.2.14.zip": "998121277e7246742963681c2b7770e707434b2ffa409f4049e93cf3a785ecf3"
+  }
+}

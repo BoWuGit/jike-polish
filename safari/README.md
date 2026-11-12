@@ -51,7 +51,7 @@ npm run safari:build
 
 ## 发布
 
-2026-11-05 已通过 App Store Connect CLI 提交 1.2.13（构建号 10），并确认状态为 `WAITING_FOR_REVIEW`。更新记录见 [`submission-1.2.13.json`](../app-store/submission-1.2.13.json)。
+2026-11-12 已通过 App Store Connect CLI 提交 1.2.14（构建号 11），并确认状态为 `WAITING_FOR_REVIEW`。更新记录见 [`submission-1.2.14.json`](../app-store/submission-1.2.14.json)。
 
 发布前执行：
 
