@@ -2,7 +2,7 @@
 
 ## 中文
 
-1.2.13 是一次小型展示优化，去除播客标题中的重复节目名，并微调卡片样式。
+1.2.14 是一次小型展示修复，修复多层转发中的作者归属展示，统一用户资料卡样式，并优化卡片更新逻辑。
 
 应用继续使用原创品牌“阅赏”，并提供完整的离线功能演示；无需账号、网络或安装其他 App，即可审核全部主要功能。
 
@@ -20,7 +20,7 @@
 
 ## English
 
-Version 1.2.13 is a small presentation update. It removes duplicate podcast show names from episode titles and refines card styling.
+Version 1.2.14 is a small presentation fix. It preserves author attribution in nested reposts, unifies profile card styling, and improves card updates.
 
 The app continues to use the original “阅赏” identity and includes a complete offline demonstration. No account, network connection, or other app is required to review all primary features.
 
