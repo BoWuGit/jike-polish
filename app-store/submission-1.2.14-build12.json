@@ -1,0 +1,41 @@
+{
+  "version": "1.2.14",
+  "build_number": 12,
+  "source_commit": "66129d465398ba5354f02be6b39f9739894a419b",
+  "app_id": "6794301352",
+  "version_id": "8575a3de-10df-45cd-b6cd-d117ad712b61",
+  "build_id": "3d788c6a-b04f-4a75-91df-63fdee35d84f",
+  "review_submission_id": "391b83d4-955f-4e77-a509-cc48beb64f98",
+  "status": "WAITING_FOR_REVIEW",
+  "submitted_at": "2026-11-17T00:21:18.613Z",
+  "pkg_sha256": "2cc20888529cafbb784200a72c4c3101b45997d11f63bbaee206a0ae78ea9a2b",
+  "xcode": "27.1",
+  "readiness": {
+    "errors": 0,
+    "warnings": 0
+  },
+  "replaces_build": 11,
+  "rejection_guideline": "2.1(a) - Performance - App Completeness",
+  "root_cause": "Missing network-client sandbox entitlement prevented WKWebView helper processes from launching on macOS 27.0.1, including for the bundled local home page.",
+  "fix": "Enable outgoing connections for both container configurations; add native load/error/retry UI and bounded web-content process recovery.",
+  "validation": {
+    "os": "macOS 27.0.1 (26A434)",
+    "tests_passed": 66,
+    "mozilla_lint": {
+      "errors": 0,
+      "warnings": 0,
+      "notices": 0
+    },
+    "sandbox_reproduction": "Original Release executable reproduced the blank window without network.client; adding only that entitlement restored the home page.",
+    "runtime_method": "Locally signed copies of the archived Release executable retained App Sandbox and hardened runtime; isolated bundle IDs were used for resource-failure tests.",
+    "runtime_checks": [
+      "Home page startup and repeated launch",
+      "Offline demo entry and panel switching",
+      "Lightbox open, zoom 1x to 6x, reset and close",
+      "Missing home page shows native error UI",
+      "Unreadable home page shows native error UI and successfully reloads after read access is restored"
+    ],
+    "exported_installer": "Expanded final pkg; verified app signature, build/version, sandbox/client entitlements and shared extension resource bytes."
+  },
+  "submission_note": "Updated the existing rejected version to build 12, marked its review item resolved, resubmitted the same review submission, and read back both version and submission as WAITING_FOR_REVIEW."
+}

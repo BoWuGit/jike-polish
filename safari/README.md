@@ -57,7 +57,7 @@ npm run safari:build
 
 ## 发布
 
-2026-11-12 已通过 App Store Connect CLI 提交 1.2.14（构建号 11），并确认状态为 `WAITING_FOR_REVIEW`。更新记录见 [`submission-1.2.14.json`](../app-store/submission-1.2.14.json)。
+1.2.14（构建号 11）因 macOS 27.0.1 上启动白屏被 2.1(a) 拒审。补齐容器的网络客户端沙盒权限并完成沙盒 Release 运行回归后，2026-11-17 已通过 App Store Connect CLI 重新提交 1.2.14（构建号 12），并确认版本和提交均为 `WAITING_FOR_REVIEW`。更新记录见 [`submission-1.2.14-build12.json`](../app-store/submission-1.2.14-build12.json)，原提交记录保留于 [`submission-1.2.14.json`](../app-store/submission-1.2.14.json)。
 
 发布前执行：
 
