@@ -11,7 +11,7 @@ const DERIVED_DATA = path.join(ROOT, "build/safari");
 const APP_BUNDLE_IDENTIFIER = "com.bowugit.jikepolish";
 const EXTENSION_BUNDLE_IDENTIFIER = `${APP_BUNDLE_IDENTIFIER}.Extension`;
 const APP_DISPLAY_NAME = "阅赏";
-const SAFARI_BUILD_NUMBER = "11";
+const SAFARI_BUILD_NUMBER = "12";
 const EXTENSION_RESOURCES = [
   "manifest.json",
   "content.js",
@@ -115,6 +115,16 @@ async function validate() {
     if (version !== manifest.version) {
       throw new Error(`Version mismatch: ${source}=${version}, manifest.json=${manifest.version}.`);
     }
+  }
+
+  const containerSettings = [...projectFile.matchAll(/buildSettings = \{([\s\S]*?)\n\s*\};/g)]
+    .map((match) => match[1])
+    .filter((settings) => settings.includes(`PRODUCT_BUNDLE_IDENTIFIER = ${APP_BUNDLE_IDENTIFIER};`));
+  if (containerSettings.length !== 2 || containerSettings.some((settings) => (
+    !settings.includes("ENABLE_APP_SANDBOX = YES;")
+    || !settings.includes("ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;")
+  ))) {
+    throw new Error("Safari container Debug and Release must enable App Sandbox and outgoing connections for WKWebView.");
   }
 
   const xcodeVersions = [...projectFile.matchAll(/MARKETING_VERSION = ([^;]+);/g)].map((match) => match[1]);

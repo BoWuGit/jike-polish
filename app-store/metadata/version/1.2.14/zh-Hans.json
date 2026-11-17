@@ -3,6 +3,6 @@
   "keywords": "网页美化,Safari扩展,用户卡片,图片缩放,转发,社交网络,阅读工具",
   "marketingUrl": "https://jikepolish.com/",
   "promotionalText": "优化网页排版、转发详情、用户卡片和图片浏览，并提供无需登录的离线功能演示。",
-  "whatsNew": "修复多层转发中的作者归属展示，统一用户资料卡样式，并优化卡片更新逻辑。",
+  "whatsNew": "修复 Mac 应用启动时可能出现的空白窗口，增加加载失败提示和重新载入入口。修复多层转发中的作者归属展示，并统一用户资料卡样式。",
   "supportUrl": "https://github.com/BoWuGit/jike-polish/issues"
 }

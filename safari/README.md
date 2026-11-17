@@ -36,6 +36,12 @@ npm run safari:build
 
 该命令会先重新生成全部图标和根目录的 `content.js`，校验版本、图标尺寸和 Xcode 资源列表，再执行无需签名的 Debug 构建。产物位于 `build/safari`，仅用于编译检查。
 
+### 沙盒 Release 启动回归
+
+容器 App 的 Debug 和 Release 配置均必须启用 `ENABLE_OUTGOING_NETWORK_CONNECTIONS`。macOS 27.0.1 上，缺少 `com.apple.security.network.client` 会使 WKWebView 的辅助进程启动失败，即使加载的是本地 HTML。`safari:check` 会检查两套容器配置；无需给 Extension target 增加此权限。离线演示仍只加载打包的本地内容。
+
+每次发布须检查归档及导出安装包内 App 的实际签名权限，并用保留沙盒权限的本地签名 Release 副本验证启动和离线演示。无签名 Debug 编译不会覆盖沙盒运行行为。还应验证资源加载失败时出现原生提示，以及恢复读取后“重新载入”可以回到首页。商店分发签名包需要商店安装环境，直接从归档启动可能被系统拒绝。
+
 ## 从源码在 Safari 中运行
 
 1. 执行 `npm run build`。
