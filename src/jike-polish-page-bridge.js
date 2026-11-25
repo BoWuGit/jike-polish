@@ -1,3 +1,4 @@
+import { handleGiftCardClick } from "./page-bridge/gift-card.js";
 import { QUOTE_CARD_SELECTOR, syncQuoteCard } from "./page-bridge/quote-card.js";
 import { NATIVE_LINK_CARD_SELECTOR, syncNativeLinkCard } from "./page-bridge/link-card.js";
 
@@ -38,6 +39,7 @@ function installPageBridge() {
     for (const delay of WARMUP_SCAN_DELAYS) setTimeout(scheduleScan, delay);
   }
 
+  document.addEventListener("click", handleGiftCardClick, true);
   bridge.rescan = scheduleWarmupScans;
   scheduleWarmupScans();
   window.addEventListener("pageshow", scheduleWarmupScans);
