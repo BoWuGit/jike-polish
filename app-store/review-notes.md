@@ -2,7 +2,7 @@
 
 ## 中文
 
-1.2.14（构建 12）修复了上次 2.1(a) 拒审中报告的启动白屏。我们已在 macOS 27.0.1 的沙盒 Release 程序中复现：容器缺少 WebKit 辅助进程所需的网络客户端权限。此构建为容器补齐该权限，并加入原生加载失败提示、重试入口和网页进程退出后的恢复。离线首页和演示仍只使用应用内置资源。
+1.2.15 是一次小型链接定位修复，修复点击评论礼物卡片时未能定位到对应评论的问题。
 
 应用继续使用原创品牌“阅赏”，并提供完整的离线功能演示；无需账号、网络或安装其他 App，即可审核全部主要功能。
 
@@ -20,7 +20,7 @@
 
 ## English
 
-Version 1.2.14 (build 12) fixes the blank launch window reported in the previous Guideline 2.1(a) review. We reproduced it on macOS 27.0.1 with the sandboxed Release binary: the container was missing the network-client entitlement required by the WebKit helper processes. This build enables that entitlement for the container and adds a native loading/error view, a retry button, and recovery after web content process termination. The home page and offline demo continue to use bundled local resources only.
+Version 1.2.15 is a small navigation fix so clicking a comment gift card opens the exact target comment.
 
 The app continues to use the original “阅赏” identity and includes a complete offline demonstration. No account, network connection, or other app is required to review all primary features.
 

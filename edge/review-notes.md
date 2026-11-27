@@ -40,7 +40,7 @@ The extension is not affiliated with, authorized by, endorsed by, or sponsored b
 ## Exact text submitted — under 2,000 characters
 
 ```text
-Yueshang (阅赏) is an open-source, unofficial extension. Version 1.2.14 fixes nested repost attribution and unifies profile card styling. It has no extension-owned account, payment, advertising, analytics, telemetry, or tracking. Live integration runs only on https://web.okjike.com/*.
+Yueshang (阅赏) is an open-source, unofficial extension. Version 1.2.15 fixes comment gift card navigation so clicking a comment gift opens the exact target comment. It has no extension-owned account, payment, advertising, analytics, telemetry, or tracking. Live integration runs only on https://web.okjike.com/*.
 
 OFFLINE REVIEW — NO ACCOUNT OR NETWORK REQUIRED
 1. Click the 阅赏 toolbar icon.
