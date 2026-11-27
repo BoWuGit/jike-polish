@@ -19,7 +19,7 @@
 | AMO 首次提交 | 已公开上架 | 2026-10-03 提交 1.2.10，2026-10-06 通过自动筛查并公开上架；安装包、源码包、中英文介绍、隐私政策、图标及截图已保存。[版本后台](https://addons.mozilla.org/zh-CN/developers/addon/yueshang/versions/6537119)。 |
 | 后续版本自动提交 | 已接入 | `npm run release:firefox -- --mode submit --confirm`；需要 AMO JWT issuer/secret。 |
 
-本次提交记录见 [`submission-receipt.json`](./submission-receipt.json)。公开地址为 https://addons.mozilla.org/firefox/addon/yueshang/，支持桌面 Firefox 142+。Mozilla 后续仍可进行人工复审。2026-11-12 已通过命令行提交 1.2.14 及匹配源码包，AMO 版本 ID 为 6698404，状态为 `unreviewed`。更新记录见 [`submission-1.2.14.json`](./submission-1.2.14.json)。
+本次提交记录见 [`submission-receipt.json`](./submission-receipt.json)。公开地址为 https://addons.mozilla.org/firefox/addon/yueshang/，支持桌面 Firefox 142+。Mozilla 后续仍可进行人工复审。2026-11-27 已通过命令行提交 1.2.15 及匹配源码包，AMO 版本 ID 为 6771031，状态为 `unreviewed`。更新记录见 [`submission-1.2.15.json`](./submission-1.2.15.json)。
 
 ## 为什么要求 Firefox 142+
 
